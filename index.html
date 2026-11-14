@@ -160,6 +160,19 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none}
 .shake{animation:shake .35s}
 @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 
+.cbox{display:flex;flex-wrap:wrap;gap:5px;align-items:center;border:3px dashed var(--line);border-radius:14px;padding:6px;min-height:62px;background:#fff}
+.cbox.sel{border-style:solid;border-color:var(--accent2);background:#f4f9ff}
+.repblk{display:flex;flex-direction:column;gap:4px;background:#fff3e0;border:3px solid #f0cf9a;border-radius:14px;padding:4px}
+.repblk.run{outline:4px solid var(--gold)}
+.rephead{display:flex;align-items:center;gap:6px;font-weight:800;font-size:16px}
+.rephead button{width:34px;height:34px;border-radius:10px;border:2px solid #f0cf9a;background:#fff;font-size:17px;font-weight:800}
+.rephead .n{min-width:22px;text-align:center;font-size:20px}
+.ccard.opc{width:56px;height:58px;flex-direction:column;font-size:22px;gap:0;background:#fff}
+.ccard.opc small{font-size:10px;font-weight:800;line-height:1}
+.cua{display:grid;gap:6px;padding:8px;background:#d9c7a6;border-radius:16px;width:max-content}
+.cuac{width:68px;height:68px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;border:3px solid transparent}
+.cuac.given{background:#efe3cc;border-color:#c9a978}
+.cuac.bad{border-color:#d62828;background:#ffe5e5}
 /* ---------- casa ---------- */
 .house-body{flex:1;display:flex;gap:14px;padding:14px;overflow:auto;flex-wrap:wrap;align-content:flex-start}
 .garden{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;background:#8b5e3c;border:6px solid #6e4a2e;border-radius:18px;padding:8px;flex:2 1 520px;max-width:820px;align-self:flex-start}
@@ -353,7 +366,7 @@ const STORIES = {
 };
 
 const LEVELS = {1:'Secuencias',2:'Repetir',3:'Motivos'};
-const TYPE_NAMES = {seq:'Secuencia',rep:'Repetir',mot:'Motivos',reglas:'¿Qué sigue?',hilo:'Revisa a Hilo',custom:'Reto del alcalde'};
+const TYPE_NAMES = {cab:'Cabezal',cua:'Cuadro mágico',seq:'Secuencia',rep:'Repetir',mot:'Motivos',reglas:'¿Qué sigue?',hilo:'Revisa a Hilo',custom:'Reto del alcalde'};
 
 const ENC = [
   {id:'e1',lvl:1,type:'seq',npc:'rosa',title:'Bufanda de rayas',story:'punto',
@@ -971,7 +984,10 @@ function openPuzzle(e,opts={}){
   PZ={e,v,target,features,attempts:0,hints:0,t0:Date.now(),best:v.sol?cardCount(v.sol):target.length,
       prog:{main:[],A:[],B:[],rep:1}, row:'main', running:false, phase:null, predicted:null, fill:null, sel:'r', age};
   if(e.type==='reglas'){ PZ.fill=target.map((c,i)=>i>=target.length-v.miss?'?':c); PZ.sel=uniqColors(target)[0]; }
+  if(e.type==='cab'){ PZ.target=v.t.split('').map(c=>c==='.'?null:c); PZ.prog=[]; PZ.selPath=[]; PZ.best=v.best; }
+  if(e.type==='cua'){ PZ.target=v.sol.split(''); PZ.fill=v.giv.split('').map(c=>c==='.'?null:c); PZ.sel=v.syms[0]; PZ.best=0; }
   if(e.type==='hilo'){ PZ.prog=Object.assign({main:[],A:[],B:[],rep:1},clone(v.hilo)); PZ.phase='predict'; PZ.features={rep:true,mot:!!(v.sol.A)}; }
+  document.querySelector('#scr-puzzle .pz-left .lbl').textContent=e.type==='cua'?'Cuadro':'Pedido';
   $('#pz-title').textContent=e.title; $('#pz-type').textContent=TYPE_NAMES[e.type];
   $('#pz-face').textContent=NPCS[e.npc].e; $('#pz-ask').textContent=e.ask;
   $('#pz-askspeak').onclick=()=>speakNow(e.ask);
@@ -985,6 +1001,7 @@ function fabS(w){ const avail=Math.min(window.innerWidth*0.42, 460); return Math
 function setMsg(t,cls){ const m=$('#pz-msg'); m.textContent=t; m.className=cls||''; }
 
 function renderTarget(hl=[]){
+  if(PZ.e.type==='cua'){ renderCua(hl); return; }
   const box=$('#pz-target'); box.innerHTML='';
   if(PZ.e.type==='reglas'){
     const cv=fabricCanvas(PZ.fill,PZ.v.w,{s:fabS(PZ.v.w),hl});
@@ -999,11 +1016,11 @@ function renderTarget(hl=[]){
     box.append(cv);
   } else box.append(fabricCanvas(PZ.target,PZ.v.w,{s:fabS(PZ.v.w),hl}));
 }
-function renderResult(cells,hl=[]){
+function renderResult(cells,hl=[],sel=-1){
   const box=$('#pz-result'); box.innerHTML='';
-  if(PZ.e.type==='reglas'){ $('#pz-reslbl').style.display='none'; return; }
+  if(PZ.e.type==='reglas'||PZ.e.type==='cua'){ $('#pz-reslbl').style.display='none'; return; }
   $('#pz-reslbl').style.display='';
-  box.append(fabricCanvas(cells,PZ.v.w,{s:fabS(PZ.v.w),ghost:PZ.target.length,hl,bg:'#f6ecd8'}));
+  box.append(fabricCanvas(cells,PZ.v.w,{s:fabS(PZ.v.w),ghost:PZ.target.length,hl,sel,bg:'#f6ecd8'}));
 }
 
 const HELP={
@@ -1011,6 +1028,8 @@ const HELP={
   rep:'¡Truco nuevo! Pon solo el trocito que se repite y usa «Repetir» para decir cuántas veces. Cuantas menos tarjetas uses, más estrellas.',
   mot:'Un motivo es un trocito de programa con nombre. Toca la fila «Motivo A» o «Motivo B» para llenarla. Luego, en el programa, usa las tarjetas A y B.',
   reglas:'Mira bien el dibujo: ¿qué se repite? Elige un hilo y toca los huecos con «?» para completarlo.',
+  cab:'Programa el cabezal del telar: 🎨 elige el hilo, ➡️ teje un punto y avanza, ⤵️ baja a la fila siguiente. Lo que pongas dentro de 🔁 Repetir se repite. Toca una caja para meter tarjetas dentro.',
+  cua:'Cuadro mágico: en cada fila y en cada columna tiene que haber un hilo de cada color, sin repetir. Si el cuadro está dividido en cuadrados, tampoco se puede repetir dentro de cada cuadrado.',
   custom:'Este reto lo ha diseñado el alcalde. Puedes usar todas tus tarjetas. ¡Intenta usar pocas!',
   hilo:'Hilo ha escrito este programa. Antes de tejer, piensa: ¿hará la tela del pedido? Sigue el programa con el dedo, paso a paso.'
 };
@@ -1020,6 +1039,8 @@ function renderPuzzle(){
   const t=PZ.e.type;
   const help=el('div','help'); const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(HELP[t]); help.append(sp, el('div','',esc(HELP[t])));
   R.append(help);
+  if(t==='cab'){ renderTarget(); renderCabRight(R); return; }
+  if(t==='cua'){ renderCua(); renderCuaRight(R); return; }
   renderTarget();
   if(t==='reglas'){
     R.append(el('div','lbl','Elige un hilo'));
@@ -1084,7 +1105,9 @@ function addCard(k){
 function showHint(){
   PZ.hints++;
   const t=PZ.e.type, v=PZ.v; let h='';
-  if(t==='custom') h=`Mira el pedido fila a fila. ¿Hay algún trocito que se repita? Empieza por los primeros ${Math.min(4,PZ.target.length)} puntos.`;
+  if(t==='cab'){ const row=PZ.target.slice(0,PZ.v.w); h=`La primera fila tiene ${cabRuns(row).map(([c,n])=>n+' '+(c?COLORS[c].n:'hueco')).join(', ')}. Pon el hilo, teje esos puntos y baja de fila. ¿Hay filas iguales? ¡Repítelas!`; }
+  else if(t==='cua') h='Busca una fila o una columna a la que solo le falte un color: ese hueco tiene que ser el color que falta.';
+  else if(t==='custom') h=`Mira el pedido fila a fila. ¿Hay algún trocito que se repita? Empieza por los primeros ${Math.min(4,PZ.target.length)} puntos.`;
   if(t==='seq') h=`Mira el pedido punto a punto. El primero es ${COLORS[PZ.target[0]].n}. Tu programa necesita ${PZ.target.length} puntos.`;
   else if(t==='rep'){ h=`El trocito que se repite tiene ${v.sol.main.length} puntos y empieza por ${COLORS[v.sol.main[0]].n}. Mira cuántas veces aparece.`; }
   else if(t==='custom'){}
@@ -1093,6 +1116,7 @@ function showHint(){
 }
 
 async function knit(){
+  if(PZ.e.type==='cab') return knitCab(false);
   if(PZ.running) return;
   const out=expand(PZ.prog);
   if(!out.length){ setMsg('Tu programa está vacío. ¡Toca los hilos para añadir puntos!','bad'); $('#pz-right').classList.add('shake'); setTimeout(()=>$('#pz-right').classList.remove('shake'),400); return; }
@@ -1159,14 +1183,15 @@ function checkReglas(){
 async function success(){
   const p=P(), e=PZ.e, t=e.type; let stars=3, note='';
   if(t==='custom') return successCustom();
-  if(t==='seq'||t==='reglas'){ stars=PZ.attempts<=1?3:PZ.attempts===2?2:1; }
+  if(t==='seq'||t==='reglas'||t==='cua'){ stars=PZ.attempts<=1?3:PZ.attempts===2?2:1; }
+  else if(t==='cab'){ const cc=countNodes(PZ.prog); stars=cc<=PZ.best?3:cc<=PZ.best+4?2:1; if(stars<3) note=`¡Funciona! Has usado ${cc} tarjetas. Se puede hacer con ${PZ.best}. Pista: usa 🔁 Repetir, también uno dentro de otro.`; }
   else if(t==='rep'||t==='mot'){
     const cc=cardCount(PZ.prog);
     stars = cc<=PZ.best?3: cc<=PZ.best+3?2:1;
     if(stars<3) note=`¡Funciona! Has usado ${cc} tarjetas. Se puede hacer con ${PZ.best}. ¿Te atreves a intentarlo otra vez?`;
   } else if(t==='hilo'){ stars=PZ.predictRight?3:2; if(!PZ.predictRight) note='La próxima vez, sigue el programa de Hilo con el dedo antes de decidir.'; }
   const kind=e.kind||'story';
-  if(kind==='catalog'){ fanfare(); await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:24px;font-weight:800">Ejercicio superado</div>${note?`<div style="font-size:17px">${esc(note)}</div>`:''}<div class="counter">Intentos: ${PZ.attempts} · Tarjetas: ${cardCount(PZ.prog)} · Reto: ${PZ.best}</div></div>`}); openCatalog(); return; }
+  if(kind==='catalog'){ fanfare(); await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:24px;font-weight:800">Ejercicio superado</div>${note?`<div style="font-size:17px">${esc(note)}</div>`:''}<div class="counter">Intentos: ${PZ.attempts} · Tarjetas: ${t==='cab'?countNodes(PZ.prog):cardCount(PZ.prog)} · Reto: ${PZ.best}</div></div>`}); openCatalog(); return; }
   recordStats(p,e.id,stars,t);
   if(t==='hilo'&&PZ.predictRight) p.counters.hiloRight++;
   const perfect = PZ.attempts<=1 && stars===3 && !PZ.hints;
@@ -1715,9 +1740,19 @@ async function newDayCheck(){
 function ensureDaily(p){
   const t=today(); if(p.daily && p.daily.date===t) return;
   const firstDay=(p.days.count||1)<=1;
-  const total=firstDay?4:3, maxStory=firstDay?4:2;
+  const total=firstDay?4:3, maxStory=firstDay?2:1;
   const list=ENC.filter(e=>e.lvl<=p.unlocked && !p.done[e.id]).slice(0,Math.min(total,maxStory)).map(e=>({id:e.id}));
-  let i=0; while(list.length<total){ const id='g'+t.replace(/-/g,'')+'_'+i; const g=genEncargo(p,t+'|'+p.id+'|'+i,'gen',id); i++; list.push({id,gen:g}); }
+  const R=rng(t+'|'+p.id+'|tipos');
+  const types=['seq','reglas','cua'].concat(p.unlocked>=2?['rep','cab']:[]).concat(p.unlocked>=3?['mot','hilo']:[]);
+  const used=new Set(list.map(x=>(ENC.find(e=>e.id===x.id)||{}).type));
+  // el concepto más nuevo sale con más frecuencia
+  const fresh=p.unlocked>=3?['cab','mot']:p.unlocked>=2?['cab','rep']:['seq','cua'];
+  let i=0; while(list.length<total){
+    let cand=types.filter(x=>!used.has(x)); if(!cand.length) cand=types.slice();
+    const pref=cand.filter(x=>fresh.includes(x)); const type=(pref.length&&R()<0.6)?pref[Math.floor(R()*pref.length)]:cand[Math.floor(R()*cand.length)];
+    used.add(type);
+    const id='g'+t.replace(/-/g,'')+'_'+i; const g=genEncargo(p,t+'|'+p.id+'|'+i,'gen',id,type); i++; list.push({id,gen:g});
+  }
   p.daily={date:t,list,done:{},bonus:false};
   saveQuiet();
 }
@@ -1740,12 +1775,14 @@ const ASK={
   reglas:'¡Se me han escapado unos puntos! ¿Descubres la regla y los completas?',
   rep:'Esta tela tiene un trocito que se repite. ¡Hazla con pocas tarjetas!',
   mot:'Mi tela tiene dos tipos de fila. ¡Usa los motivos A y B!',
-  hilo:'Bip bip. He preparado el programa de este encargo. ¿Lo revisas antes de tejer?'
+  hilo:'Bip bip. He preparado el programa de este encargo. ¿Lo revisas antes de tejer?',
+  cab:'¡Programa el cabezal del telar para que teja esta tela!',
+  cua:'Mi cuadro mágico está a medias. ¿Lo completas sin repetir colores?'
 };
 function genEncargo(p,seed,kind,id,forceType){
   const R=rng(seed), ri=(a,b)=>a+Math.floor(R()*(b-a+1)), pk=a=>a[Math.floor(R()*a.length)];
   const small=p.age<=7, lv=p.unlocked;
-  const pool=[['seq',lv===1?4:2],['reglas',2]]; if(lv>=2) pool.push(['rep',lv===2?5:3]); if(lv>=3) pool.push(['mot',4],['hilo',2]);
+  const pool=[['seq',lv===1?3:1],['reglas',2],['cua',3]]; if(lv>=2) pool.push(['rep',lv===2?4:2],['cab',4]); if(lv>=3) pool.push(['mot',3],['hilo',2]);
   let x=R()*pool.reduce((a,b)=>a+b[1],0), type='seq'; for(const [t,w] of pool){ if((x-=w)<0){ type=t; break; } }
   if(forceType) type=forceType;
   const cols=shuffle(COLOR_KEYS.slice(),R).slice(0,small?ri(2,3):ri(3,4));
@@ -1754,6 +1791,8 @@ function genEncargo(p,seed,kind,id,forceType){
   if(type==='seq'){ const n=small?ri(5,7):ri(7,10); const t=Array.from({length:n},()=>pk(cols)); v={w:n<=8?n:Math.ceil(n/2),t:t.join('')}; }
   else if(type==='reglas'){ const L=small?ri(2,3):ri(3,5), m=motif(L), w=small?6:8, n=Math.max(w*(small?2:3),L*4); const t=[]; while(t.length<n) t.push(...m); t.length=n; v={w,t:t.join(''),miss:Math.min(small?L:L+1,Math.floor(n/3))}; }
   else if(type==='rep'){ const L=small?ri(2,3):ri(3,5), m=motif(L), w=small?6:8; v={w,sol:{main:m,rep:Math.max(3,Math.ceil(w*(small?2:3)/L))}}; }
+  else if(type==='cab'){ const d=genCabDesign(R,small,lv>=3?2:1); v=makeCabVariant(d.t,d.w,d.h); }
+  else if(type==='cua'){ v=genCua(R,small); }
   else {
     const w=small?4:6, A=motif(w); let B; do{ B=motif(w); }while(B.join('')===A.join(''));
     let main; do{ main=Array.from({length:small?ri(4,5):ri(5,7)},()=>R()<0.5?'A':'B'); }while(!main.includes('A')||!main.includes('B'));
@@ -1769,8 +1808,8 @@ function genEncargo(p,seed,kind,id,forceType){
     }
   }
   const npcs=['rosa','tomas','coco'].concat(lv>=2?['bruno','lia']:[]).concat(lv>=3?['nube']:[]);
-  return {id,kind,type,lvl:type==='seq'||type==='reglas'?1:type==='rep'?2:3,npc:type==='hilo'?'hilo':pk(npcs),
-    title:(kind==='practice'?'Práctica: ':'')+pk(GARMENTS)+' '+pk(GSTYLE),story:null,ask:ASK[type],v6:v,v9:v};
+  return {id,kind,type,lvl:type==='seq'||type==='reglas'||type==='cua'?1:type==='rep'?2:type==='cab'?(lv>=3?3:2):3,npc:type==='hilo'?'hilo':pk(npcs),
+    title:(kind==='practice'?'Práctica: ':'')+(type==='cua'?pk(['Cuadro mágico','Colcha mágica','Tapiz mágico']):pk(GARMENTS)+' '+pk(GSTYLE)),story:null,ask:ASK[type],v6:v,v9:v};
 }
 
 /* ---------- plantas y jardín ---------- */
@@ -1797,10 +1836,219 @@ async function waterGarden(){
 }
 
 /* =========================================================
+   NUEVOS RETOS: CABEZAL PROGRAMABLE y CUADRO MÁGICO
+   ========================================================= */
+const CAB_OPS={p:{e:'➡️',n:'Tejer'},s:{e:'⏭️',n:'Saltar'},n:{e:'⤵️',n:'Bajar fila'}};
+function countNodes(list){ let c=0; for(const n of list){ c++; if(n.op==='rep') c+=countNodes(n.body); } return c; }
+function runCab(prog,w,h){
+  const grid=Array(w*h).fill(null); let x=0,y=0,col=null; const steps=[]; let err=null;
+  const exec=list=>{
+    for(const n of list){
+      if(err) return;
+      if(steps.length>800){ err={t:'pasos'}; return; }
+      if(n.op==='rep'){ for(let k=0;k<n.n;k++){ exec(n.body); if(err) return; } continue; }
+      if(n.op==='c'){ col=n.v; steps.push({node:n,x,y}); }
+      else if(n.op==='n'){ y++; x=0; steps.push({node:n,x,y}); }
+      else {
+        if(y>=h){ err={t:'abajo',node:n}; return; }
+        if(x>=w){ err={t:'derecha',node:n,y}; return; }
+        if(n.op==='p'){ if(!col){ err={t:'sinhilo',node:n}; return; } grid[y*w+x]=col; }
+        steps.push({node:n,x,y,i:y*w+x,put:n.op==='p'?col:null}); x++;
+      }
+    }
+  };
+  exec(prog); return {grid,steps,err};
+}
+function cabRuns(row){ const r=[]; for(const c of row){ if(r.length&&r[r.length-1][0]===c) r[r.length-1][1]++; else r.push([c,1]); } return r; }
+function cabCanon(t,w,h){
+  const groups=[];
+  for(let y=0;y<h;y++){ const row=t.slice(y*w,(y+1)*w), key=row.join(','); const g=groups[groups.length-1]; if(g&&g.key===key) g.k++; else groups.push({key,row,k:1}); }
+  const prog=[];
+  groups.forEach((g,gi)=>{
+    const body=[];
+    cabRuns(g.row).forEach(([c,len])=>{ if(c) body.push({op:'c',v:c}); const op=c?'p':'s'; if(len>=3) body.push({op:'rep',n:len,body:[{op}]}); else for(let i=0;i<len;i++) body.push({op}); });
+    if(g.k>=2) prog.push({op:'rep',n:g.k,body:body.concat([{op:'n'}])});
+    else { prog.push(...body); if(gi<groups.length-1) prog.push({op:'n'}); }
+  });
+  return prog;
+}
+function genCabDesign(R,small,tier){
+  const ri=(a,b)=>a+Math.floor(R()*(b-a+1)), pk=a=>a[Math.floor(R()*a.length)];
+  const cols=shuffle(COLOR_KEYS.slice(),R);
+  let w,h,t=[];
+  if(tier===1){
+    w=small?ri(3,4):ri(4,6); h=small?2:ri(2,3);
+    for(let y=0;y<h;y++){ const a=cols[ri(0,2)], b=cols[ri(0,3)], cut=ri(1,w); for(let x=0;x<w;x++) t.push(x<cut?a:b); }
+  } else {
+    w=small?ri(4,5):ri(6,8); h=small?ri(3,4):ri(4,6);
+    const fam=pk(small?['bandas','rayas','marco']:['bandas','rayas','marco','mixto']);
+    const A=cols[0],B=cols[1],C=cols[2];
+    if(fam==='bandas'){ const k=ri(1,2); for(let y=0;y<h;y++){ const c=[A,B,C][Math.floor(y/k)%3]; for(let x=0;x<w;x++) t.push(c); } }
+    else if(fam==='rayas'){ const k=ri(1,2); for(let y=0;y<h;y++) for(let x=0;x<w;x++) t.push([A,B][Math.floor(x/k)%2]); }
+    else if(fam==='marco'){ for(let y=0;y<h;y++) for(let x=0;x<w;x++) t.push((y===0||y===h-1||x===0||x===w-1)?A:B); }
+    else { for(let y=0;y<h;y++) for(let x=0;x<w;x++) t.push(y===0||y===h-1?C:[A,B][Math.floor(x/2)%2]); }
+  }
+  return {w,h,t};
+}
+function makeCabVariant(t,w,h){ const sol=cabCanon(t,w,h); return {w,h,t:t.map(c=>c||'.').join(''),sol,best:countNodes(sol)}; }
+
+/* ---------- cuadro mágico (sudoku de colores) ---------- */
+function cuaOk(g,n,box,i,v){
+  const r=Math.floor(i/n), c=i%n;
+  for(let k=0;k<n;k++){ if(g[r*n+k]===v&&r*n+k!==i) return false; if(g[k*n+c]===v&&k*n+c!==i) return false; }
+  if(box){ const br=r-r%2, bc=c-c%2; for(let a=0;a<2;a++) for(let b=0;b<2;b++){ const j=(br+a)*n+bc+b; if(j!==i&&g[j]===v) return false; } }
+  return true;
+}
+function cuaCount(g,n,box,syms,limit=2){
+  const i=g.indexOf(null); if(i<0) return 1; let c=0;
+  for(const v of syms){ if(cuaOk(g,n,box,i,v)){ g[i]=v; c+=cuaCount(g,n,box,syms,limit); g[i]=null; if(c>=limit) return c; } }
+  return c;
+}
+function genCua(R,small){
+  const n=small?3:4, box=!small, syms=shuffle(COLOR_KEYS.slice(),R).slice(0,n);
+  const g=Array(n*n).fill(null);
+  const fill=i=>{ if(i===n*n) return true; for(const v of shuffle(syms.slice(),R)){ if(cuaOk(g,n,box,i,v)){ g[i]=v; if(fill(i+1)) return true; g[i]=null; } } return false; };
+  fill(0);
+  const sol=g.slice(), giv=g.slice(), maxRemove=small?5:10;
+  let removed=0;
+  for(const i of shuffle([...Array(n*n).keys()],R)){
+    if(removed>=maxRemove) break;
+    const keep=giv[i]; giv[i]=null;
+    if(cuaCount(giv.slice(),n,box,syms)!==1) giv[i]=keep; else removed++;
+  }
+  return {n,box,sol:sol.join(''),giv:giv.map(c=>c||'.').join(''),syms};
+}
+
+/* ---------- integración en el puzle ---------- */
+function cabCurList(){ let l=PZ.prog; for(const i of PZ.selPath){ const n=l[i]; if(!n||n.op!=='rep') { PZ.selPath=[]; return PZ.prog; } l=n.body; } return l; }
+function opCard(n){
+  if(n.op==='c'){ const c=el('div','ccard opc'); c.style.background=shade(COLORS[n.v].c,0.55); c.append(stitchIcon(n.v,24)); c.append(el('small','','hilo')); return c; }
+  const o=CAB_OPS[n.op]; const c=el('div','ccard opc'); c.innerHTML=`<span>${o.e}</span><small>${o.n}</small>`; return c;
+}
+function renderCabProg(list,path,locked){
+  const box=el('div','cbox'+(!locked&&path.join(',')===PZ.selPath.join(',')?' sel':''));
+  if(!list.length) box.append(el('span','empty',path.length?'Toca aquí y añade lo que se repite':'Toca las tarjetas para programar el cabezal…'));
+  list.forEach((n,i)=>{
+    if(n.op==='rep'){
+      const b=el('div','repblk'); n._el=b;
+      const hd=el('div','rephead'); hd.append(el('span','','🔁 Repetir ×'));
+      const mi=el('button','','–'), num=el('span','n',String(n.n)), pl=el('button','',' +'), del=el('button','','✖');
+      mi.onclick=ev=>{ ev.stopPropagation(); if(locked) return; n.n=Math.max(2,n.n-1); renderPuzzle(); };
+      pl.onclick=ev=>{ ev.stopPropagation(); if(locked) return; n.n=Math.min(12,n.n+1); renderPuzzle(); };
+      del.onclick=ev=>{ ev.stopPropagation(); if(locked) return; list.splice(i,1); PZ.selPath=[]; beep(300,0.05); renderPuzzle(); };
+      hd.append(mi,num,pl,del); b.append(hd);
+      b.append(renderCabProg(n.body,path.concat(i),locked));
+      box.append(b);
+    } else {
+      const c=opCard(n); n._el=c;
+      c.onclick=ev=>{ ev.stopPropagation(); if(locked) return; list.splice(i,1); beep(300,0.05); renderPuzzle(); };
+      box.append(c);
+    }
+  });
+  box.onclick=ev=>{ ev.stopPropagation(); if(locked) return; PZ.selPath=path; renderPuzzle(); };
+  return box;
+}
+function cabAdd(node){
+  if(PZ.running) return;
+  if(countNodes(PZ.prog)>=40){ toast('¡Programa demasiado largo! Usa Repetir.'); return; }
+  const l=cabCurList(); l.push(node);
+  if(node.op==='rep') PZ.selPath=PZ.selPath.concat(l.length-1);
+  beep(640,0.05); renderPuzzle();
+}
+function renderCabRight(R){
+  const locked=PZ.running;
+  R.append(el('div','lbl','Programa del cabezal'));
+  R.append(renderCabProg(PZ.prog,[],locked));
+  R.append(el('div','counter',`Tarjetas usadas: ${countNodes(PZ.prog)} · reto: ${PZ.best} o menos`));
+  R.append(el('div','lbl','Tarjetas'));
+  const pal=el('div','palette');
+  uniqColors(PZ.target).concat(PZ.age>7?COLOR_KEYS.filter(c=>!uniqColors(PZ.target).includes(c)).slice(0,1):[]).forEach(k=>{ const c=opCard({op:'c',v:k}); c.onclick=()=>cabAdd({op:'c',v:k}); pal.append(c); });
+  ['p','n'].concat(PZ.target.includes(null)?['s']:[]).forEach(op=>{ const c=opCard({op}); c.onclick=()=>cabAdd({op}); pal.append(c); });
+  const rc=el('div','ccard opc'); rc.style.background='#fff3e0'; rc.innerHTML='<span>🔁</span><small>Repetir</small>'; rc.onclick=()=>cabAdd({op:'rep',n:2,body:[]}); pal.append(rc);
+  R.append(pal);
+  const act=el('div','actions');
+  if(PZ.attempts>=3){ const h=el('button','btn blue','💡 Pista'); h.onclick=showHint; act.append(h); }
+  if(TEST){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); }
+  const clr=el('button','btn','↺ Borrar todo'); clr.onclick=()=>{ if(PZ.running) return; PZ.prog=[]; PZ.selPath=[]; renderPuzzle(); renderResult([]); setMsg(''); };
+  const slow=el('button','btn','🐢 Despacio'); slow.onclick=()=>knitCab(true);
+  const run=el('button','btn primary','▶ Tejer'); run.onclick=()=>knitCab(false); run.disabled=PZ.running;
+  act.append(clr,slow,run); R.append(act);
+}
+async function knitCab(slow){
+  if(PZ.running) return;
+  if(!PZ.prog.length){ setMsg('El programa está vacío. ¡Toca las tarjetas!','bad'); return; }
+  PZ.attempts++; PZ.running=true; renderPuzzle(); setMsg('🧶 El cabezal está tejiendo…');
+  const {grid,steps,err}=runCab(PZ.prog,PZ.v.w,PZ.v.h);
+  const shown=Array(PZ.v.w*PZ.v.h).fill(null);
+  const delay=slow?420:Math.max(35,Math.min(110,2600/Math.max(1,steps.length)));
+  let last=null;
+  for(const s of steps){
+    if(last&&last._el) last._el.classList.remove('run');
+    if(s.node._el){ s.node._el.classList.add('run'); last=s.node; }
+    if(s.put) shown[s.i]=s.put;
+    renderResult(shown,[],s.x<PZ.v.w&&s.y<PZ.v.h?s.y*PZ.v.w+s.x:-1);
+    if(s.put) beep(500+COLOR_KEYS.indexOf(s.put)*60,0.03,'triangle',0.03);
+    await new Promise(r=>setTimeout(r,s.node.op==='c'?delay/2:delay));
+  }
+  if(last&&last._el) last._el.classList.remove('run');
+  PZ.running=false; renderPuzzle(); renderResult(grid);
+  if(err){
+    if(err.node&&err.node._el) err.node._el.classList.add('shake');
+    const m={derecha:'¡El cabezal se ha salido por la derecha! Al final de cada fila usa ⤵️ Bajar fila.',abajo:'¡El cabezal se ha salido por abajo de la tela! Sobran filas.',sinhilo:'¡El cabezal no tiene hilo! Pon una tarjeta de color antes de tejer.',pasos:'¡Uf, el cabezal no para! Revisa los números de Repetir.'}[err.t];
+    setMsg(m,'bad'); speakAuto(m); beep(220,0.2,'sawtooth',0.03); return;
+  }
+  const d=firstDiff(grid,PZ.target);
+  if(d===-1){ success(); return; }
+  renderResult(grid,[d]); renderTarget([d]);
+  const want=PZ.target[d], got=grid[d];
+  const row=Math.floor(d/PZ.v.w)+1, colN=d%PZ.v.w+1;
+  setMsg(`Fila ${row}, punto ${colN}: debería ser ${want?COLORS[want].n:'un hueco'} y es ${got?COLORS[got].n:'un hueco'}. ¡Busca el error!`,'bad');
+  speakAuto($('#pz-msg').textContent); beep(220,0.2,'sawtooth',0.03);
+}
+
+function renderCua(hl=[]){
+  const box=$('#pz-target'); box.innerHTML='';
+  const n=PZ.v.n, g=el('div','cua'); g.style.gridTemplateColumns=`repeat(${n},auto)`;
+  PZ.fill.forEach((c,i)=>{
+    const given=PZ.v.giv[i]!=='.';
+    const d=el('button','cuac'+(given?' given':'')+(hl.includes(i)?' bad':''));
+    if(PZ.v.box && !given){ const bx=Math.floor((i%n)/2)+Math.floor(Math.floor(i/n)/2); d.style.background=bx%2?'#e4efff':'#fff'; }
+    if(c) d.append(stitchIcon(c,40));
+    d.onclick=()=>{ if(given){ toast('Este punto ya venía puesto 📌'); return; } PZ.fill[i]=PZ.fill[i]===PZ.sel?null:PZ.sel; beep(650,0.05); renderCua(); setMsg(''); };
+    g.append(d);
+  });
+  box.append(g);
+  $('#pz-reslbl').style.display='none'; $('#pz-result').innerHTML='';
+}
+function renderCuaRight(R){
+  R.append(el('div','lbl','Elige un hilo y toca un hueco'));
+  const pal=el('div','palette');
+  PZ.v.syms.forEach(k=>{ const c=colorCard(k); if(PZ.sel===k) c.style.outline='4px solid #2f5f96'; c.onclick=()=>{ PZ.sel=k; beep(600,0.04); renderPuzzle(); }; pal.append(c); });
+  R.append(pal);
+  const act=el('div','actions');
+  if(PZ.attempts>=3){ const h=el('button','btn blue','💡 Pista'); h.onclick=showHint; act.append(h); }
+  if(TEST){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); }
+  const b=el('button','btn green','✔ Comprobar'); b.onclick=checkCua; act.append(b); R.append(act);
+}
+function checkCua(){
+  const n=PZ.v.n, g=PZ.fill;
+  if(g.includes(null)){ setMsg('Todavía quedan huecos vacíos.','bad'); return; }
+  PZ.attempts++;
+  const bad=new Set(); let why='';
+  for(let i=0;i<n*n;i++) if(!cuaOk(g,n,PZ.v.box,i,g[i])){ bad.add(i); }
+  if(!bad.size){ success(); return; }
+  const i=[...bad][0], r=Math.floor(i/n)+1, c=i%n+1;
+  why=`Hay un hilo ${COLORS[g[i]].n} repetido. Mira la fila ${r}, la columna ${c}${PZ.v.box?' y su cuadrado':''}.`;
+  renderCua([...bad]); setMsg(why,'bad'); speakAuto(why); beep(220,0.2,'sawtooth',0.03);
+}
+
+/* =========================================================
    CATÁLOGO DE EJERCICIOS (puerta trasera, solo modo prueba)
    ========================================================= */
 function showSolution(){
   const t=PZ.e.type, v=PZ.v;
+  if(t==='cab'){ PZ.prog=clone(v.sol); PZ.selPath=[]; renderPuzzle(); setMsg('Solución cargada ('+countNodes(PZ.prog)+' tarjetas). Pulsa ▶ Tejer.','good'); return; }
+  if(t==='cua'){ PZ.fill=PZ.target.slice(); renderCua(); setMsg('Solución cargada. Pulsa Comprobar.','good'); return; }
   if(t==='reglas'){ PZ.fill=PZ.target.slice(); renderTarget(); setMsg('Solución: '+PZ.target.slice(PZ.target.length-v.miss).map(c=>COLORS[c].n).join(', ')+'. Pulsa Comprobar.','good'); return; }
   if(t==='hilo'){ const ok=firstDiff(expand(PZ.prog),PZ.target)===-1; toast(ok?'✅ Esta vez el programa de Hilo está BIEN':'❌ El programa de Hilo tiene un ERROR',3500); PZ.phase=null; }
   PZ.prog = (t==='seq'||t==='custom'||!v.sol) ? {main:PZ.target.slice(),A:[],B:[],rep:1} : Object.assign({main:[],A:[],B:[],rep:1},clone(v.sol));
@@ -1824,10 +2072,10 @@ function renderCatalog(){
     ENC.filter(e=>e.lvl===l).forEach(e=>L.append(catCard(e,e.title,`6-7: ${describe(e,6)}<br>8-10: ${describe(e,9)}`)));
   });
   L.append(el('div','wsec','Encargos generados (cada vez sale uno distinto)'));
-  ['seq','reglas','rep','mot','hilo'].forEach(t=>{
-    const proto={npc:t==='hilo'?'hilo':'coco',type:t,title:'Generado: '+TYPE_NAMES[t]};
-    proto.make=a=>{ const g=genEncargo({age:a,unlocked:3,id:'cat'},'cat'+t+Date.now()+Math.random(),'catalog','cat'+Date.now(),t); g.title='Generado: '+TYPE_NAMES[t]; return g; };
-    L.append(catCard(proto));
+  [['seq',3,''],['reglas',3,''],['rep',3,''],['mot',3,''],['hilo',3,''],['cua',3,' (3×3 / 4×4 con cuadrados)'],['cab',2,' · nivel 1: el hilo como estado'],['cab',3,' · nivel 2: bucles dentro de bucles']].forEach(([t,lv,extra])=>{
+    const proto={npc:t==='hilo'?'hilo':t==='cab'?'bruno':t==='cua'?'nube':'coco',type:t,title:'Generado: '+TYPE_NAMES[t]+extra};
+    proto.make=a=>{ const g=genEncargo({age:a,unlocked:lv,id:'cat'},'cat'+t+Date.now()+Math.random(),'catalog','cat'+Date.now(),t); g.title=proto.title; return g; };
+    L.append(catCard(proto, proto.title, t==='cab'?'Nuevo · programa el cabezal':t==='cua'?'Nuevo · lógica tipo sudoku':''));
   });
 }
 $('#cat-back').onclick=()=>{ if(P()&&P().met) show('village'); else { renderProfiles(); show('profiles'); } };

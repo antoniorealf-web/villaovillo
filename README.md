@@ -44,3 +44,16 @@ Abre `https://antoniorealf-web.github.io/villaovillo/panel.html`, escribe la cla
 - **Jardín vivo:** las plantas nacen como semilla y hay que regarlas cada día (las flores tardan 2 días y los árboles 3). Hay plantas comunes, raras y especiales para coleccionar.
 - **Racha diaria:** cada día que juegan reciben un regalo. Si faltan algún día, la racha baja un poco, pero no vuelve a cero.
 - **22 medallas** con barra de progreso, en el libro.
+
+## Tipos de reto en el telar (v0.4)
+| Tipo | Habilidad | Desde |
+|---|---|---|
+| Secuencia | seguir un orden | nivel 1 |
+| ¿Qué sigue? | encontrar la regla de una serie | nivel 1 |
+| Cuadro mágico | deducción lógica (sudoku de colores 3×3, o 4×4 con cuadrados) | nivel 1 |
+| Repetir | bucles | nivel 2 |
+| Cabezal programable | estado (el hilo activo), coordenadas, bucles dentro de bucles | nivel 2 |
+| Motivos | funciones | nivel 3 |
+| Revisa a Hilo | comprobar el trabajo de una IA | nivel 3 |
+
+Cada día salen tipos distintos, con más probabilidad para el concepto más nuevo. Todos se pueden probar en `?prueba#catalogo`.
