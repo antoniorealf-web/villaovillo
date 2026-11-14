@@ -298,6 +298,12 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
   </div>
 </section>
 
+<!-- CATÁLOGO (modo prueba) -->
+<section id="scr-catalog" class="screen">
+  <div class="topbar"><button class="btn" id="cat-back">← Pueblo</button><div class="ttl">📚 Catálogo de ejercicios</div><div class="chip">🧪 Modo prueba</div></div>
+  <div class="scroll" style="flex:1"><div class="wgrid" id="cat-list"></div></div>
+</section>
+
 <!-- BUZÓN -->
 <section id="scr-mail" class="screen">
   <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl">📬 Mi buzón</div><div class="chip" id="mail-coins"></div></div>
@@ -952,17 +958,18 @@ function renderWorkshop(){
    PUZLE
    ========================================================= */
 let PZ=null;
-function variant(e){ return P().age<=7?e.v6:e.v9; }
+function variant(e,age){ return (age||P().age)<=7?e.v6:e.v9; }
 function expand(prog){ const out=[]; const rep=prog.rep||1; for(let k=0;k<rep;k++){ for(const t of (prog.main||[])){ if(t==='A') out.push(...(prog.A||[])); else if(t==='B') out.push(...(prog.B||[])); else out.push(t); if(out.length>400) return out; } } return out; }
 function cardCount(prog){ return (prog.main||[]).length+((prog.main||[]).includes('A')?(prog.A||[]).length:0)+((prog.main||[]).includes('B')?(prog.B||[]).length:0); }
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
-function openPuzzle(e){
-  const v=variant(e);
+function openPuzzle(e,opts={}){
+  const age=opts.age||P().age;
+  const v=variant(e,age);
   const target = v.t ? v.t.split('') : expand(v.sol);
-  const features = e.type==='seq'?{rep:false,mot:false}: e.type==='rep'?{rep:true,mot:false}: e.type==='custom'?{rep:true,mot:P().age>7}: {rep:true,mot:true};
+  const features = e.type==='seq'?{rep:false,mot:false}: e.type==='rep'?{rep:true,mot:false}: e.type==='custom'?{rep:true,mot:age>7}: {rep:true,mot:true};
   PZ={e,v,target,features,attempts:0,hints:0,t0:Date.now(),best:v.sol?cardCount(v.sol):target.length,
-      prog:{main:[],A:[],B:[],rep:1}, row:'main', running:false, phase:null, predicted:null, fill:null, sel:'r'};
+      prog:{main:[],A:[],B:[],rep:1}, row:'main', running:false, phase:null, predicted:null, fill:null, sel:'r', age};
   if(e.type==='reglas'){ PZ.fill=target.map((c,i)=>i>=target.length-v.miss?'?':c); PZ.sel=uniqColors(target)[0]; }
   if(e.type==='hilo'){ PZ.prog=Object.assign({main:[],A:[],B:[],rep:1},clone(v.hilo)); PZ.phase='predict'; PZ.features={rep:true,mot:!!(v.sol.A)}; }
   $('#pz-title').textContent=e.title; $('#pz-type').textContent=TYPE_NAMES[e.type];
@@ -972,7 +979,7 @@ function openPuzzle(e){
   show('puzzle'); renderPuzzle(); renderResult([]);
   speakAuto(e.ask);
 }
-$('#pz-back').onclick=()=>{ if(PZ&&PZ.running) return; stopSpeak(); if(PZ&&PZ.e.type==='custom') openMail(); else openWorkshop(); };
+$('#pz-back').onclick=()=>{ if(PZ&&PZ.running) return; stopSpeak(); if(PZ&&PZ.e.kind==='catalog') openCatalog(); else if(PZ&&PZ.e.type==='custom') openMail(); else openWorkshop(); };
 function uniqColors(arr){ return [...new Set(arr.filter(c=>COLORS[c]))]; }
 function fabS(w){ const avail=Math.min(window.innerWidth*0.42, 460); return Math.max(18,Math.min(40,Math.floor((avail-12)/w))); }
 function setMsg(t,cls){ const m=$('#pz-msg'); m.textContent=t; m.className=cls||''; }
@@ -1019,7 +1026,7 @@ function renderPuzzle(){
     const pal=el('div','palette');
     paletteColors().forEach(k=>{ const c=colorCard(k); if(PZ.sel===k) c.style.outline='4px solid #2f5f96'; c.onclick=()=>{ PZ.sel=k; beep(600,0.04); renderPuzzle(); }; pal.append(c); });
     R.append(pal);
-    const act=el('div','actions'); const b=el('button','btn green','✔ Comprobar'); b.onclick=checkReglas; act.append(b); R.append(act);
+    const act=el('div','actions'); if(TEST){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); } const b=el('button','btn green','✔ Comprobar'); b.onclick=checkReglas; act.append(b); R.append(act);
     return;
   }
   // filas de programa
@@ -1050,7 +1057,7 @@ function renderPuzzle(){
     q.innerHTML='<div style="font-size:30px">🤖</div><div><b>¿El programa de Hilo teje bien la tela del pedido?</b><br>Piénsalo antes de probarlo.</div>';
     R.append(q);
     const act=el('div','actions'); const no=el('button','btn','❌ Tiene un error'), si=el('button','btn green','✅ Está bien');
-    no.onclick=()=>predict(false); si.onclick=()=>predict(true); act.append(no,si); R.append(act); return;
+    no.onclick=()=>predict(false); si.onclick=()=>predict(true); if(TEST){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.prepend(sb); } act.append(no,si); R.append(act); return;
   }
   R.append(el('div','lbl','Tarjetas'));
   const pal=el('div','palette');
@@ -1061,9 +1068,10 @@ function renderPuzzle(){
   const clr=el('button','btn','↺ Borrar todo'); clr.onclick=()=>{ if(PZ.running) return; PZ.prog={main:[],A:[],B:[],rep:1}; PZ.row='main'; renderPuzzle(); renderResult([]); setMsg(''); };
   const run=el('button','btn primary','▶ Tejer'); run.onclick=knit; run.disabled=PZ.running;
   if(PZ.attempts>=3){ const h=el('button','btn blue','💡 Pista'); h.onclick=showHint; act.append(h); }
+  if(TEST){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); }
   act.append(clr,run); R.append(act);
 }
-function paletteColors(){ const tc=uniqColors(PZ.target); return P().age<=7?COLOR_KEYS.filter(k=>tc.includes(k)||k==='w'):COLOR_KEYS; }
+function paletteColors(){ const tc=uniqColors(PZ.target); return PZ.age<=7?COLOR_KEYS.filter(k=>tc.includes(k)||k==='w'):COLOR_KEYS; }
 function colorCard(k){ const c=el('div','ccard'); c.style.background=shade(COLORS[k].c,0.55); c.append(stitchIcon(k,30)); c.title=COLORS[k].n; return c; }
 function tokenCard(k){ const c=el('div','ccard tok'+k,k); return c; }
 function addCard(k){
@@ -1158,6 +1166,7 @@ async function success(){
     if(stars<3) note=`¡Funciona! Has usado ${cc} tarjetas. Se puede hacer con ${PZ.best}. ¿Te atreves a intentarlo otra vez?`;
   } else if(t==='hilo'){ stars=PZ.predictRight?3:2; if(!PZ.predictRight) note='La próxima vez, sigue el programa de Hilo con el dedo antes de decidir.'; }
   const kind=e.kind||'story';
+  if(kind==='catalog'){ fanfare(); await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:24px;font-weight:800">Ejercicio superado</div>${note?`<div style="font-size:17px">${esc(note)}</div>`:''}<div class="counter">Intentos: ${PZ.attempts} · Tarjetas: ${cardCount(PZ.prog)} · Reto: ${PZ.best}</div></div>`}); openCatalog(); return; }
   recordStats(p,e.id,stars,t);
   if(t==='hilo'&&PZ.predictRight) p.counters.hiloRight++;
   const perfect = PZ.attempts<=1 && stars===3 && !PZ.hints;
@@ -1580,6 +1589,7 @@ function initTestBar(){
   const need=fn=>()=>{ const p=P(); if(!p||curScreen==='profiles'){ toast('Entra con una jugadora primero'); return; } fn(p); saveQuiet(); refreshScreen(); };
   const fakeMsg=(tipo,texto,extra)=>need(p=>{ DB.msgs.push({id:'t'+Date.now(),para:p.id,tipo,texto,premio:10,estado:'nuevo',extra}); toast('📬 Mensaje de prueba en el buzón'); });
   const B=[
+    ['📚 Catálogo',()=>openCatalog()],
     ['Nivel 1',need(p=>setLevel(p,1))],['Nivel 2',need(p=>setLevel(p,2))],['Nivel 3',need(p=>setLevel(p,3))],
     ['+100 🔘',need(p=>{p.coins+=100;})],
     ['+plantas',need(p=>{ for(const l in PLANTS) for(const [e] of PLANTS[l]) p.inv['pl_'+e]=(p.inv['pl_'+e]||0)+1; ['L1','L2','L3','M'].forEach(k=>p.inv[k]=(p.inv[k]||0)+1); })],
@@ -1601,7 +1611,7 @@ function initTestBar(){
 function setLevel(p,n){ p.unlocked=n; ENC.forEach(e=>{ if(e.lvl<n) p.done[e.id]=p.done[e.id]||3; }); }
 
 function initExtras(){
-  if(TEST) initTestBar();
+  if(TEST){ initTestBar(); if(location.hash==='#catalogo') setTimeout(openCatalog,50); }
   startPlayClock();
   if(cloudReady()) cloudPull(true).then(ok=>{ if(ok&&curScreen==='profiles') renderProfiles(); });
 }
@@ -1732,11 +1742,12 @@ const ASK={
   mot:'Mi tela tiene dos tipos de fila. ¡Usa los motivos A y B!',
   hilo:'Bip bip. He preparado el programa de este encargo. ¿Lo revisas antes de tejer?'
 };
-function genEncargo(p,seed,kind,id){
+function genEncargo(p,seed,kind,id,forceType){
   const R=rng(seed), ri=(a,b)=>a+Math.floor(R()*(b-a+1)), pk=a=>a[Math.floor(R()*a.length)];
   const small=p.age<=7, lv=p.unlocked;
   const pool=[['seq',lv===1?4:2],['reglas',2]]; if(lv>=2) pool.push(['rep',lv===2?5:3]); if(lv>=3) pool.push(['mot',4],['hilo',2]);
   let x=R()*pool.reduce((a,b)=>a+b[1],0), type='seq'; for(const [t,w] of pool){ if((x-=w)<0){ type=t; break; } }
+  if(forceType) type=forceType;
   const cols=shuffle(COLOR_KEYS.slice(),R).slice(0,small?ri(2,3):ri(3,4));
   const motif=len=>{ let m; do{ m=Array.from({length:len},()=>pk(cols)); }while(new Set(m).size<2); return m; };
   let v;
@@ -1784,6 +1795,42 @@ async function waterGarden(){
   await say({face:'💧',name:'¡Jardín regado!',text: bloomed.length?`¡Ha${bloomed.length>1?'n':''} florecido: ${names.join(', ')}! Ganas ${coins} botones.`:`Tus plantas están creciendo. Ganas ${coins} botones. ¡Vuelve mañana a regarlas!`});
   await afterRewards(); renderHouse();
 }
+
+/* =========================================================
+   CATÁLOGO DE EJERCICIOS (puerta trasera, solo modo prueba)
+   ========================================================= */
+function showSolution(){
+  const t=PZ.e.type, v=PZ.v;
+  if(t==='reglas'){ PZ.fill=PZ.target.slice(); renderTarget(); setMsg('Solución: '+PZ.target.slice(PZ.target.length-v.miss).map(c=>COLORS[c].n).join(', ')+'. Pulsa Comprobar.','good'); return; }
+  if(t==='hilo'){ const ok=firstDiff(expand(PZ.prog),PZ.target)===-1; toast(ok?'✅ Esta vez el programa de Hilo está BIEN':'❌ El programa de Hilo tiene un ERROR',3500); PZ.phase=null; }
+  PZ.prog = (t==='seq'||t==='custom'||!v.sol) ? {main:PZ.target.slice(),A:[],B:[],rep:1} : Object.assign({main:[],A:[],B:[],rep:1},clone(v.sol));
+  renderPuzzle(); setMsg('Solución cargada ('+cardCount(PZ.prog)+' tarjetas). Pulsa ▶ Tejer.','good');
+}
+function ensureTestProfile(){ if(!P()){ const i=DB.profiles.findIndex(p=>p); if(i>=0) DB.cur=i; else { DB.profiles[0]=newProfile('Papá',9,'#4a8fdc'); DB.profiles[0].met=true; DB.cur=0; } saveQuiet(); } }
+function openCatalog(){ ensureTestProfile(); renderCatalog(); show('catalog'); }
+function catCard(e,label,extra){
+  const c=el('div','ecard'); c.style.cursor='default';
+  c.innerHTML=`<div class="who">${NPCS[e.npc].e}</div><div class="t">${esc(label||e.title)}</div><div class="badge">${TYPE_NAMES[e.type]}</div>${extra?`<div class="counter">${extra}</div>`:''}`;
+  const row=el('div','choice'); row.style.justifyContent='flex-start';
+  [[6,'👧 6-7 años'],[9,'👧 8-10 años']].forEach(([a,t])=>{ const b=el('button','',t); b.onclick=()=>{ const ee=Object.assign({},typeof e.make==='function'?e.make(a):e,{kind:'catalog'}); openPuzzle(ee,{age:a}); }; row.append(b); });
+  c.append(row); return c;
+}
+function describe(e,age){ const v=age<=7?e.v6:e.v9; const t=v.t?v.t.length:expand(v.sol).length; return `${t} puntos · ancho ${v.w}`+(v.sol?` · reto ${cardCount(v.sol)} tarjetas`:''); }
+function renderCatalog(){
+  const L=$('#cat-list'); L.innerHTML='';
+  L.append(el('div','wnote','🧪 Aquí puedes probar cualquier ejercicio, en la versión de 6-7 o de 8-10 años, sin que cuente para ninguna partida. En cada ejercicio tienes el botón <b>👁️ Solución</b>.'));
+  [1,2,3].forEach(l=>{
+    L.append(el('div','wsec',`Nivel ${l} · ${LEVELS[l]} (encargos con historia)`));
+    ENC.filter(e=>e.lvl===l).forEach(e=>L.append(catCard(e,e.title,`6-7: ${describe(e,6)}<br>8-10: ${describe(e,9)}`)));
+  });
+  L.append(el('div','wsec','Encargos generados (cada vez sale uno distinto)'));
+  ['seq','reglas','rep','mot','hilo'].forEach(t=>{
+    const proto={npc:t==='hilo'?'hilo':'coco',type:t,title:'Generado: '+TYPE_NAMES[t]};
+    proto.make=a=>{ const g=genEncargo({age:a,unlocked:3,id:'cat'},'cat'+t+Date.now()+Math.random(),'catalog','cat'+Date.now(),t); g.title='Generado: '+TYPE_NAMES[t]; return g; };
+    L.append(catCard(proto));
+  });
+}
+$('#cat-back').onclick=()=>{ if(P()&&P().met) show('village'); else { renderProfiles(); show('profiles'); } };
 
 /* =========================================================
    INICIO
