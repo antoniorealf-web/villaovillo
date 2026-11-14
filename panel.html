@@ -76,8 +76,9 @@ const ENC={e1:['seq','Bufanda de rayas'],e2:['seq','Cinta para el pelo'],e3:['re
 const TYPE={cab:'Cabezal programable',cua:'Cuadro mágico (lógica)',seq:'Secuencias',reglas:'Encontrar la regla',rep:'Repetir (bucles)',mot:'Motivos (funciones)',hilo:'Revisar a Hilo (IA)',custom:'Retos del alcalde'};
 const LEVELS={1:'Secuencias',2:'Repetir',3:'Motivos'};
 const RANKS=['Aprendiz','Ayudante','Hiladora','Tejedora','Bordadora','Oficiala','Experta','Artesana','Maestra','Gran maestra','Leyenda del telar','Reina del telar'];
+const MATHN={contar:'Contar',sumas:'Sumas',restas:'Restas',dinero:'Dinero',multi:'Multiplicar',reparto:'Repartir (dividir)',cambio:'Cambio',dospasos:'Problemas de dos pasos',receta:'Recetas (doble/mitad)',fraccion:'Fracciones',suma100:'Sumas grandes'};
 const ICON={carta:'✉️',casa:'🧹',deberes:'📚',reto:'🎯'};
-const ESTADO={nuevo:'Sin abrir',leida:'Leída',hecha:'Dice que la ha hecho',validada:'Validada',cobrada:'Premio recogido',completado:'Superado'};
+const ESTADO={aceptada:'Aceptada (haciéndola)',nuevo:'Sin abrir',leida:'Leída',hecha:'Dice que la ha hecho',validada:'Validada',cobrada:'Premio recogido',completado:'Superado'};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let KEYV='', PIN='', DATA=null, tab='resumen';
@@ -144,12 +145,15 @@ function vResumen(V){
         <div class="kpi"><b>${cnt.bloomed||0}</b><span>Plantas florecidas</span></div>
         <div class="kpi"><b>${medals}/22</b><span>Medallas</span></div>
         <div class="kpi"><b>${cnt.tasks||0}</b><span>Tareas comprobadas</span></div>
+        <div class="kpi"><b>${cnt.math||0}</b><span>Turnos de panadería</span></div>
+        <div class="kpi"><b>${cnt.reads||0}</b><span>Repasos en la biblioteca</span></div>
         <div class="kpi"><b>${(p.stories||[]).length}</b><span>Historias leídas</span></div>
       </div>
       <label style="margin-top:12px">Minutos por día</label>
       <div class="bars">${days.map(d=>`<div class="bar" style="height:${Math.max(2,d[1]/mx*80)}px"><u>${d[1]||''}</u><i>${d[2]}</i></div>`).join('')}</div>
       <label style="margin-top:28px">Dónde le cuesta más (intentos por encargo)</label>
       ${typeRows.length?`<table><tr><th>Tipo</th><th>Intentos medios</th><th>Pistas</th><th>Tiempo</th></tr>${typeRows.map(r=>`<tr><td>${TYPE[r.t]||r.t}</td><td>${r.avg.toFixed(1)}${r.avg>=3?' ⚠️':''}</td><td>${r.h}</td><td>${r.min} min</td></tr>`).join('')}</table>`:'<div class="note">Aún sin datos.</div>'}
+      ${p.math&&Object.keys(p.math).length?`<label style="margin-top:12px">Mates (aciertos a la primera)</label><table><tr><th>Tipo</th><th>Aciertos</th><th>%</th></tr>${Object.entries(p.math).map(([k,v])=>`<tr><td>${MATHN[k]||k}</td><td>${v.ok}/${v.total}</td><td>${Math.round(v.ok/Math.max(1,v.total)*100)}%${v.total>=4&&v.ok/v.total<0.6?' ⚠️':''}</td></tr>`).join('')}</table>`:''}
       <details style="margin-top:8px"><summary><b>Encargo a encargo</b></summary><table><tr><th>Encargo</th><th>Estrellas</th><th>Intentos</th><th>Pistas</th><th>Tiempo</th></tr>${encRows}</table></details>
       <details style="margin-top:6px"><summary><b>Diario reciente</b></summary>${hist.length?hist.map(h=>`<div class="note">${new Date(h.fecha).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} · ${esc(h.evento)}</div>`).join(''):'<div class="note">Sin eventos todavía.</div>'}</details>`;
     V.append(c);
@@ -170,7 +174,7 @@ function vBuzon(V){
     const d=document.createElement('div'); d.className='msg';
     d.innerHTML=`<div class="i">${ICON[m.tipo]||'✉️'}</div><div class="t"><b>${esc(nameOf(m.para))}</b> · <span class="pill ${m.estado}">${ESTADO[m.estado]||m.estado}</span>${m.premio?` · 🔘 ${m.premio}`:''}<br>${esc(m.texto)}</div>`;
     const a=document.createElement('div'); a.style.display='flex'; a.style.flexDirection='column'; a.style.gap='4px';
-    if(m.estado==='hecha'||(m.estado==='nuevo'&&(m.tipo==='casa'||m.tipo==='deberes'))){ const v=document.createElement('button'); v.className='btn green small'; v.textContent='✅ Validar'; v.onclick=()=>setState(m,'validada'); a.append(v); }
+    if(m.estado==='hecha'||((m.estado==='nuevo'||m.estado==='aceptada')&&(m.tipo==='casa'||m.tipo==='deberes'))){ const v=document.createElement('button'); v.className='btn green small'; v.textContent='✅ Validar'; v.onclick=()=>setState(m,'validada'); a.append(v); }
     const x=document.createElement('button'); x.className='btn small'; x.textContent='🗑️'; x.title='Borrar'; x.onclick=()=>{ if(window.confirm?confirm('¿Borrar este mensaje?'):true) setState(m,'borrada'); }; a.append(x);
     d.append(a); c.append(d);
   });

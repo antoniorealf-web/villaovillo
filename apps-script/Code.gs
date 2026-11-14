@@ -107,8 +107,8 @@ function addMsg_(q) {
 }
 
 // Cambios de estado permitidos
-const KID_OK  = {'nuevo>leida': 1, 'nuevo>hecha': 1, 'nuevo>completado': 1, 'validada>cobrada': 1, 'leida>completado': 1};
-const PAPA_OK = {'hecha>validada': 1, 'nuevo>validada': 1};
+const KID_OK  = {'nuevo>leida': 1, 'nuevo>hecha': 1, 'nuevo>aceptada': 1, 'aceptada>hecha': 1, 'nuevo>completado': 1, 'validada>cobrada': 1, 'leida>completado': 1};
+const PAPA_OK = {'hecha>validada': 1, 'aceptada>validada': 1, 'nuevo>validada': 1};
 
 function msgState_(q, papa) {
   const s = hoja_('Mensajes', H_MSG);

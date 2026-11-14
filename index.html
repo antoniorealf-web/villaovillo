@@ -173,6 +173,23 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none}
 .cuac{width:68px;height:68px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;border:3px solid transparent}
 .cuac.given{background:#efe3cc;border-color:#c9a978}
 .cuac.bad{border-color:#d62828;background:#ffe5e5}
+.ccard.run{outline:4px solid #f2b632;transform:scale(1.18);box-shadow:0 0 0 8px rgba(242,182,50,.35);z-index:2;background:#fff6cf!important;transition:transform .08s}
+.repblk.loopon{border-color:#f2b632;box-shadow:0 0 0 4px rgba(242,182,50,.35)}
+.vuelta{font-size:14px;font-weight:800;color:#c47f00;background:#fff;border-radius:10px;padding:0 8px}
+.vuelta:empty{display:none}
+.mvis{font-size:30px;line-height:1.35;margin:8px 0}
+.mbox{display:inline-block;border:2px solid #d8c08a;border-radius:8px;padding:2px 4px;margin:3px;font-size:18px;background:#fff}
+.mplus{font-size:30px;font-weight:800}
+.mpad{display:grid;grid-template-columns:repeat(3,78px);gap:8px}
+.mpad .btn{font-size:28px;min-height:62px}
+.mdisp{font-size:40px;font-weight:800;min-width:170px;text-align:center;background:#fff;border:3px solid var(--line);border-radius:14px;padding:2px 12px;margin-bottom:8px;display:inline-block}
+.mchoices{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.mchoices .btn{font-size:22px}
+.mdot{display:inline-block;width:18px;height:18px;border-radius:50%;background:#e5d6bd;margin:0 3px}
+.mdot.ok{background:var(--ok)}.mdot.ko{background:var(--accent)}.mdot.cur{background:var(--gold)}
+.qorder{margin:10px 0;display:flex;flex-wrap:wrap;gap:6px}
+.qchip{background:#e4efff;border-radius:12px;padding:4px 10px;font-weight:700}
+#bk-msg.good,#qz-msg.good{color:var(--ok)} #bk-msg.bad,#qz-msg.bad{color:#c0443d}
 /* ---------- casa ---------- */
 .house-body{flex:1;display:flex;gap:14px;padding:14px;overflow:auto;flex-wrap:wrap;align-content:flex-start}
 .garden{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;background:#8b5e3c;border:6px solid #6e4a2e;border-radius:18px;padding:8px;flex:2 1 520px;max-width:820px;align-self:flex-start}
@@ -317,6 +334,30 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
   <div class="scroll" style="flex:1"><div class="wgrid" id="cat-list"></div></div>
 </section>
 
+<!-- TABLÓN -->
+<section id="scr-board" class="screen">
+  <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl">📌 Tablón de tareas</div><button class="btn" id="board-alc">🔐 Alcalde</button><div class="chip" id="board-coins"></div></div>
+  <div class="scroll" style="flex:1"><div class="mlist" id="blist"></div></div>
+</section>
+<section id="scr-alcalde" class="screen">
+  <div class="topbar"><button class="btn" id="alc-back">← Salir</button><div class="ttl">🎩 Modo alcalde</div></div>
+  <div class="scroll" style="flex:1"><div style="max-width:820px;margin:0 auto;padding:16px" id="alc-body"></div></div>
+</section>
+<!-- PANADERÍA -->
+<section id="scr-bakery" class="screen">
+  <div class="topbar"><button class="btn" id="bk-back">← Pueblo</button><div class="ttl">🥐 Panadería de Bruno</div><div id="bk-prog"></div><div class="chip" id="bk-coins"></div></div>
+  <div class="pz-body"><div class="panel pz-left" id="bk-q"></div><div class="panel pz-right"><div id="bk-ans"></div><div id="bk-msg" style="font-size:20px;font-weight:700;margin-top:10px"></div></div></div>
+</section>
+<!-- BIBLIOTECA -->
+<section id="scr-library" class="screen">
+  <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl">🦉 Biblioteca de Sabina</div><div class="chip" id="lib-coins"></div></div>
+  <div class="scroll" style="flex:1"><div class="wgrid" id="lib-list"></div></div>
+</section>
+<section id="scr-quiz" class="screen">
+  <div class="topbar"><button class="btn" id="qz-back">← Biblioteca</button><div class="ttl" id="qz-title"></div><div id="qz-prog"></div></div>
+  <div class="pz-body"><div class="panel" style="flex:1;max-width:900px;margin:0 auto"><div id="qz-body"></div><div id="qz-msg" style="font-size:20px;font-weight:700;margin-top:10px"></div></div></div>
+</section>
+
 <!-- BUZÓN -->
 <section id="scr-mail" class="screen">
   <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl">📬 Mi buzón</div><div class="chip" id="mail-coins"></div></div>
@@ -327,6 +368,7 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
 <div id="testflag">🧪 MODO PRUEBA · no afecta a las partidas reales</div>
 <div id="testbar"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>🧪 Prueba <span id="tb-day"></span></b><button id="tb-min">–</button></div><div class="tb" id="tb-btns"></div></div>
 <script src="config.js"></script>
+<script src="cuadernos.js"></script>
 
 <script>
 "use strict";
@@ -635,7 +677,7 @@ async function enterGame(i){
 /* =========================================================
    PUEBLO (canvas)
    ========================================================= */
-const VW=1200, VH=720;
+const VW=1200, VH=880;
 const vcanvas=$('#vcanvas'), vctx=vcanvas.getContext('2d');
 let vScale=1, vOffX=0, vOffY=0, vDpr=1, rafId=null, lastT=0, tGlobal=0;
 const player={x:600,y:548,tx:600,ty:548,moving:false,dir:1,act:null};
@@ -650,9 +692,12 @@ const B = { // edificios y zonas (coordenadas lógicas)
   houseB:{x:810,y:410,w:170,h:140,door:[895,566]},
   plotB:{x:786,y:578,w:218,h:110},
   plaza:{x:600,y:430,r:95},
-  locked:{x:1018,y:0,w:182,h:720}
+  locked:{x:1018,y:0,w:182,h:880},
+  tablon:{x:448,y:138,w:58,h:98,door:[477,252]},
+  panaderia:{x:370,y:722,w:180,h:126,door:[460,864]},
+  biblio:{x:650,y:722,w:180,h:126,door:[740,864]}
 };
-const TREE_SPOTS=[[70,90],[60,300],[470,70],[728,262],[78,385],[350,640],[640,650],[960,330],[345,470],[110,210],[470,290],[760,400],[52,690],[445,590],[430,700],[930,262],[520,640],[250,370],[720,705],[40,520]];
+const TREE_SPOTS=[[70,90],[60,300],[470,70],[728,262],[78,385],[350,640],[640,650],[960,330],[345,470],[110,210],[470,290],[760,400],[52,690],[445,590],[300,780],[930,262],[520,640],[250,370],[880,800],[40,520],[60,820],[200,860],[960,860],[560,700],[860,700]];
 
 function resizeVillage(){
   const r=$('#vwrap').getBoundingClientRect(); vDpr=window.devicePixelRatio||1;
@@ -691,7 +736,7 @@ function update(dt){
 }
 function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
 function inRect(x,y,r){ return x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h; }
-function insideBuilding(x,y){ return ['taller','tienda','houseA','houseB','plotA','plotB','tend'].some(k=>inRect(x,y,B[k])); }
+function insideBuilding(x,y){ return ['taller','tienda','houseA','houseB','plotA','plotB','tend','tablon','panaderia','biblio'].some(k=>inRect(x,y,B[k])); }
 
 // --- cálculo de crecimiento
 function progressStats(p){
@@ -716,6 +761,8 @@ function drawVillage(){
   const pc=[B.plaza.x,B.plaza.y];
   for(const k of ['taller','tienda','houseA','houseB','tend']){ c.beginPath(); c.moveTo(pc[0],pc[1]); c.lineTo(B[k].door[0],B[k].door[1]); c.stroke(); }
   c.beginPath(); c.moveTo(pc[0],pc[1]); c.lineTo(990,430); c.stroke();
+  c.beginPath(); c.moveTo(pc[0],pc[1]); c.lineTo(600,864); c.lineTo(460,864); c.moveTo(600,864); c.lineTo(740,864); c.stroke();
+  c.beginPath(); c.moveTo(pc[0],pc[1]); c.lineTo(B.tablon.door[0],B.tablon.door[1]); c.stroke();
   c.strokeStyle='#dcc68f'; c.lineWidth=3; c.setLineDash([2,10]);
   for(const k of ['taller','tienda','houseA','houseB','tend']){ c.beginPath(); c.moveTo(pc[0],pc[1]); c.lineTo(B[k].door[0],B[k].door[1]); c.stroke(); }
   c.setLineDash([]);
@@ -752,6 +799,9 @@ function drawVillage(){
   drawHouse(c,B.houseA, pA?pA.color:'#c9b89c', pA?('Casa de '+pA.name):'Casa vacía');
   drawHouse(c,B.houseB, pB?pB.color:'#c9b89c', pB?('Casa de '+pB.name):'Casa vacía');
   drawPlot(c,B.plotA,pA); drawPlot(c,B.plotB,pB);
+  drawBuilding(c,B.panaderia,'#f6d7a7','#d9822b','🥐 PANADERÍA',false);
+  drawBuilding(c,B.biblio,'#dfe8f5','#4a6fa5','🦉 BIBLIOTECA',false);
+  drawTablon(c,B.tablon);
   // fuente / pozo
   if(st.lv>=2) drawFountain(c,pc[0],pc[1]); else drawWell(c,pc[0],pc[1]);
   if(st.lv>=2) for(const [lx,ly] of [[505,350],[695,350],[505,510],[695,510]]) drawLamp(c,lx,ly);
@@ -809,6 +859,14 @@ function drawPlot(c,b,p){
   if(p===P() && needsWater(p)){ const bob=Math.sin(tGlobal*4)*4; c.fillStyle='#fffaf1'; c.beginPath(); c.arc(b.x+b.w-6,b.y-14+bob,17,0,Math.PI*2); c.fill(); c.strokeStyle='#4a8fdc'; c.lineWidth=3; c.stroke(); c.fillStyle='#000'; c.font='20px serif'; c.fillText('💧',b.x+b.w-6,b.y-13+bob); }
   // valla
   c.strokeStyle='#f6ead2'; c.lineWidth=3; for(let x=b.x;x<=b.x+b.w;x+=14){ c.beginPath(); c.moveTo(x,b.y+b.h-2); c.lineTo(x,b.y+b.h+10); c.stroke(); }
+}
+function drawTablon(c,b){
+  c.fillStyle='#7d5333'; c.fillRect(b.x+6,b.y+40,7,b.h-40); c.fillRect(b.x+b.w-13,b.y+40,7,b.h-40);
+  c.fillStyle='#c98f5a'; roundRect(c,b.x-14,b.y,b.w+28,62,6); c.fill(); c.strokeStyle='#7d5333'; c.lineWidth=4; c.stroke();
+  const n=Math.min(4,taskCount());
+  ['#fff8c4','#ffd8e4','#d8ecff','#e2f7d8'].forEach((col,i)=>{ c.fillStyle=col; c.fillRect(b.x-8+i*21,b.y+8+(i%2)*10,17,22); c.fillStyle='#e4574f'; c.beginPath(); c.arc(b.x+0.5+i*21,b.y+10+(i%2)*10,2.5,0,Math.PI*2); c.fill(); });
+  c.font="800 13px 'Baloo 2',sans-serif"; c.fillStyle='#5a3d22'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('TABLÓN',b.x+b.w/2,b.y+52);
+  if(n){ c.fillStyle='#fffaf1'; c.beginPath(); c.arc(b.x+b.w+12,b.y-6,13,0,Math.PI*2); c.fill(); c.strokeStyle='#f2b632'; c.lineWidth=3; c.stroke(); c.fillStyle='#e4574f'; c.font="800 16px 'Baloo 2',sans-serif"; c.fillText(String(n),b.x+b.w+12,b.y-5); }
 }
 function drawFountain(c,x,y){
   c.fillStyle='#b7c3cc'; c.beginPath(); c.ellipse(x,y+6,46,22,0,0,Math.PI*2); c.fill();
@@ -876,7 +934,7 @@ function drawNPC(c,n){
   if(n.k==='alcalde'){ c.font='26px serif'; c.fillText('🎩',n.x,n.y-bob-28); c.font="800 13px 'Baloo 2',sans-serif"; c.fillStyle='#5a3d22'; c.textBaseline='middle'; c.fillText('Alcalde',n.x,n.y+14); }
   if(hasEncargo(n.k)){ c.fillStyle='#fffaf1'; c.beginPath(); c.arc(n.x+18,n.y-48,11,0,Math.PI*2); c.fill(); c.strokeStyle='#f2b632'; c.lineWidth=3; c.stroke(); c.fillStyle='#e4574f'; c.font="800 16px 'Baloo 2',sans-serif"; c.textBaseline='middle'; c.fillText('!',n.x+18,n.y-47); }
 }
-function hasEncargo(k){ const p=P(); if(k==='alcalde') return mailCount()>0; if(!p.daily) return false; return p.daily.list.some(x=>!p.daily.done[x.id] && (encOf(p,x.id)||{}).npc===k); }
+function hasEncargo(k){ const p=P(); if(k==='alcalde') return mailCount()+taskCount()>0; if(!p.daily) return false; return p.daily.list.some(x=>!p.daily.done[x.id] && (encOf(p,x.id)||{}).npc===k); }
 
 // --- toques en el pueblo
 vcanvas.addEventListener('pointerdown',ev=>{
@@ -887,16 +945,20 @@ vcanvas.addEventListener('pointerdown',ev=>{
   const p=P(); const mine=DB.cur===0?'A':'B', other=mine==='A'?'B':'A';
   const go=(door,fn)=>{ player.tx=door[0]; player.ty=door[1]; player.act=fn; tapFx={x:door[0],y:door[1],t:0}; };
   if(inRect(x,y,B.taller)) return go(B.taller.door,openWorkshop);
+  if(inRect(x,y,{x:B.tablon.x-16,y:B.tablon.y,w:B.tablon.w+32,h:B.tablon.h})) return go(B.tablon.door,openBoard);
+  if(inRect(x,y,B.panaderia)) return go(B.panaderia.door,()=>openBakery());
+  if(inRect(x,y,B.biblio)) return go(B.biblio.door,openLibrary);
   if(inRect(x,y,B.tienda)) return go(B.tienda.door,openShop);
   if(inRect(x,y,B.tend)) return go(B.tend.door,()=>openBook('telas'));
   if(inRect(x,y,B['house'+mine])||inRect(x,y,B['plot'+mine])) return go(B['house'+mine].door,()=>openHouse(DB.cur));
   if(inRect(x,y,B['house'+other])||inRect(x,y,B['plot'+other])) return go(B['house'+other].door,()=>visitOther());
   if(x>=968){ return go([960,430],()=>say({face:'🦦',name:NPCS.lia.n,text:'Al otro lado del río están el Huerto del robot y el Laboratorio. ¡Se abrirán más adelante, cuando seas una gran tejedora!'})); }
-  player.tx=clamp(x,20,960); player.ty=clamp(y,40,705); player.act=null; tapFx={x:player.tx,y:player.ty,t:0};
+  player.tx=clamp(x,20,960); player.ty=clamp(y,40,870); player.act=null; tapFx={x:player.tx,y:player.ty,t:0};
 });
 async function talkNPC(n){
   const info=NPCS[n.k]; const p=P();
   if(n.k==='alcalde'){
+    const tc=taskCount(); if(tc&&!mailCount()){ const r2=await say({face:'🧔',name:info.n,text:`¡Hola, ${p.name}! Hay ${tc===1?'una tarea nueva':tc+' tareas'} en el tablón.`,buttons:[{t:'Luego'},{t:'📌 Ver tablón',cls:'primary'}]}); if(r2===1) openBoard(); return; }
     const c=mailCount();
     const r=await say({face:'🧔',name:info.n,text:c?`¡Hola, ${p.name}! Tienes ${c===1?'algo nuevo':c+' cosas nuevas'} en tu buzón.`:pick(info.hi),buttons:c?[{t:'Luego'},{t:'📬 Abrir buzón',cls:'primary'}]:[{t:'¡Adiós, papá!',cls:'primary'}]});
     if(c&&r===1) openMail(); return;
@@ -917,7 +979,7 @@ async function visitOther(){
 function updateHUD(){
   const p=P();
   $('#hud-name').innerHTML=`<span class="dot" style="width:22px;height:22px;background:${p.color};flex-shrink:0"></span><span class="nm">${esc(p.name)}</span><span class="xpbar" title="Experiencia"><i style="width:${Math.round(rankProgress(p)*100)}%"></i></span><span class="rk">${RANKS[p.rank][0]}</span>`;
-  if(p.daily){ const nd=p.daily.list.filter(x=>p.daily.done[x.id]).length; $('#hud-daily').innerHTML=`📅 Hoy ${nd}/${p.daily.list.length} · 🔥 ${p.days.streak||0}`; }
+  if(p.daily){ const nd=p.daily.list.filter(x=>p.daily.done[x.id]).length; const hasR=cuadernosFor(p).length>0; $('#hud-daily').innerHTML=`Hoy: 🧶 ${nd}/${p.daily.list.length} · 🥐 ${p.daily.math?'✅':'○'}${hasR?` · 🦉 ${p.daily.read?'✅':'○'}`:''} · 🔥 ${p.days.streak||0}`; }
   $('#hud-coins').textContent='🔘 '+p.coins;
   $('#hb-voz').textContent=p.voice?'🔊':'🔇';
   renderBracelet($('#hud-bracelet'),p);
@@ -955,7 +1017,7 @@ function renderWorkshop(){
   const nd=p.daily.list.filter(x=>p.daily.done[x.id]).length;
   H(`📅 Encargos de hoy · ${nd}/${p.daily.list.length}`);
   p.daily.list.forEach(x=>{ const e=encOf(p,x.id); if(e) list.append(encCard(e,p.daily.done[x.id]||0,true)); });
-  if(nd===p.daily.list.length) list.append(el('div','wnote','🎉 ¡Has terminado los encargos de hoy! Mañana llegarán más. Mientras, puedes practicar, diseñar telas o cuidar tu jardín.'));
+  if(nd===p.daily.list.length) list.append(el('div','wnote',`🎉 ¡Has terminado los encargos del telar de hoy!${!p.daily.math?' Bruno te espera en la panadería 🥐.':''}${cuadernosFor(p).length&&!p.daily.read?' Sabina te espera en la biblioteca 🦉.':''} Mañana llegarán más.`));
   H('✨ Libre');
   const pr=el('button','ecard practice'); const pc=(p.practice&&p.practice.date===today())?p.practice.coins:0;
   pr.innerHTML=`<div class="who">🏋️</div><div class="t">Práctica libre</div><div class="badge">Encargos sin fin</div><div class="counter">🔘 ${pc}/15 botones hoy</div>`;
@@ -1479,6 +1541,7 @@ function renderProfileTools(){
   const t=$('#ptools'); if(!t) return; t.innerHTML='';
   const chip=el('div','chip cloudchip'); chip.id='cloudchip'; chip.innerHTML=cloudLabel(); t.append(chip);
   if(!TEST){ const cb=el('button','btn','⚙️ Nube'); cb.onclick=configCloud; t.append(cb); }
+  const al=el('button','btn','🎩 Alcalde'); al.onclick=()=>openAlcalde(); t.append(al);
   const bk=el('button','btn','💾 Copia de seguridad'); bk.onclick=showBackup; t.append(bk);
   const rs=el('button','btn','♻️ Restaurar'); rs.onclick=restoreBackup; t.append(rs);
 }
@@ -1522,10 +1585,11 @@ async function restoreBackup(){
    ========================================================= */
 const MAIL_ICON={carta:'✉️',casa:'🧹',deberes:'📚',reto:'🎯'};
 const MAIL_NAME={carta:'Carta del alcalde',casa:'Tarea de casa',deberes:'Deberes',reto:'Reto del alcalde'};
-function myMsgs(){ const p=P(); if(!p) return []; return (DB.msgs||[]).filter(m=>m.para===p.id && m.estado!=='borrada'); }
-function mailCount(){ const p=P(); if(!p) return 0; return myMsgs().filter(m=>m.estado==='nuevo'||(m.estado==='validada'&&!p.rewarded[m.id])).length; }
+function myMsgs(){ const p=P(); if(!p) return []; return (DB.msgs||[]).concat(DB.localMsgs||[]).filter(m=>m.para===p.id && m.estado!=='borrada'); }
+function mailCount(){ const p=P(); if(!p) return 0; return myMsgs().filter(m=>!isTask(m)&&(m.estado==='nuevo'||(m.estado==='validada'&&!p.rewarded[m.id]))).length; }
 function setMsgState(m,estado){
   m.estado=estado; const p=P();
+  if(String(m.id).startsWith('L')){ save(); return; }
   if(!TEST){ p.pendingMsg[m.id]=estado; }
   save(); if(!TEST&&cloudReady()) api('msgState',{id:m.id,estado}).then(()=>{ delete p.pendingMsg[m.id]; saveQuiet(); }).catch(()=>{});
 }
@@ -1533,7 +1597,7 @@ function openMail(){ renderMail(); show('mail'); if(!TEST) cloudPull(false); }
 function renderMail(){
   const p=P(); $('#mail-coins').textContent='🔘 '+p.coins;
   const L=$('#mlist'); L.innerHTML='';
-  const list=myMsgs().slice().reverse();
+  const list=myMsgs().filter(m=>!isTask(m)).slice().reverse();
   if(!list.length){ L.append(el('div','help','<div style="font-size:30px">📭</div><div>Tu buzón está vacío. ¡El alcalde te escribirá pronto!</div>')); return; }
   list.forEach(m=>{
     const it=el('div','mitem'+((m.estado==='nuevo'||(m.estado==='validada'&&!p.rewarded[m.id]))?' nuevo':''));
@@ -1566,7 +1630,6 @@ async function readLetter(m){
 async function doneTask(m){
   setMsgState(m,'hecha'); beep(700,0.1,'triangle');
   await say({face:'🧔',name:'Papá, el alcalde',text:'¡Muy bien! Lo comprobaré y, si está hecho, te daré tu premio.'});
-  renderMail();
 }
 async function collectTask(m){
   const p=P(); if(p.rewarded[m.id]) return;
@@ -1575,7 +1638,6 @@ async function collectTask(m){
   setMsgState(m,'cobrada'); save('Premio: '+(MAIL_NAME[m.tipo]||'')); fanfare();
   await say({center:true,html:`<div class="reward"><div style="font-size:56px">🎁</div><div style="font-size:26px;font-weight:800">¡Papá lo ha comprobado!</div><div class="rw-items"><div class="rw-item">🔘 +${m.premio||10} botones</div><div class="rw-item">${pe} ${esc(pn)}</div><div class="rw-item">📿 cuenta nueva</div><div class="rw-item">✨ +3 experiencia</div></div></div>`});
   await afterRewards();
-  renderMail();
 }
 function openReto(m){
   const x=m.extra||{w:6,t:'rwrwrw'};
@@ -1722,7 +1784,7 @@ async function newDayCheck(){
     else if(gap===1) p.days.streak++;
     else if(gap>1) p.days.streak=Math.max(1,p.days.streak-2*(gap-1));
     p.days.last=t; p.days.count=(p.days.count||0)+1; p.days.best=Math.max(p.days.best||0,p.days.streak);
-    ensureDaily(p);
+    ensureDaily(p); ensureRecurring(p);
     const gift=2+Math.min(p.days.streak,5); p.coins+=gift; p.counters.earned+=gift; addXP(p,1);
     save('Nuevo día · racha '+p.days.streak);
     if(p.days.count>1){
@@ -1759,9 +1821,11 @@ function ensureDaily(p){
 async function dailyBonusCheck(p){
   if(!p.daily||p.daily.bonus) return;
   if(!p.daily.list.every(x=>p.daily.done[x.id])) return;
+  if(!p.daily.math) return;
+  if(cuadernosFor(p).length && !p.daily.read) return;
   p.daily.bonus=true; p.coins+=3; p.counters.earned+=3; addXP(p,2); save('Terminó los encargos del día');
   fanfare();
-  await say({center:true,html:`<div class="reward"><div style="font-size:56px">🎉</div><div style="font-size:26px;font-weight:800">¡Encargos de hoy terminados!</div><div class="rw-items"><div class="rw-item">🔘 +3 botones</div><div class="rw-item">✨ +2 experiencia</div></div><div style="font-size:18px">Mañana llegarán más. ¿Has regado tu jardín?</div></div>`,buttons:[{t:'¡Hurra!',cls:'primary'}]});
+  await say({center:true,html:`<div class="reward"><div style="font-size:56px">🎉</div><div style="font-size:26px;font-weight:800">¡Ruta del día completada!</div><div class="rw-items"><div class="rw-item">🔘 +3 botones</div><div class="rw-item">✨ +2 experiencia</div></div><div style="font-size:18px">Mañana llegarán más. ¿Has regado tu jardín?</div></div>`,buttons:[{t:'¡Hurra!',cls:'primary'}]});
 }
 
 /* ---------- generador de encargos ---------- */
@@ -1842,18 +1906,20 @@ const CAB_OPS={p:{e:'➡️',n:'Tejer'},s:{e:'⏭️',n:'Saltar'},n:{e:'⤵️',
 function countNodes(list){ let c=0; for(const n of list){ c++; if(n.op==='rep') c+=countNodes(n.body); } return c; }
 function runCab(prog,w,h){
   const grid=Array(w*h).fill(null); let x=0,y=0,col=null; const steps=[]; let err=null;
+  const stack=[];
   const exec=list=>{
     for(const n of list){
       if(err) return;
       if(steps.length>800){ err={t:'pasos'}; return; }
-      if(n.op==='rep'){ for(let k=0;k<n.n;k++){ exec(n.body); if(err) return; } continue; }
-      if(n.op==='c'){ col=n.v; steps.push({node:n,x,y}); }
-      else if(n.op==='n'){ y++; x=0; steps.push({node:n,x,y}); }
+      if(n.op==='rep'){ for(let k=0;k<n.n;k++){ stack.push([n,k+1]); exec(n.body); stack.pop(); if(err) return; } continue; }
+      const loops=stack.map(s=>s.slice());
+      if(n.op==='c'){ col=n.v; steps.push({node:n,x,y,loops}); }
+      else if(n.op==='n'){ y++; x=0; steps.push({node:n,x,y,loops}); }
       else {
         if(y>=h){ err={t:'abajo',node:n}; return; }
         if(x>=w){ err={t:'derecha',node:n,y}; return; }
         if(n.op==='p'){ if(!col){ err={t:'sinhilo',node:n}; return; } grid[y*w+x]=col; }
-        steps.push({node:n,x,y,i:y*w+x,put:n.op==='p'?col:null}); x++;
+        steps.push({node:n,x,y,i:y*w+x,put:n.op==='p'?col:null,loops}); x++;
       }
     }
   };
@@ -1932,11 +1998,12 @@ function renderCabProg(list,path,locked){
     if(n.op==='rep'){
       const b=el('div','repblk'); n._el=b;
       const hd=el('div','rephead'); hd.append(el('span','','🔁 Repetir ×'));
+      const vu=el('span','vuelta',''); n._cnt=vu;
       const mi=el('button','','–'), num=el('span','n',String(n.n)), pl=el('button','',' +'), del=el('button','','✖');
       mi.onclick=ev=>{ ev.stopPropagation(); if(locked) return; n.n=Math.max(2,n.n-1); renderPuzzle(); };
       pl.onclick=ev=>{ ev.stopPropagation(); if(locked) return; n.n=Math.min(12,n.n+1); renderPuzzle(); };
       del.onclick=ev=>{ ev.stopPropagation(); if(locked) return; list.splice(i,1); PZ.selPath=[]; beep(300,0.05); renderPuzzle(); };
-      hd.append(mi,num,pl,del); b.append(hd);
+      hd.append(mi,num,pl,del,vu); b.append(hd);
       b.append(renderCabProg(n.body,path.concat(i),locked));
       box.append(b);
     } else {
@@ -1956,7 +2023,7 @@ function cabAdd(node){
   beep(640,0.05); renderPuzzle();
 }
 function renderCabRight(R){
-  const locked=PZ.running;
+  const locked=PZ.running||!!PZ.step;
   R.append(el('div','lbl','Programa del cabezal'));
   R.append(renderCabProg(PZ.prog,[],locked));
   R.append(el('div','counter',`Tarjetas usadas: ${countNodes(PZ.prog)} · reto: ${PZ.best} o menos`));
@@ -1969,29 +2036,30 @@ function renderCabRight(R){
   const act=el('div','actions');
   if(PZ.attempts>=3){ const h=el('button','btn blue','💡 Pista'); h.onclick=showHint; act.append(h); }
   if(TEST){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); }
-  const clr=el('button','btn','↺ Borrar todo'); clr.onclick=()=>{ if(PZ.running) return; PZ.prog=[]; PZ.selPath=[]; renderPuzzle(); renderResult([]); setMsg(''); };
-  const slow=el('button','btn','🐢 Despacio'); slow.onclick=()=>knitCab(true);
-  const run=el('button','btn primary','▶ Tejer'); run.onclick=()=>knitCab(false); run.disabled=PZ.running;
-  act.append(clr,slow,run); R.append(act);
-}
-async function knitCab(slow){
-  if(PZ.running) return;
-  if(!PZ.prog.length){ setMsg('El programa está vacío. ¡Toca las tarjetas!','bad'); return; }
-  PZ.attempts++; PZ.running=true; renderPuzzle(); setMsg('🧶 El cabezal está tejiendo…');
-  const {grid,steps,err}=runCab(PZ.prog,PZ.v.w,PZ.v.h);
-  const shown=Array(PZ.v.w*PZ.v.h).fill(null);
-  const delay=slow?420:Math.max(35,Math.min(110,2600/Math.max(1,steps.length)));
-  let last=null;
-  for(const s of steps){
-    if(last&&last._el) last._el.classList.remove('run');
-    if(s.node._el){ s.node._el.classList.add('run'); last=s.node; }
-    if(s.put) shown[s.i]=s.put;
-    renderResult(shown,[],s.x<PZ.v.w&&s.y<PZ.v.h?s.y*PZ.v.w+s.x:-1);
-    if(s.put) beep(500+COLOR_KEYS.indexOf(s.put)*60,0.03,'triangle',0.03);
-    await new Promise(r=>setTimeout(r,s.node.op==='c'?delay/2:delay));
+  if(PZ.step){
+    const stop=el('button','btn','⏹ Parar'); stop.onclick=()=>{ PZ.step=null; renderPuzzle(); renderResult([]); setMsg(''); };
+    const nx=el('button','btn primary','👣 Siguiente paso'); nx.onclick=cabStepNext;
+    act.append(stop,nx); R.append(act); return;
   }
-  if(last&&last._el) last._el.classList.remove('run');
-  PZ.running=false; renderPuzzle(); renderResult(grid);
+  const clr=el('button','btn','↺ Borrar todo'); clr.onclick=()=>{ if(PZ.running) return; PZ.prog=[]; PZ.selPath=[]; renderPuzzle(); renderResult([]); setMsg(''); };
+  const stp=el('button','btn','👣 Paso a paso'); stp.onclick=cabStepStart; stp.disabled=PZ.running;
+  const slow=el('button','btn','🐢 Despacio'); slow.onclick=()=>knitCab(true); slow.disabled=PZ.running;
+  const run=el('button','btn primary','▶ Tejer'); run.onclick=()=>knitCab(false); run.disabled=PZ.running;
+  act.append(clr,stp,slow,run); R.append(act);
+}
+function cabPrepare(){ return {res:runCab(PZ.prog,PZ.v.w,PZ.v.h),idx:0,shown:Array(PZ.v.w*PZ.v.h).fill(null)}; }
+function cabClearHL(){ document.querySelectorAll('#pz-right .run').forEach(e=>e.classList.remove('run')); document.querySelectorAll('#pz-right .loopon').forEach(e=>e.classList.remove('loopon')); document.querySelectorAll('#pz-right .vuelta').forEach(e=>e.textContent=''); }
+function cabApply(S){
+  const s=S.res.steps[S.idx]; cabClearHL();
+  (s.loops||[]).forEach(([n,k])=>{ if(n._el) n._el.classList.add('loopon'); if(n._cnt) n._cnt.textContent=`vuelta ${k} de ${n.n}`; });
+  if(s.node._el) s.node._el.classList.add('run');
+  if(s.put) S.shown[s.i]=s.put;
+  renderResult(S.shown,[],s.x<PZ.v.w&&s.y<PZ.v.h?s.y*PZ.v.w+s.x:-1);
+  if(s.put) beep(500+COLOR_KEYS.indexOf(s.put)*60,0.03,'triangle',0.03);
+  S.idx++;
+}
+function cabFinish(S){
+  const {grid,err}=S.res; cabClearHL(); PZ.running=false; PZ.step=null; renderPuzzle(); renderResult(grid);
   if(err){
     if(err.node&&err.node._el) err.node._el.classList.add('shake');
     const m={derecha:'¡El cabezal se ha salido por la derecha! Al final de cada fila usa ⤵️ Bajar fila.',abajo:'¡El cabezal se ha salido por abajo de la tela! Sobran filas.',sinhilo:'¡El cabezal no tiene hilo! Pon una tarjeta de color antes de tejer.',pasos:'¡Uf, el cabezal no para! Revisa los números de Repetir.'}[err.t];
@@ -2000,10 +2068,31 @@ async function knitCab(slow){
   const d=firstDiff(grid,PZ.target);
   if(d===-1){ success(); return; }
   renderResult(grid,[d]); renderTarget([d]);
-  const want=PZ.target[d], got=grid[d];
-  const row=Math.floor(d/PZ.v.w)+1, colN=d%PZ.v.w+1;
+  const want=PZ.target[d], got=grid[d], row=Math.floor(d/PZ.v.w)+1, colN=d%PZ.v.w+1;
   setMsg(`Fila ${row}, punto ${colN}: debería ser ${want?COLORS[want].n:'un hueco'} y es ${got?COLORS[got].n:'un hueco'}. ¡Busca el error!`,'bad');
   speakAuto($('#pz-msg').textContent); beep(220,0.2,'sawtooth',0.03);
+}
+async function knitCab(slow){
+  if(PZ.running||PZ.step) return;
+  if(!PZ.prog.length){ setMsg('El programa está vacío. ¡Toca las tarjetas!','bad'); return; }
+  PZ.attempts++; PZ.running=true; renderPuzzle(); setMsg(slow?'🐢 Mira qué tarjeta se ilumina en cada momento…':'🧶 El cabezal está tejiendo…');
+  const S=cabPrepare(), n=S.res.steps.length;
+  const delay=slow?550:Math.max(60,Math.min(160,3200/Math.max(1,n)));
+  while(S.idx<n){ const op=S.res.steps[S.idx].node.op; cabApply(S); await new Promise(r=>setTimeout(r,op==='c'?delay*0.7:delay)); }
+  cabFinish(S);
+}
+function cabStepStart(){
+  if(PZ.running) return;
+  if(!PZ.prog.length){ setMsg('El programa está vacío. ¡Toca las tarjetas!','bad'); return; }
+  PZ.attempts++; PZ.step=cabPrepare(); renderPuzzle(); renderResult([]);
+  setMsg('👣 Pulsa «Siguiente paso» y mira qué tarjeta se ilumina y dónde está el cabezal (cuadro azul).');
+  if(!PZ.step.res.steps.length) cabFinish(PZ.step);
+}
+function cabStepNext(){
+  const S=PZ.step; if(!S) return;
+  if(S.idx<S.res.steps.length){ cabApply(S); const s=S.res.steps[S.idx-1]; const o=s.node.op;
+    setMsg(o==='c'?`🎨 Cambia al hilo ${COLORS[s.node.v].n}`:o==='p'?`➡️ Teje un punto ${COLORS[S.shown[s.i]]?COLORS[S.shown[s.i]].n:''} y avanza`:o==='s'?'⏭️ Salta un punto':'⤵️ Baja a la fila siguiente'); }
+  if(S.idx>=S.res.steps.length) setTimeout(()=>cabFinish(S),400);
 }
 
 function renderCua(hl=[]){
@@ -2043,6 +2132,288 @@ function checkCua(){
 }
 
 /* =========================================================
+   TABLÓN DE TAREAS + MODO ALCALDE (local, con PIN)
+   ========================================================= */
+function localMsgs(){ DB.localMsgs=DB.localMsgs||[]; return DB.localMsgs; }
+function isTask(m){ return m.tipo==='casa'||m.tipo==='deberes'; }
+function myTasks(){ const p=P(); if(!p) return []; return myMsgs().filter(m=>isTask(m)&&!['borrada','caducada'].includes(m.estado)); }
+function taskCount(){ const p=P(); if(!p) return 0; return myTasks().filter(m=>m.estado==='nuevo'||(m.estado==='validada'&&!p.rewarded[m.id])).length; }
+function ensureRecurring(p){
+  const t=today(); DB.recTasks=DB.recTasks||[];
+  localMsgs().forEach(m=>{ if(m.rid&&m.day&&m.day<t&&['nuevo','aceptada'].includes(m.estado)) m.estado='caducada'; });
+  DB.recTasks.forEach(r=>{
+    if(r.para!=='todas'&&r.para!==p.id) return;
+    if(localMsgs().some(m=>m.rid===r.rid&&m.para===p.id&&m.day===t)) return;
+    localMsgs().push({id:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),rid:r.rid,day:t,para:p.id,tipo:r.tipo,texto:r.texto,premio:r.premio,estado:'nuevo'});
+  });
+  saveQuiet();
+}
+function openBoard(){ const p=P(); ensureRecurring(p); renderBoard(); show('board'); if(!TEST) cloudPull(false); }
+function renderBoard(){
+  const p=P(); $('#board-coins').textContent='🔘 '+p.coins;
+  const L=$('#blist'); L.innerHTML='';
+  const list=myTasks().slice().reverse();
+  if(!list.length) L.append(el('div','help','<div style="font-size:30px">📌</div><div>No hay tareas en el tablón. Cuando papá ponga una, aparecerá aquí.</div>'));
+  list.forEach(m=>{
+    const it=el('div','mitem'+((m.estado==='nuevo'||(m.estado==='validada'&&!p.rewarded[m.id]))?' nuevo':''));
+    it.append(el('div','mi',m.tipo==='deberes'?'📚':'🧹'));
+    it.append(el('div','mt',`<b>${m.tipo==='deberes'?'Deberes':'Tarea de casa'}${m.rid?' · 📅 de hoy':''} · 🔘 ${m.premio||10}</b>${esc(m.texto||'')}`));
+    const a=el('div','ma'); const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(m.texto||''); a.append(sp);
+    const B=(t,cls,fn)=>{ const b=el('button','btn '+(cls||''),t); b.onclick=fn; a.append(b); };
+    if(m.estado==='nuevo') B('✋ Aceptar','primary',()=>{ setMsgState(m,'aceptada'); beep(700,0.08,'triangle'); toast('📌 ¡Tarea aceptada! Cuando la termines, márcala.'); renderBoard(); });
+    else if(m.estado==='aceptada') B('✅ ¡Ya la hice!','green',()=>doneTask(m).then(renderBoard));
+    else if(m.estado==='hecha') a.append(el('div','counter','⏳ Esperando a que papá lo compruebe'));
+    else if(m.estado==='validada'&&!p.rewarded[m.id]) B('🎁 Recoger premio','primary',()=>collectTask(m).then(renderBoard));
+    else a.append(el('div','counter','✅ Premio recogido'));
+    it.append(a); L.append(it);
+  });
+}
+
+/* ---- PIN del alcalde (local) ---- */
+function pinHash(s){ let h=7; for(const ch of String(s)) h=(h*31+ch.charCodeAt(0))%1000003; return 'h'+h; }
+async function askPin(){
+  let stored=null; try{ stored=localStorage.getItem('villaovillo.pinLocal'); }catch(e){}
+  const first=!stored;
+  const r=await say({center:true,face:'🔐',name:first?'Crea el PIN del alcalde':'Modo alcalde',speak:false,
+    html:`<div style="font-size:18px">${first?'Elige un PIN de 4 números. Solo papá debe saberlo.':'Escribe el PIN del alcalde.'}</div><input class="inputline" id="pin-in" type="password" inputmode="numeric" maxlength="8" placeholder="PIN">`,
+    buttons:[{t:'Cancelar'},{t:'Entrar',cls:'primary'}]});
+  if(r!==1) return false;
+  const v=(document.getElementById('pin-in').value||'').trim();
+  if(v.length<4){ toast('El PIN debe tener al menos 4 números'); return false; }
+  if(first){ try{ localStorage.setItem('villaovillo.pinLocal',pinHash(v)); }catch(e){} toast('🔐 PIN guardado'); return true; }
+  if(pinHash(v)!==stored){ toast('PIN incorrecto'); return false; }
+  return true;
+}
+async function openAlcalde(){ if(!(await askPin())) return; renderAlcalde(); show('alcalde'); }
+function profileOptions(withAll=true){ return DB.profiles.filter(Boolean).map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')+(withAll&&DB.profiles.filter(Boolean).length>1?'<option value="todas">Las dos</option>':''); }
+function renderAlcalde(){
+  const V=$('#alc-body'); V.innerHTML='';
+  const box=(title)=>{ const d=el('div','panel'); d.style.marginBottom='14px'; d.append(el('div','wsec',title)); V.append(d); return d; };
+  // pendientes de validar
+  const all=(DB.msgs||[]).concat(localMsgs());
+  const pend=all.filter(m=>isTask(m)&&['hecha','aceptada'].includes(m.estado));
+  const b1=box(`✅ Tareas por comprobar (${pend.filter(m=>m.estado==='hecha').length})`);
+  if(!pend.length) b1.append(el('div','counter','No hay nada pendiente.'));
+  pend.forEach(m=>{ const pr=DB.profiles.find(p=>p&&p.id===m.para); const r=el('div','mitem'); r.innerHTML=`<div class="mi">${m.tipo==='deberes'?'📚':'🧹'}</div><div class="mt"><b>${esc(pr?pr.name:'?')} · ${m.estado==='hecha'?'dice que la ha hecho':'la ha aceptado'}</b>${esc(m.texto)}</div>`;
+    const a=el('div','ma'); const v=el('button','btn green','✅ Validar'); v.onclick=()=>{ validateMsg(m); renderAlcalde(); }; a.append(v); r.append(a); b1.append(r); });
+  // nueva tarea
+  const b2=box('📌 Nueva tarea para el tablón');
+  const f=el('div'); f.innerHTML=`<div class="lbl">Para</div><select class="inputline" id="a-para">${profileOptions()}</select>
+    <div class="lbl">Tipo</div><select class="inputline" id="a-tipo"><option value="casa">🧹 Tarea de casa</option><option value="deberes">📚 Deberes del cole</option></select>
+    <div class="lbl">Qué hay que hacer</div><input class="inputline" id="a-texto" placeholder="Ej.: Recoger la habitación">
+    <div class="lbl">Premio (botones)</div><input class="inputline" id="a-premio" type="number" value="10" min="1" max="100">
+    <label style="display:flex;gap:8px;align-items:center;font-size:18px;margin:6px 0"><input type="checkbox" id="a-rec" style="width:24px;height:24px"> 📅 Repetir cada día</label>`;
+  const send=el('button','btn primary','Poner en el tablón'); send.onclick=()=>{
+    const para=$('#a-para').value, tipo=$('#a-tipo').value, texto=$('#a-texto').value.trim(), premio=Math.max(1,+$('#a-premio').value||10), rec=$('#a-rec').checked;
+    if(!texto){ toast('Escribe la tarea'); return; }
+    if(rec){ DB.recTasks=DB.recTasks||[]; DB.recTasks.push({rid:'r'+Date.now().toString(36),para,tipo,texto,premio}); DB.profiles.filter(Boolean).forEach(ensureRecurring); }
+    else { const targets=para==='todas'?DB.profiles.filter(Boolean).map(p=>p.id):[para];
+      targets.forEach(pid=>localMsgs().push({id:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),para:pid,tipo,texto,premio,estado:'nuevo'})); }
+    saveQuiet(); toast('📌 ¡Tarea puesta en el tablón!'); renderAlcalde();
+  };
+  f.append(send); b2.append(f);
+  // tareas diarias
+  const b3=box('📅 Tareas de cada día');
+  (DB.recTasks||[]).forEach((r,i)=>{ const pr=DB.profiles.find(p=>p&&p.id===r.para); const row=el('div','mitem'); row.innerHTML=`<div class="mi">${r.tipo==='deberes'?'📚':'🧹'}</div><div class="mt"><b>${r.para==='todas'?'Las dos':esc(pr?pr.name:'?')} · 🔘 ${r.premio}</b>${esc(r.texto)}</div>`;
+    const a=el('div','ma'); const d=el('button','btn','🗑️ Quitar'); d.onclick=()=>{ DB.recTasks.splice(i,1); saveQuiet(); renderAlcalde(); }; a.append(d); row.append(a); b3.append(row); });
+  if(!(DB.recTasks||[]).length) b3.append(el('div','counter','Ninguna. Marca «Repetir cada día» al crear una tarea.'));
+  // carta
+  const b4=box('✉️ Escribir una carta');
+  const fc=el('div'); fc.innerHTML=`<select class="inputline" id="c-para">${profileOptions()}</select><input class="inputline" id="c-texto" placeholder="¡Estoy muy orgulloso de ti!"><div class="lbl">Regalo (botones, opcional)</div><input class="inputline" id="c-premio" type="number" value="0" min="0" max="50">`;
+  const cs=el('button','btn primary','Enviar carta'); cs.onclick=()=>{ const para=$('#c-para').value, texto=$('#c-texto').value.trim(); if(!texto){ toast('Escribe la carta'); return; }
+    const targets=para==='todas'?DB.profiles.filter(Boolean).map(p=>p.id):[para];
+    targets.forEach(pid=>localMsgs().push({id:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),para:pid,tipo:'carta',texto,premio:+$('#c-premio').value||0,estado:'nuevo'}));
+    saveQuiet(); toast('✉️ ¡Carta en el buzón!'); renderAlcalde(); };
+  fc.append(cs); b4.append(fc);
+  // foco de mates
+  const b5=box('🥐 Mates: ¿qué están dando en clase?');
+  DB.profiles.filter(Boolean).forEach(p=>{
+    const row=el('div'); row.style.margin='6px 0';
+    const opts=p.age<=7?[['','Variado'],['sumas','Sumas'],['restas','Restas'],['dinero','Dinero'],['contar','Contar']]:[['','Variado'],...[2,3,4,5,6,7,8,9].map(n=>['tabla:'+n,'Tabla del '+n]),['division','Repartos (dividir)'],['dinero','Dinero y cambio'],['fracciones','Fracciones'],['problemas','Problemas de dos pasos']];
+    row.innerHTML=`<b>${esc(p.name)}</b> <select class="inputline">${opts.map(([v,t])=>`<option value="${v}" ${p.mathFocus===v?'selected':''}>${t}</option>`).join('')}</select>`;
+    row.querySelector('select').onchange=ev=>{ p.mathFocus=ev.target.value; p.updatedAt=Date.now(); saveQuiet(); toast('Guardado'); };
+    b5.append(row);
+  });
+  const b6=box('🔐 Seguridad');
+  const cp=el('button','btn','Cambiar PIN'); cp.onclick=()=>{ try{ localStorage.removeItem('villaovillo.pinLocal'); }catch(e){} toast('Ahora crea un PIN nuevo'); openAlcalde(); }; b6.append(cp);
+}
+function validateMsg(m){
+  if(!String(m.id).startsWith('L')){ toast('Esta tarea llegó desde la nube: valídala desde el panel del móvil.'); return; }
+  m.estado='validada';
+  if(!String(m.id).startsWith('L')&&cloudReady()) api('msgState',{id:m.id,estado:'validada',pin:''}).catch(()=>{});
+  saveQuiet(); toast('✅ Validada: ya puede recoger su premio');
+}
+
+/* =========================================================
+   PANADERÍA DE BRUNO (mates)
+   ========================================================= */
+let MZ=null;
+function rr(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+function emojis(e,n,perRow=5){ let s='<div class="mvis">'; for(let i=0;i<n;i++){ s+=`<span>${e}</span>`; if((i+1)%perRow===0&&i<n-1) s+='<br>'; } return s+'</div>'; }
+function genMath(p){
+  const small=p.age<=7, f=p.mathFocus||'';
+  const E=['🥐','🧁','🍪','🥖','🍩','🥨'], e=E[rr(0,E.length-1)];
+  const pickKind=()=>{
+    if(small){ if(f&&Math.random()<0.6) return f; return ['contar','sumas','sumas','restas','restas','dinero'][rr(0,5)]; }
+    if(f.startsWith('tabla')&&Math.random()<0.6) return 'multi';
+    if(f&&!f.startsWith('tabla')&&Math.random()<0.6) return {division:'reparto',dinero:'cambio',fracciones:'fraccion',problemas:'dospasos'}[f];
+    return ['multi','multi','reparto','cambio','dospasos','receta','fraccion','suma100'][rr(0,7)];
+  };
+  const k=pickKind();
+  if(k==='contar'){ const n=rr(5,15); return {k,q:`¿Cuántos ${e} hay en la bandeja?`,vis:emojis(e,n),a:n,exp:`Hay ${n}. Cuenta de 5 en 5: cada fila tiene 5.`}; }
+  if(k==='sumas'){ const a=rr(2,10), b=rr(1,Math.min(10,20-a)); return {k,q:`En una bandeja hay ${a} ${e} y en otra ${b}. ¿Cuántos hay en total?`,vis:emojis(e,a)+'<div class="mplus">+</div>'+emojis(e,b),a:a+b,exp:`${a} + ${b} = ${a+b}`}; }
+  if(k==='restas'){ const a=rr(6,18), b=rr(1,a-2); return {k,q:`Bruno tenía ${a} ${e}. Ha vendido ${b}. ¿Cuántos le quedan?`,vis:`<div class="mvis">${Array.from({length:a},(_,i)=>`<span style="${i<b?'opacity:.25':''}">${e}</span>${(i+1)%5===0?'<br>':''}`).join('')}</div>`,a:a-b,exp:`${a} − ${b} = ${a-b}`}; }
+  if(k==='dinero'){ const x=rr(1,6), y=rr(1,6);
+    if(Math.random()<0.5) return {k,q:`Un pan cuesta ${x} botones y un bollo ${y}. ¿Cuánto cuesta todo?`,vis:`<div class="mvis">🥖 ${'🔘'.repeat(x)}<br>🥐 ${'🔘'.repeat(y)}</div>`,a:x+y,exp:`${x} + ${y} = ${x+y} botones`};
+    const c=x+y; return {k,q:`Una tarta cuesta ${c} botones. Pagas con 10. ¿Cuántos botones te devuelven?`,vis:`<div class="mvis">🎂 ${'🔘'.repeat(c)}<br>💰 ${'🔘'.repeat(10)}</div>`,a:10-c,exp:`10 − ${c} = ${10-c}`}; }
+  if(k==='multi'){ const t=f.startsWith('tabla')?+f.split(':')[1]:rr(2,9); const n=rr(2,10); const [a,b]=Math.random()<0.5?[n,t]:[t,n];
+    return {k,q:`Bruno llena ${a} cajas con ${b} ${e} en cada una. ¿Cuántos ${e} hay?`,vis:a*b<=60?`<div class="mvis">${Array.from({length:a},()=>`<div class="mbox">${e.repeat(b)}</div>`).join('')}</div>`:`<div class="mvis">📦 × ${a} &nbsp; (${b} ${e} en cada caja)</div>`,a:a*b,exp:`${a} × ${b} = ${a*b}`}; }
+  if(k==='reparto'){ const b=rr(2,9), q=rr(2,9); return {k,q:`Hay ${b*q} ${e} para repartir en ${b} bolsas iguales. ¿Cuántos van en cada bolsa?`,vis:`<div class="mvis">${'🛍️'.repeat(b)}</div>`,a:q,exp:`${b*q} : ${b} = ${q}, porque ${b} × ${q} = ${b*q}`}; }
+  if(k==='cambio'){ const n=rr(2,5), pr=rr(2,9), tot=n*pr, pay=tot<=20?20:tot<=50?50:100; return {k,q:`Compras ${n} barras de pan a ${pr} botones cada una y pagas con ${pay}. ¿Cuánto te devuelven?`,vis:`<div class="mvis">${'🥖'.repeat(n)}</div>`,a:pay-tot,exp:`${n} × ${pr} = ${tot}; ${pay} − ${tot} = ${pay-tot}`}; }
+  if(k==='dospasos'){ const a=rr(3,6), b=rr(4,8), c=rr(3,a*b-3); return {k,q:`Bruno hornea ${a} bandejas de ${b} ${e}. Vende ${c}. ¿Cuántos le quedan?`,vis:`<div class="mvis">${'🍽️'.repeat(a)}</div>`,a:a*b-c,exp:`${a} × ${b} = ${a*b}; ${a*b} − ${c} = ${a*b-c}`}; }
+  if(k==='receta'){ const h=rr(2,4), t=rr(2,5); if(Math.random()<0.4){ const hh=h*2; return {k,q:`Para una tarta se necesitan ${hh} huevos. ¿Cuántos hacen falta para media tarta?`,vis:`<div class="mvis">🎂 ${'🥚'.repeat(hh)}</div>`,a:hh/2,exp:`La mitad de ${hh} es ${hh/2}`}; }
+    return {k,q:`Para una tarta se necesitan ${h} huevos. ¿Cuántos hacen falta para ${t} tartas?`,vis:`<div class="mvis">${'🎂'.repeat(t)}</div>`,a:h*t,exp:`${t} × ${h} = ${h*t}`}; }
+  if(k==='fraccion'){ const n=[4,6,8][rr(0,2)], c=rr(1,n-1);
+    const opts=shuffle([`${n-c}/${n}`,`${c}/${n}`,`${n}/${n-c}`,`${n-c}/${c}`].filter((x,i,a)=>a.indexOf(x)===i),Math.random);
+    return {k,q:`La tarta tenía ${n} trozos iguales y se han comido ${c}. ¿Qué parte de la tarta queda?`,vis:pieSVG(n,c),a:`${n-c}/${n}`,choices:opts,exp:`Quedan ${n-c} trozos de ${n}: ${n-c}/${n}`}; }
+  // suma100
+  const a=rr(12,58), b=rr(11,40); return {k:'suma100',q:`Por la mañana Bruno vendió ${a} ${e} y por la tarde ${b}. ¿Cuántos vendió en total?`,vis:'',a:a+b,exp:`${a} + ${b} = ${a+b}`};
+}
+function pieSVG(n,eaten){ let s='<svg viewBox="-52 -52 104 104" width="120" height="120">'; for(let i=0;i<n;i++){ const a0=i/n*Math.PI*2-Math.PI/2, a1=(i+1)/n*Math.PI*2-Math.PI/2; const x0=Math.cos(a0)*48,y0=Math.sin(a0)*48,x1=Math.cos(a1)*48,y1=Math.sin(a1)*48;
+  s+=`<path d="M0,0 L${x0.toFixed(1)},${y0.toFixed(1)} A48,48 0 0,1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="${i<eaten?'#f3ead9':'#f29b38'}" stroke="#8a5a36" stroke-width="2"/>`; } return s+'</svg>'; }
+function openBakery(age){
+  const p=P(); const src=age?{age,mathFocus:''}:p;
+  MZ={qs:Array.from({length:src.age<=7?5:6},()=>genMath(src)),i:0,ok:0,tries:0,input:'',catalog:!!age};
+  show('bakery'); renderBakery();
+  if(!age && !p._bakeryHi){ p._bakeryHi=true; saveQuiet(); say({face:'🐻',name:'Bruno el panadero',text:'¡Bienvenida a mi panadería! Necesito ayuda con las cuentas. Cada día puedes hacer un turno de problemas.'}); }
+}
+function renderBakery(){
+  const p=P(), q=MZ.qs[MZ.i]; $('#bk-coins').textContent='🔘 '+p.coins;
+  $('#bk-prog').innerHTML=MZ.qs.map((_,i)=>`<span class="mdot ${i<MZ.i?(MZ.qs[i].good?'ok':'ko'):i===MZ.i?'cur':''}"></span>`).join('');
+  $('#bk-q').innerHTML=`<div class="npcline"><div class="face">🐻</div><div class="ask">${esc(q.q)}</div><button class="speak" id="bk-sp">🔊</button></div>${q.vis||''}`;
+  $('#bk-sp').onclick=()=>speakNow(q.q);
+  const A=$('#bk-ans'); A.innerHTML='';
+  if(q.choices){ const g=el('div','mchoices'); q.choices.forEach(c=>{ const b=el('button','btn',esc(c)); b.style.fontSize='26px'; b.onclick=()=>answerMath(c); g.append(b); }); A.append(g); }
+  else {
+    A.append(el('div','mdisp',MZ.input||'&nbsp;'));
+    const pad=el('div','mpad');
+    ['1','2','3','4','5','6','7','8','9','⌫','0','✔'].forEach(k=>{ const b=el('button','btn'+(k==='✔'?' green':''),k); b.onclick=()=>{
+      if(k==='⌫') MZ.input=MZ.input.slice(0,-1); else if(k==='✔'){ if(MZ.input!=='') answerMath(+MZ.input); return; } else if(MZ.input.length<4) MZ.input+=k;
+      beep(600,0.03); renderBakery(); }; pad.append(b); });
+    A.append(pad);
+  }
+  $('#bk-msg').textContent=''; $('#bk-msg').className='';
+  speakAuto(q.q);
+}
+async function answerMath(v){
+  const q=MZ.qs[MZ.i], p=P(); p.math=p.math||{}; const st=p.math[q.k]=p.math[q.k]||{ok:0,total:0};
+  if(String(v)===String(q.a)){
+    if(MZ.tries===0){ MZ.ok++; q.good=true; st.ok++; } st.total++;
+    fanfare(); $('#bk-msg').textContent='¡Correcto! '+q.exp; $('#bk-msg').className='good';
+    await new Promise(r=>setTimeout(r,1300)); nextMath();
+  } else {
+    MZ.tries++;
+    if(MZ.tries===1){ beep(220,0.2,'sawtooth',0.03); $('#bk-msg').textContent='¡Casi! Vuelve a mirarlo con calma.'; $('#bk-msg').className='bad'; MZ.input=''; setTimeout(()=>{ const d=document.querySelector('.mdisp'); if(d) d.innerHTML='&nbsp;'; },300); speakAuto('Casi. Vuelve a mirarlo con calma.'); }
+    else { st.total++; q.good=false; await say({face:'🐻',name:'Bruno',text:`La respuesta es ${q.a}. ${q.exp}. ¡La próxima seguro que sí!`}); nextMath(); }
+  }
+}
+async function nextMath(){
+  MZ.i++; MZ.tries=0; MZ.input='';
+  if(MZ.i<MZ.qs.length){ renderBakery(); return; }
+  const p=P(), n=MZ.qs.length, ok=MZ.ok, stars=ok>=n?3:ok>=n-2?2:1;
+  if(MZ.catalog){ await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:24px;font-weight:800">${ok} de ${n} a la primera</div></div>`}); openCatalog(); return; }
+  const first=!(p.daily&&p.daily.math);
+  let coins, xp;
+  if(first){ coins=ok*2; xp=ok+1; if(p.daily) p.daily.math=true; }
+  else { const pc=(p.mathPractice&&p.mathPractice.date===today())?p.mathPractice.coins:0; coins=Math.min(Math.max(0,10-pc),ok); p.mathPractice={date:today(),coins:pc+coins}; xp=0; }
+  p.coins+=coins; p.counters.earned+=coins; p.counters.math=(p.counters.math||0)+1; addXP(p,xp);
+  save(`Panadería: ${ok}/${n} bien`); fanfare();
+  await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:26px;font-weight:800">¡Turno terminado! ${ok} de ${n} a la primera</div><div class="rw-items">${coins?`<div class="rw-item">🔘 +${coins} botones</div>`:''}${xp?`<div class="rw-item">✨ +${xp} experiencia</div>`:''}</div><div style="font-size:18px">🐻 «¡Gracias por ayudarme con las cuentas!»</div>${first?'':'<div class="counter">Los turnos extra dan menos premio. ¡Mañana hay turno nuevo!</div>'}</div>`});
+  await dailyBonusCheck(p); await afterRewards();
+  const r=await say({face:'🐻',name:'Bruno',text:'¿Otro turno?',buttons:[{t:'Volver al pueblo'},{t:'¡Otro turno!',cls:'primary'}],speak:false});
+  if(r===1) openBakery(); else show('village');
+}
+
+/* =========================================================
+   BIBLIOTECA DE SABINA (repaso de lecturas y deberes)
+   ========================================================= */
+let LQ=null;
+const SR_DAYS=[1,2,4,7,14];
+function cuadernosFor(p){ const C=window.CUADERNOS||[]; return C.filter(c=>c.para==='todas'||c.para===(p.age<=7?'6':'9')||String(c.para).toLowerCase()===p.name.toLowerCase()); }
+function dueQuestions(p,c){ const t=dayNum(today()); p.sr=p.sr||{}; return c.preguntas.map((q,i)=>({q,key:c.id+':'+i})).filter(x=>{ const s=p.sr[x.key]; return !s||s.n<=t; }); }
+function openLibrary(){ renderLibrary(); show('library'); const p=P(); if(!p._libHi){ p._libHi=true; saveQuiet(); say({face:'🦉',name:'Sabina la lechuza',text:'¡Hola! Soy Sabina. Aquí repasamos lo que aprendes en el cole. Lo que te cueste lo volveremos a ver otro día, ¡así se queda en la memoria!'}); } }
+function renderLibrary(){
+  const p=P(); $('#lib-coins').textContent='🔘 '+p.coins;
+  const L=$('#lib-list'); L.innerHTML='';
+  const cs=cuadernosFor(p);
+  if(!cs.length){ L.append(el('div','wnote','🦉 Todavía no hay cuadernos para ti. Papá puede mandar a Claude una foto de los deberes para crear uno.')); return; }
+  cs.forEach(c=>{
+    const due=dueQuestions(p,c).length, tot=c.preguntas.length;
+    const known=c.preguntas.filter((_,i)=>{ const s=(p.sr||{})[c.id+':'+i]; return s&&s.b>=2; }).length;
+    const card=el('button','ecard'); card.innerHTML=`<div class="who">${c.emoji||'📘'}</div><div class="t">${esc(c.titulo)}</div><div class="badge">${esc(c.asignatura||'Repaso')}</div><div class="pbar"><i style="width:${Math.round(known/tot*100)}%"></i></div><div class="counter">${known}/${tot} bien aprendidas · ${due?`${due} para repasar hoy`:'✅ nada pendiente hoy'}</div>`;
+    card.onclick=()=>startQuiz(c); L.append(card);
+  });
+}
+function startQuiz(c){
+  const p=P(); let pool=dueQuestions(p,c);
+  if(!pool.length) pool=c.preguntas.map((q,i)=>({q,key:c.id+':'+i}));
+  pool=shuffle(pool.slice(),Math.random).slice(0,6);
+  LQ={c,qs:pool,i:0,ok:0,tries:0,order:[]}; show('quiz'); renderQuiz();
+}
+function renderQuiz(){
+  const x=LQ.qs[LQ.i], q=x.q;
+  $('#qz-title').textContent=LQ.c.titulo;
+  $('#qz-prog').innerHTML=LQ.qs.map((_,i)=>`<span class="mdot ${i<LQ.i?(LQ.qs[i].good?'ok':'ko'):i===LQ.i?'cur':''}"></span>`).join('');
+  const B=$('#qz-body'); B.innerHTML='';
+  const head=el('div','npcline'); head.innerHTML=`<div class="face">🦉</div><div class="ask">${esc(q.q)}</div>`; const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(q.q+(q.opts?'. '+q.opts.join('. '):'')); head.append(sp); B.append(head);
+  const A=el('div','mchoices');
+  if(q.t==='vf') ['Verdadero','Falso'].forEach(o=>{ const b=el('button','btn',o==='Verdadero'?'✅ Verdadero':'❌ Falso'); b.onclick=()=>answerQuiz(o==='Verdadero'); A.append(b); });
+  else if(q.t==='ordenar'){
+    if(!LQ.order.length&&!LQ.shuffled) LQ.shuffled=shuffle(q.items.slice(),Math.random);
+    const chosen=el('div','qorder'); chosen.innerHTML=LQ.order.length?LQ.order.map((o,i)=>`<span class="qchip">${i+1}. ${esc(o)}</span>`).join(''):'<span class="counter">Toca en orden…</span>'; B.append(chosen);
+    LQ.shuffled.filter(o=>!LQ.order.includes(o)).forEach(o=>{ const b=el('button','btn',esc(o)); b.onclick=()=>{ LQ.order.push(o); beep(600,0.04); if(LQ.order.length===q.items.length) answerQuiz(LQ.order.slice()); else renderQuiz(); }; A.append(b); });
+    if(LQ.order.length){ const u=el('button','btn','↺ Empezar de nuevo'); u.onclick=()=>{ LQ.order=[]; renderQuiz(); }; A.append(u); }
+  }
+  else (LQ.optsShuffled=LQ.optsShuffled||shuffle(q.opts.slice(),Math.random)).forEach(o=>{ const b=el('button','btn',esc(o)); b.onclick=()=>answerQuiz(o); A.append(b); });
+  B.append(A);
+  $('#qz-msg').textContent=''; $('#qz-msg').className='';
+  speakAuto(q.q);
+}
+async function answerQuiz(v){
+  const x=LQ.qs[LQ.i], q=x.q, p=P(); p.sr=p.sr||{};
+  const right = q.t==='ordenar' ? JSON.stringify(v)===JSON.stringify(q.items) : q.t==='vf' ? v===q.a : v===q.a;
+  if(right){
+    if(LQ.tries===0){ LQ.ok++; x.good=true; const s=p.sr[x.key]||{b:-1}; s.b=Math.min(4,s.b+1); s.n=dayNum(today())+SR_DAYS[s.b]; p.sr[x.key]=s; }
+    fanfare(); $('#qz-msg').textContent='¡Correcto! '+(q.exp||''); $('#qz-msg').className='good';
+    await new Promise(r=>setTimeout(r,1500)); nextQuiz();
+  } else {
+    LQ.tries++; LQ.order=[];
+    if(LQ.tries===1&&q.t!=='vf'){ beep(220,0.2,'sawtooth',0.03); $('#qz-msg').textContent='Mmm, no es esa. ¡Piensa otra vez!'; $('#qz-msg').className='bad'; if(q.t==='ordenar') renderQuiz(); return; }
+    p.sr[x.key]={b:0,n:dayNum(today())+1}; x.good=false;
+    const sol=q.t==='ordenar'?q.items.join(' → '):q.t==='vf'?(q.a?'Verdadero':'Falso'):q.a;
+    await say({face:'🦉',name:'Sabina',text:`La respuesta es: ${sol}. ${q.exp||''} Mañana la repasamos otra vez.`}); nextQuiz();
+  }
+}
+async function nextQuiz(){
+  LQ.i++; LQ.tries=0; LQ.order=[]; LQ.shuffled=null; LQ.optsShuffled=null;
+  if(LQ.i<LQ.qs.length){ renderQuiz(); return; }
+  const p=P(), n=LQ.qs.length, ok=LQ.ok, stars=ok>=n?3:ok>=n-2?2:1;
+  if(LQ.catalog){ await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:24px;font-weight:800">${ok} de ${n}</div></div>`}); openCatalog(); return; }
+  const first=!(p.daily&&p.daily.read);
+  const coins=first?ok*2:Math.min(ok,3), xp=first?ok+1:0;
+  if(first&&p.daily) p.daily.read=true;
+  p.coins+=coins; p.counters.earned+=coins; p.counters.reads=(p.counters.reads||0)+1; addXP(p,xp);
+  save(`Biblioteca: ${LQ.c.titulo} ${ok}/${n}`); fanfare();
+  await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:26px;font-weight:800">¡Repaso terminado! ${ok} de ${n}</div><div class="rw-items">${coins?`<div class="rw-item">🔘 +${coins} botones</div>`:''}${xp?`<div class="rw-item">✨ +${xp} experiencia</div>`:''}</div><div style="font-size:18px">🦉 «Lo que te ha costado lo volveremos a ver otro día.»</div></div>`});
+  await dailyBonusCheck(p); await afterRewards();
+  openLibrary();
+}
+$('#bk-back').onclick=()=>{ if(MZ&&MZ.catalog) openCatalog(); else show('village'); };
+$('#qz-back').onclick=()=>{ if(LQ&&LQ.catalog) openCatalog(); else openLibrary(); };
+$('#board-alc').onclick=()=>openAlcalde();
+$('#alc-back').onclick=()=>{ if(P()) openBoard(); else { renderProfiles(); show('profiles'); } };
+
+/* =========================================================
    CATÁLOGO DE EJERCICIOS (puerta trasera, solo modo prueba)
    ========================================================= */
 function showSolution(){
@@ -2071,6 +2442,10 @@ function renderCatalog(){
     L.append(el('div','wsec',`Nivel ${l} · ${LEVELS[l]} (encargos con historia)`));
     ENC.filter(e=>e.lvl===l).forEach(e=>L.append(catCard(e,e.title,`6-7: ${describe(e,6)}<br>8-10: ${describe(e,9)}`)));
   });
+  L.append(el('div','wsec','Otras casas del pueblo'));
+  const bk=el('div','ecard'); bk.innerHTML='<div class="who">🥐</div><div class="t">Turno en la panadería</div><div class="badge">Mates</div><div class="counter">Problemas generados según la edad y el foco que elijas en el modo alcalde</div>';
+  const bkr=el('div','choice'); bkr.style.justifyContent='flex-start'; [[6,'👧 6-7 años'],[9,'👧 8-10 años']].forEach(([a,t])=>{ const b=el('button','',t); b.onclick=()=>openBakery(a); bkr.append(b); }); bk.append(bkr); L.append(bk);
+  (window.CUADERNOS||[]).forEach(c=>{ const cc=el('div','ecard'); cc.innerHTML=`<div class="who">${c.emoji||'📘'}</div><div class="t">${esc(c.titulo)}</div><div class="badge">Biblioteca · para ${c.para==='6'?'6-7 años':c.para==='9'?'8-10 años':esc(c.para)}</div><div class="counter">${c.preguntas.length} preguntas</div>`; const b=el('button','btn','Probar'); b.onclick=()=>{ LQ=null; startQuiz(c); LQ.catalog=true; }; cc.append(b); L.append(cc); });
   L.append(el('div','wsec','Encargos generados (cada vez sale uno distinto)'));
   [['seq',3,''],['reglas',3,''],['rep',3,''],['mot',3,''],['hilo',3,''],['cua',3,' (3×3 / 4×4 con cuadrados)'],['cab',2,' · nivel 1: el hilo como estado'],['cab',3,' · nivel 2: bucles dentro de bucles']].forEach(([t,lv,extra])=>{
     const proto={npc:t==='hilo'?'hilo':t==='cab'?'bruno':t==='cua'?'nube':'coco',type:t,title:'Generado: '+TYPE_NAMES[t]+extra};
