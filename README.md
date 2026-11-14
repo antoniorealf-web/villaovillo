@@ -36,3 +36,11 @@ Abre `https://antoniorealf-web.github.io/villaovillo/panel.html`, escribe la cla
 - **⚠️ Sin conexión:** el juego sigue guardando en la tablet y sube los cambios cuando vuelve la conexión.
 - **Copia de seguridad manual:** en la pantalla de inicio, **💾 Copia de seguridad** genera un código; **♻️ Restaurar** lo recupera.
 - **Si cambias el código del script:** usa **Implementar → Gestionar implementaciones → editar → Nueva versión**, para que la URL no cambie.
+
+## Progresión (v0.3)
+- **Encargos del día:** 4 el primer día y 3 los siguientes (como máximo 2 con historia). Cuando se acaban las historias, el generador crea encargos nuevos según el nivel y la edad.
+- **Práctica libre:** encargos ilimitados; da como máximo 15 botones al día.
+- **Rangos:** 12 rangos con experiencia (de Aprendiz a Reina del telar), pensados para unos 2 meses de juego diario. Los rangos desbloquean objetos de la tienda y zonas del pueblo (Huerto del robot: Experta; Laboratorio: Maestra).
+- **Jardín vivo:** las plantas nacen como semilla y hay que regarlas cada día (las flores tardan 2 días y los árboles 3). Hay plantas comunes, raras y especiales para coleccionar.
+- **Racha diaria:** cada día que juegan reciben un regalo. Si faltan algún día, la racha baja un poco, pero no vuelve a cero.
+- **22 medallas** con barra de progreso, en el libro.
