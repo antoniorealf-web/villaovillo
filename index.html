@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Villaovillo · El Taller del Telar</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6eedf; --ink:#4a3b2c; --soft:#8a7660; --card:#fffaf1; --line:#e5d6bd;
+  --accent:#e4574f; --accent2:#4a8fdc; --ok:#4fa45a; --gold:#f2b632; --purple:#8c63c9; --teal:#2fa39a;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:'Baloo 2',system-ui,-apple-system,'Segoe UI',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+button{font-family:inherit;color:inherit;cursor:pointer;border:none}
+.screen{position:absolute;inset:0;display:none;flex-direction:column}
+.screen.on{display:flex}
+.btn{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:8px 16px;font-size:18px;font-weight:700;min-height:50px;box-shadow:0 3px 0 var(--line);transition:transform .08s}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.btn.primary{background:var(--accent);border-color:#c0443d;color:#fff;box-shadow:0 3px 0 #a73a34}
+.btn.green{background:var(--ok);border-color:#3c8546;color:#fff;box-shadow:0 3px 0 #33703b}
+.btn.blue{background:var(--accent2);border-color:#3a72b3;color:#fff;box-shadow:0 3px 0 #2f5f96}
+.btn:disabled{opacity:.45}
+.topbar{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff6e6;border-bottom:3px solid var(--line);flex-shrink:0}
+.topbar .ttl{font-size:24px;font-weight:800;flex:1}
+.lbl{font-size:15px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px}
+.panel{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:14px}
+.scroll{overflow:auto;-webkit-overflow-scrolling:touch}
+
+/* ---------- perfiles ---------- */
+#scr-profiles{align-items:center;justify-content:center;gap:18px;padding:20px;background:linear-gradient(#bfe3f2,#e9f5d8 60%,#cfe8a9)}
+#scr-profiles h1{margin:0;font-size:46px;font-weight:800;color:#5a3d22;text-shadow:0 3px 0 #fff}
+#scr-profiles .sub{font-size:20px;margin-top:-10px;color:#6b5236}
+.slots{display:flex;gap:22px;flex-wrap:wrap;justify-content:center}
+.slot{width:300px;min-height:250px;background:var(--card);border:4px solid var(--line);border-radius:26px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 5px 0 var(--line)}
+.slot .big{font-size:28px;font-weight:800}
+.slot .meta{color:var(--soft);font-size:17px;text-align:center}
+.slot input{font-family:inherit;font-size:22px;padding:8px 12px;border-radius:14px;border:3px solid var(--line);width:100%;text-align:center;background:#fff}
+.choice{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.choice button{padding:6px 12px;border-radius:14px;border:3px solid var(--line);background:#fff;font-size:17px;font-weight:700}
+.choice button.sel{border-color:var(--accent2);background:#e4efff}
+.dot{width:38px;height:38px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--line)}
+.dot.sel{box-shadow:0 0 0 4px var(--accent2)}
+.smalllink{background:none;color:var(--soft);font-size:15px;text-decoration:underline;margin-top:auto}
+
+/* ---------- pueblo ---------- */
+#scr-village{background:#9fd27c}
+#vwrap{position:absolute;inset:0}
+#vcanvas{width:100%;height:100%;display:block;touch-action:none}
+.hud{position:absolute;display:flex;gap:8px;align-items:center;pointer-events:none}
+.hud>*{pointer-events:auto}
+#hud-tl{top:10px;left:10px}
+#hud-tr{top:10px;right:10px}
+#hud-bl{bottom:10px;left:10px;right:10px;justify-content:space-between}
+.chip{background:rgba(255,250,241,.95);border:3px solid var(--line);border-radius:18px;padding:6px 14px;font-weight:700;font-size:18px;display:flex;align-items:center;gap:8px}
+.hbtn{width:56px;height:56px;border-radius:18px;background:rgba(255,250,241,.95);border:3px solid var(--line);font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 0 var(--line)}
+.hbtn:active{transform:translateY(2px)}
+.bracelet{display:flex;align-items:center;gap:2px;padding:6px 12px;flex-wrap:wrap;max-width:70vw}
+.bead{width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,.15)}
+.charm{font-size:18px;line-height:1}
+#toast{position:absolute;left:50%;top:80px;transform:translateX(-50%);background:#fffaf1;border:3px solid var(--line);border-radius:18px;padding:8px 18px;font-size:19px;font-weight:700;display:none;pointer-events:none;text-align:center;max-width:80vw}
+
+/* ---------- diálogo ---------- */
+#dlg{position:fixed;inset:0;background:rgba(60,40,20,.35);display:none;align-items:flex-end;justify-content:center;padding:18px;z-index:50}
+#dlg.on{display:flex}
+#dlg.center{align-items:center}
+.dlgbox{background:var(--card);border:4px solid var(--line);border-radius:26px;max-width:760px;width:100%;padding:18px 20px;box-shadow:0 8px 0 rgba(0,0,0,.08);animation:pop .25s ease}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.dlghead{display:flex;align-items:center;gap:12px}
+.dlgface{font-size:54px;line-height:1}
+.dlgname{font-size:22px;font-weight:800;flex:1}
+.dlgtext{font-size:22px;line-height:1.35;margin:8px 0 12px}
+.dlgbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.speak{width:46px;height:46px;border-radius:14px;background:#fff;border:3px solid var(--line);font-size:22px}
+.reward{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.reward .stars{font-size:52px;letter-spacing:4px;color:var(--gold);text-shadow:0 3px 0 #c98f16}
+.reward .stars .off{color:#e5d6bd;text-shadow:none}
+.rw-items{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:6px 0}
+.rw-item{background:#fff;border:3px solid var(--line);border-radius:16px;padding:6px 12px;font-size:19px;font-weight:700}
+.story{background:#fff4d6;border:3px dashed #e8c77a;border-radius:16px;padding:10px 14px;font-size:19px;text-align:left;line-height:1.35}
+
+/* ---------- taller ---------- */
+.tabs{display:flex;gap:8px;padding:12px 14px 0;flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:16px 16px 0 0;background:#efe2c9;font-size:19px;font-weight:700;border:3px solid var(--line);border-bottom:none}
+.tab.sel{background:var(--card)}
+.tab.lock{opacity:.5}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;padding:16px}
+.ecard{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:6px;text-align:left;box-shadow:0 4px 0 var(--line)}
+.ecard:active{transform:translateY(2px)}
+.ecard .who{font-size:44px;line-height:1}
+.ecard .t{font-size:21px;font-weight:800}
+.ecard .badge{align-self:flex-start;font-size:14px;font-weight:700;padding:2px 10px;border-radius:10px;background:#e4efff;color:#2f5f96}
+.ecard .st{font-size:24px;color:var(--gold)}
+.ecard .st .off{color:var(--line)}
+.ecard.free{background:#f3ecff;border-color:#d8c8f2;box-shadow:0 4px 0 #d8c8f2}
+
+/* ---------- puzle ---------- */
+.pz-body{flex:1;display:flex;gap:14px;padding:14px;overflow:auto;flex-wrap:wrap;align-content:flex-start}
+.pz-left{flex:1 1 360px;display:flex;flex-direction:column;gap:4px;min-width:300px}
+.pz-right{flex:1.25 1 420px;display:flex;flex-direction:column;gap:6px;min-width:320px}
+.npcline{display:flex;gap:10px;align-items:flex-start}
+.npcline .face{font-size:48px;line-height:1}
+.npcline .ask{font-size:20px;line-height:1.3;flex:1}
+.fab{display:block;max-width:100%}
+#pz-msg{font-size:19px;font-weight:700;min-height:30px;padding:4px 2px}
+#pz-msg.bad{color:#c0443d}
+#pz-msg.good{color:var(--ok)}
+.help{background:#eaf4ff;border:3px solid #c9def5;border-radius:16px;padding:8px 12px;font-size:18px;line-height:1.3;display:flex;gap:8px;align-items:flex-start}
+.help .speak{flex-shrink:0;width:40px;height:40px;font-size:19px}
+.prow{border:3px dashed var(--line);border-radius:16px;padding:6px;min-height:66px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;position:relative;background:#fff}
+.prow.sel{border-style:solid;border-color:var(--accent2);background:#f4f9ff}
+.prow .rname{font-weight:800;font-size:16px;padding:0 6px;color:var(--soft);min-width:84px}
+.prow.locked{opacity:.7}
+.prow .empty{color:#bba98f;font-size:16px}
+.ccard{width:48px;height:52px;border-radius:12px;border:3px solid rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;position:relative;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.ccard:active{transform:translateY(2px)}
+.ccard.tokA{background:var(--purple);color:#fff}
+.ccard.tokB{background:var(--teal);color:#fff}
+.ccard canvas{pointer-events:none}
+.ccard.run{outline:4px solid var(--gold)}
+.palette{display:flex;flex-wrap:wrap;gap:8px}
+.palette .ccard{width:58px;height:62px}
+.repbox{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;background:#fff3e0;border:3px solid #f0cf9a;border-radius:16px;padding:6px 12px;align-self:flex-start}
+.repbox button{width:44px;height:44px;border-radius:12px;background:#fff;border:3px solid #f0cf9a;font-size:24px;font-weight:800}
+.repbox .n{min-width:36px;text-align:center;font-size:26px}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px;flex-wrap:wrap}
+.counter{font-size:16px;color:var(--soft);font-weight:700}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ---------- casa ---------- */
+.house-body{flex:1;display:flex;gap:14px;padding:14px;overflow:auto;flex-wrap:wrap;align-content:flex-start}
+.garden{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;background:#8b5e3c;border:6px solid #6e4a2e;border-radius:18px;padding:8px;flex:2 1 520px;max-width:820px;align-self:flex-start}
+.gcell{aspect-ratio:1;background:#a8d58a;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:min(5vw,46px);position:relative;border:2px solid rgba(0,0,0,.06)}
+.gcell.drop{background:#c9eab2;outline:3px dashed #fff}
+.gcell .fr{position:absolute;right:2px;bottom:0;font-size:.45em}
+.inv{flex:1 1 260px;display:flex;flex-direction:column;gap:10px}
+.invgrid{display:flex;flex-wrap:wrap;gap:8px}
+.invitem{background:#fff;border:3px solid var(--line);border-radius:16px;padding:6px 10px;font-size:30px;display:flex;align-items:center;gap:4px;position:relative}
+.invitem small{font-size:15px;font-weight:800;color:var(--soft)}
+.invitem.sel{border-color:var(--accent2);background:#e4efff}
+.invitem .fr{position:absolute;left:30px;bottom:2px;font-size:14px}
+
+/* ---------- tienda / libro ---------- */
+.shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;padding:16px}
+.sitem{background:var(--card);border:3px solid var(--line);border-radius:22px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.sitem .e{font-size:56px;line-height:1.1}
+.sitem .n{font-size:19px;font-weight:800}
+.fabgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;padding:16px}
+.fabcard{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:700;text-align:center}
+.storygrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;padding:16px}
+.storycard{background:#fff4d6;border:3px solid #ecd290;border-radius:18px;padding:12px 14px;font-size:18px;line-height:1.35;display:flex;gap:8px}
+.storycard.lock{background:#efe7d8;border-color:var(--line);color:#b4a58e}
+
+/* ---------- dibujo ---------- */
+.draw-body{flex:1;display:flex;gap:16px;padding:16px;flex-wrap:wrap;align-content:flex-start;overflow:auto}
+#drawgrid{display:grid;gap:3px;background:#d9c7a6;padding:8px;border-radius:16px;touch-action:none}
+.dcell{width:min(7vw,52px);height:min(7vw,52px);border-radius:8px;background:#fff}
+.badge{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;border-radius:12px;min-width:24px;height:24px;font-size:15px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 6px;border:2px solid #fff}
+.hbtn{position:relative}
+.cloudchip{font-size:15px;padding:4px 12px}
+.toolsrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.toolsrow .btn{min-height:42px;font-size:16px;padding:4px 14px}
+textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;border:3px solid var(--line);border-radius:12px;padding:8px}
+.inputline{width:100%;font-family:inherit;font-size:20px;padding:8px 12px;border-radius:14px;border:3px solid var(--line);margin:6px 0}
+.mlist{display:flex;flex-direction:column;gap:12px;padding:16px;max-width:820px;margin:0 auto;width:100%}
+.mitem{background:var(--card);border:3px solid var(--line);border-radius:20px;padding:14px;display:flex;gap:12px;align-items:flex-start}
+.mitem.nuevo{border-color:var(--gold);background:#fff8e6}
+.mitem .mi{font-size:40px;line-height:1}
+.mitem .mt{font-size:20px;line-height:1.35;flex:1}
+.mitem .mt b{font-size:16px;color:var(--soft);display:block}
+.mitem .ma{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+#testbar{position:fixed;right:8px;bottom:8px;z-index:60;background:#2c2c3a;color:#fff;border-radius:16px;padding:8px;font-size:14px;display:none;max-width:330px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#testbar.on{display:block}
+#testbar .tb{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+#testbar button{background:#4b4b63;color:#fff;border-radius:10px;padding:6px 9px;font-size:13px;font-weight:700}
+#testbar button:active{background:#6b6b8a}
+#testbar.min .tb{display:none}
+#testflag{position:fixed;left:50%;top:0;transform:translateX(-50%);background:#2c2c3a;color:#ffd75e;font-weight:800;font-size:14px;padding:2px 14px;border-radius:0 0 12px 12px;z-index:59;display:none;pointer-events:none}
+</style>
+</head>
+<body>
+
+<!-- PERFILES -->
+<section id="scr-profiles" class="screen">
+  <h1>🧶 Villaovillo</h1>
+  <div class="sub">El Taller del Telar</div>
+  <div class="slots" id="slots"></div>
+  <div class="toolsrow" id="ptools"></div>
+</section>
+
+<!-- PUEBLO -->
+<section id="scr-village" class="screen">
+  <div id="vwrap"><canvas id="vcanvas"></canvas></div>
+  <div class="hud" id="hud-tl"><div class="chip" id="hud-name"></div><div class="chip" id="hud-coins"></div></div>
+  <div class="hud" id="hud-tr">
+    <button class="hbtn" id="hb-taller" title="Taller">🧶</button>
+    <button class="hbtn" id="hb-casa" title="Mi casa">🏡</button>
+    <button class="hbtn" id="hb-mail" title="Buzón">📬<span class="badge" id="mail-badge" style="display:none"></span></button>
+    <button class="hbtn" id="hb-libro" title="Libro">📖</button>
+    <button class="hbtn" id="hb-voz" title="Voz">🔇</button>
+    <button class="hbtn" id="hb-perfil" title="Cambiar de jugadora">👥</button>
+  </div>
+  <div class="hud" id="hud-bl"><div class="chip bracelet" id="hud-bracelet"></div></div>
+  <div id="toast"></div>
+</section>
+
+<!-- TALLER -->
+<section id="scr-workshop" class="screen">
+  <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl">🧶 El Taller del Telar</div><div class="chip" id="ws-coins"></div></div>
+  <div class="tabs" id="ws-tabs"></div>
+  <div class="scroll" style="flex:1;background:var(--card);border-top:3px solid var(--line)"><div class="wgrid" id="ws-list"></div></div>
+</section>
+
+<!-- PUZLE -->
+<section id="scr-puzzle" class="screen">
+  <div class="topbar"><button class="btn" id="pz-back">← Taller</button><div class="ttl" id="pz-title"></div><div class="chip" id="pz-type"></div></div>
+  <div class="pz-body">
+    <div class="pz-left panel">
+      <div class="npcline"><div class="face" id="pz-face"></div><div class="ask" id="pz-ask"></div><button class="speak" id="pz-askspeak">🔊</button></div>
+      <div class="lbl">Pedido</div><div id="pz-target"></div>
+      <div class="lbl" id="pz-reslbl">Tu tela</div><div id="pz-result"></div>
+      <div id="pz-msg"></div>
+    </div>
+    <div class="pz-right panel" id="pz-right"></div>
+  </div>
+</section>
+
+<!-- CASA -->
+<section id="scr-house" class="screen">
+  <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl" id="house-title">🏡 Mi casa</div><div class="chip" id="house-coins"></div></div>
+  <div class="house-body">
+    <div class="garden" id="garden"></div>
+    <div class="inv panel" id="inv"></div>
+  </div>
+</section>
+
+<!-- TIENDA -->
+<section id="scr-shop" class="screen">
+  <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl">🏪 La Tienda de Coco</div><div class="chip" id="shop-coins"></div></div>
+  <div class="scroll" style="flex:1"><div class="shopgrid" id="shopgrid"></div></div>
+</section>
+
+<!-- LIBRO -->
+<section id="scr-book" class="screen">
+  <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl">📖 Mi libro</div></div>
+  <div class="tabs" id="book-tabs"></div>
+  <div class="scroll" style="flex:1;background:var(--card);border-top:3px solid var(--line)" id="book-body"></div>
+</section>
+
+<!-- DIBUJO LIBRE -->
+<section id="scr-draw" class="screen">
+  <div class="topbar"><button class="btn" id="draw-back">← Taller</button><div class="ttl">🎨 Diseño libre</div><button class="btn green" id="draw-save">Guardar tela</button></div>
+  <div class="draw-body">
+    <div id="drawgrid"></div>
+    <div class="panel" style="flex:1 1 260px;display:flex;flex-direction:column;gap:10px">
+      <div class="lbl">Elige un hilo</div>
+      <div class="palette" id="draw-pal"></div>
+      <div class="lbl">Tamaño</div>
+      <div class="choice" id="draw-size"></div>
+      <button class="btn" id="draw-clear">Borrar todo</button>
+      <div class="help">💡 Toca o arrastra el dedo para pintar puntos. ¡Tu tela se colgará en el tendedero del pueblo!</div>
+    </div>
+  </div>
+</section>
+
+<!-- BUZÓN -->
+<section id="scr-mail" class="screen">
+  <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl">📬 Mi buzón</div><div class="chip" id="mail-coins"></div></div>
+  <div class="scroll" style="flex:1"><div class="mlist" id="mlist"></div></div>
+</section>
+
+<div id="dlg"><div class="dlgbox" id="dlgbox"></div></div>
+<div id="testflag">🧪 MODO PRUEBA · no afecta a las partidas reales</div>
+<div id="testbar"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>🧪 Prueba <span id="tb-day"></span></b><button id="tb-min">–</button></div><div class="tb" id="tb-btns"></div></div>
+<script src="config.js"></script>
+
+<script>
+"use strict";
+/* =========================================================
+   DATOS
+   ========================================================= */
+const COLORS = {
+  r:{n:'rojo',c:'#e4574f'}, b:{n:'azul',c:'#4a8fdc'}, y:{n:'amarillo',c:'#f4c430'},
+  g:{n:'verde',c:'#55b05a'}, w:{n:'blanco',c:'#f7f2e8'}, p:{n:'lila',c:'#a678d6'}
+};
+const COLOR_KEYS = Object.keys(COLORS);
+
+const NPCS = {
+  rosa:{e:'🐑',n:'Rosa la oveja', hi:['¡Mi lana es la más suave del pueblo!','¿Sabes que con una oveja se pueden tejer varios jerséis al año?']},
+  tomas:{e:'🦔',n:'Tomás el erizo', hi:['Tengo pinchos, pero soy muy cariñoso.','Me encanta ordenar mis bellotas por colores.']},
+  coco:{e:'🐔',n:'Coco la gallina', hi:['¡Me encantan los acertijos de colores!','Pásate por mi tienda, tengo cosas bonitas para tu jardín.']},
+  bruno:{e:'🐻',n:'Bruno el oso', hi:['Este invierno voy a dormir calentito.','¿Has probado la miel con pan? ¡Mmm!']},
+  lia:{e:'🦦',n:'Lía la nutria', hi:['¡Me encanta nadar en el río!','Al otro lado del río pasan cosas misteriosas…']},
+  nube:{e:'🐰',n:'Nube la coneja', hi:['Salto, salto y vuelvo a saltar: ¡como un bucle!','Mis zanahorias crecen en filas perfectas.']},
+  hilo:{e:'🤖',n:'Hilo el robot', hi:['Bip bip. Soy muy rápido… pero compruébame, ¿eh?','Algún día cuidaré un huerto al otro lado del río.']},
+  alcalde:{e:'🧔',n:'Papá, el alcalde', hi:['¡Estoy muy orgulloso de lo que estás haciendo!','Mira tu buzón de vez en cuando: a veces te escribo.','Un buen tejedor no tiene prisa: mira, piensa y prueba.']}
+};
+
+const STORIES = {
+  punto:{e:'🧶',t:'Tejer es seguir una receta',x:'Tejer punto es seguir una receta: «dos del derecho, dos del revés, y repetir». Una lista de pasos en orden… ¡eso es justo un programa!'},
+  gusano:{e:'🐛',t:'Los gusanos de seda',x:'La seda la fabrican unas orugas llamadas gusanos de seda. Cada capullo está hecho de un solo hilo larguísimo: ¡de cientos de metros!'},
+  quipu:{e:'🪢',t:'Los quipus de los incas',x:'Los incas no escribían con letras, pero guardaban números con cuerdas y nudos llamados quipus. Cada nudo y su lugar significaban algo.'},
+  jacquard:{e:'🏭',t:'El telar de Jacquard',x:'Hace más de 200 años, en Lyon (Francia), Joseph-Marie Jacquard inventó un telar que leía tarjetas con agujeros. Con agujero, el hilo sube; sin agujero, se queda abajo. ¡Una de las primeras máquinas programables!'},
+  fairisle:{e:'🧥',t:'Los jerséis de Fair Isle',x:'En Fair Isle, una islita de Escocia, tejen jerséis con bandas de dibujos que se repiten. Normalmente usan solo dos colores en cada fila.'},
+  kente:{e:'🌍',t:'La tela kente de Ghana',x:'En Ghana tejen la tela kente en tiras estrechas que luego se cosen juntas. Cada color tiene su significado.'},
+  sashiko:{e:'🪡',t:'El sashiko de Japón',x:'En Japón, el sashiko son puntadas pequeñas para reforzar y arreglar la ropa. ¡Forman dibujos geométricos preciosos!'},
+  seda:{e:'🏛️',t:'La Lonja de la Seda',x:'En Valencia está la Lonja de la Seda, un edificio de hace más de 500 años donde se compraba y vendía seda. ¡Es Patrimonio de la Humanidad!'},
+  ada:{e:'👩‍🔬',t:'Ada Lovelace',x:'Ada Lovelace vivió en Inglaterra hace casi 200 años. Escribió programas para una máquina que aún no se había construido y dijo que esa máquina «tejería» números como el telar teje flores. ¡Fue la primera programadora!'},
+  binario:{e:'💡',t:'Agujero o no agujero',x:'Las tarjetas de Jacquard solo tenían dos opciones: agujero o no agujero. Los ordenadores de hoy también piensan con dos opciones: 1 y 0.'},
+  hilo1:{e:'🤖',t:'Los ayudantes también fallan',x:'Los ayudantes con inteligencia artificial, como Hilo, son rapidísimos, pero a veces se equivocan. Por eso hay que comprobar lo que dicen.'},
+  hilo2:{e:'✅',t:'Comprobar es pensar',x:'Esta vez Hilo acertó. Comprobar no es desconfiar siempre: es mirar con atención antes de decidir.'}
+};
+
+const LEVELS = {1:'Secuencias',2:'Repetir',3:'Motivos'};
+const TYPE_NAMES = {seq:'Secuencia',rep:'Repetir',mot:'Motivos',reglas:'¿Qué sigue?',hilo:'Revisa a Hilo',custom:'Reto del alcalde'};
+
+const ENC = [
+  {id:'e1',lvl:1,type:'seq',npc:'rosa',title:'Bufanda de rayas',story:'punto',
+   ask:'¡Hace fresquito! ¿Me tejes una bufanda con estos colores, en este orden?',
+   v6:{w:6,t:'rwrwrw'}, v9:{w:8,t:'rrbwwbrr'}},
+  {id:'e2',lvl:1,type:'seq',npc:'tomas',title:'Cinta para el pelo',story:'gusano',
+   ask:'Quiero una cinta de colores para no pincharme el flequillo. ¿Me ayudas?',
+   v6:{w:6,t:'yyggyy'}, v9:{w:8,t:'ygbppbgy'}},
+  {id:'e3',lvl:1,type:'reglas',npc:'coco',title:'¿Qué punto sigue?',story:'quipu',
+   ask:'¡Se me escaparon unos puntos! Descubre la regla del dibujo y complétalo.',
+   v6:{w:6,t:'ryyryyryyryy',miss:3}, v9:{w:8,t:'rbbyrbbyrbbyrbby',miss:5}},
+  {id:'e4',lvl:1,type:'seq',npc:'rosa',title:'Mantel de la merienda',story:'jacquard',
+   ask:'Voy a invitar a todo el pueblo a merendar. ¡Necesito un mantel de cuadros!',
+   v6:{w:4,t:'bwbwwbwb'}, v9:{w:8,t:'bwbwbwbwwbwbwbwb'}},
+  {id:'e5',lvl:2,type:'rep',npc:'bruno',title:'Manta para hibernar',story:'fairisle',
+   ask:'Voy a dormir todo el invierno. ¿Me tejes una manta grande? ¡Usa la tarjeta Repetir!',
+   v6:{w:6,sol:{main:['r','w'],rep:6}}, v9:{w:8,sol:{main:['r','r','w'],rep:8}}},
+  {id:'e6',lvl:2,type:'rep',npc:'lia',title:'Calcetines de colores',story:'kente',
+   ask:'¡Mis patas se enfrían al salir del río! Quiero unos calcetines alegres.',
+   v6:{w:6,sol:{main:['b','y','g'],rep:4}}, v9:{w:8,sol:{main:['y','p','y','b'],rep:6}}},
+  {id:'e7',lvl:2,type:'reglas',npc:'coco',title:'El dibujo misterioso',story:'sashiko',
+   ask:'Este dibujo es más largo. Busca el trocito que se repite y completa lo que falta.',
+   v6:{w:6,t:'yywyywyywyywyywyyw',miss:3}, v9:{w:8,t:'rbywrbywrbywrbywrbywrbyw',miss:6}},
+  {id:'e8',lvl:2,type:'rep',npc:'rosa',title:'Jersey de bandas',story:'seda',
+   ask:'Quiero un jersey con bandas, como los de Fair Isle. ¡Con pocas tarjetas!',
+   v6:{w:6,sol:{main:['w','r','r'],rep:4}}, v9:{w:8,sol:{main:['w','r','r','r','w','b','b','b'],rep:3}}},
+  {id:'e9',lvl:3,type:'mot',npc:'nube',title:'Tapiz de filas',story:'ada',
+   ask:'Mi tapiz tiene dos tipos de fila. Crea el motivo A y el motivo B y úsalos en el programa.',
+   v6:{w:4,sol:{A:['p','w','w','p'],B:['g','g','g','g'],main:['A','A','B','A','B','B'],rep:1}},
+   v9:{w:6,sol:{A:['r','r','w','w','r','r'],B:['w','w','r','r','w','w'],main:['A','B','B','A'],rep:2}}},
+  {id:'e10',lvl:3,type:'mot',npc:'lia',title:'Toalla de playa',story:'binario',
+   ask:'¡Me voy a la playa! Mi toalla tiene filas azules y filas de sol.',
+   v6:{w:4,sol:{A:['b','b','b','b'],B:['w','y','y','w'],main:['A','B','B','A','B'],rep:1}},
+   v9:{w:6,sol:{A:['b','b','w','w','b','b'],B:['y','y','y','y','y','y'],main:['A','A','B','A','B','B','A'],rep:1}}},
+  {id:'e11',lvl:3,type:'hilo',npc:'hilo',title:'Hilo quiere ayudar',story:'hilo1',
+   ask:'Bip bip. ¡Yo he hecho el programa de este pedido! ¿Lo revisas antes de tejer?',
+   v6:{w:6,sol:{main:['r','w'],rep:6},hilo:{main:['r','w'],rep:5}},
+   v9:{w:6,sol:{A:['g','g','w','w','g','g'],B:['p','p','p','p','p','p'],main:['A','B','A'],rep:1},
+       hilo:{A:['g','g','w','w','g','g'],B:['p','p','p','p','p','p'],main:['A','B','B'],rep:1}}},
+  {id:'e12',lvl:3,type:'hilo',npc:'hilo',title:'Hilo lo intenta otra vez',story:'hilo2',
+   ask:'¡He practicado mucho! Revisa mi nuevo programa, por favor.',
+   v6:{w:4,sol:{main:['g','g','g','w'],rep:3},hilo:{main:['g','g','g','w'],rep:3}},
+   v9:{w:6,sol:{A:['b','w','b','w','b','w'],B:['w','b','w','b','w','b'],main:['A','B'],rep:3},
+       hilo:{A:['b','w','b','w','b','w'],B:['w','b','w','b','w','b'],main:['A','B'],rep:3}}}
+];
+
+const PLANTS = {
+  1:[['🌷','tulipán'],['🌼','margarita'],['🌻','girasol'],['🌹','rosa']],
+  2:[['🌿','helecho'],['🪴','planta en maceta'],['🌸','flor de cerezo'],['🍀','trébol']],
+  3:[['🌳','árbol'],['🌲','pino'],['🌴','palmera'],['🌵','cactus']]
+};
+const SPECIAL = {
+  L1:{e:'🌳',f:'🍊',n:'Naranjo de nivel 1'},
+  L2:{e:'🌳',f:'🍋',n:'Limonero de nivel 2'},
+  L3:{e:'🌳',f:'🍒',n:'Cerezo de nivel 3'},
+  M:{e:'🌳',f:'🌈',n:'Árbol arcoíris de maestra'}
+};
+const SHOP = [
+  {k:'seta',e:'🍄',n:'Setas',p:10},{k:'farol',e:'🏮',n:'Farolillo',p:15},{k:'banco',e:'🪑',n:'Banco',p:20},
+  {k:'pajaro',e:'🐦',n:'Caseta de pájaros',p:25},{k:'colmena',e:'🐝',n:'Colmena',p:30},{k:'fuente',e:'⛲',n:'Fuente',p:45}
+];
+// catálogo de objetos para jardín: key -> {e, f?, n}
+function itemInfo(k){
+  if (SPECIAL[k]) return SPECIAL[k];
+  for (const l in PLANTS) for (const [e,n] of PLANTS[l]) if (k==='pl_'+e) return {e,n};
+  const s = SHOP.find(s=>'sh_'+s.k===k); if (s) return {e:s.e,n:s.n};
+  return {e:'❓',n:'?'};
+}
+
+/* =========================================================
+   GUARDADO
+   ========================================================= */
+const TEST = (()=>{ try{ return new URLSearchParams(location.search).has('prueba'); }catch(e){ return false; } })();
+const KEY = TEST ? 'villaovillo.prueba' : 'villaovillo.v1';
+const CFG = window.VILLA_CONFIG || {scriptUrl:''};
+let DB = {profiles:[null,null], cur:0, dayOffset:0, msgs:[]};
+function uid(){ return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function migrate(p){
+  if(!p) return p;
+  p.id=p.id||uid(); p.stats=p.stats||{}; p.play=p.play||{}; p.rewarded=p.rewarded||{}; p.pendingMsg=p.pendingMsg||{}; p.updatedAt=p.updatedAt||Date.now();
+  return p;
+}
+function load(){ try{ const s=localStorage.getItem(KEY); if(s){ const d=JSON.parse(s); if(d&&d.profiles){ DB=Object.assign({dayOffset:0,msgs:[]},d); } } }catch(e){} DB.profiles=DB.profiles.map(migrate); }
+let lastEvent='';
+function save(evento){
+  const p=P(); if(p){ p.updatedAt=Date.now(); if(evento) lastEvent = lastEvent? lastEvent+' · '+evento : evento; }
+  try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){}
+  if(p) scheduleCloud();
+}
+function saveQuiet(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){} }
+function P(){ return DB.profiles[DB.cur]; }
+function now(){ return Date.now() + (DB.dayOffset||0)*864e5; }
+function today(){ const d=new Date(now()); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function newProfile(name, age, color){
+  return migrate({name, age, color, unlocked:1, done:{}, coins:0, inv:{}, garden:Array(32).fill(null),
+          fabrics:[], stories:[], beads:[], voice:false, streak:0, master:false, seenHelp:{}, met:false, lvlRewarded:{}});
+}
+
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+const $ = s=>document.querySelector(s);
+function el(tag, cls, html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function shade(hex, amt){ // amt -1..1
+  const n=parseInt(hex.slice(1),16); let r=n>>16,g=(n>>8)&255,b=n&255;
+  const t=amt<0?0:255, a=Math.abs(amt);
+  r=Math.round(r+(t-r)*a); g=Math.round(g+(t-g)*a); b=Math.round(b+(t-b)*a);
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function starsHTML(n, max=3){ let s=''; for(let i=0;i<max;i++) s+= i<n?'★':'<span class="off">★</span>'; return s; }
+
+/* ---------- sonido ---------- */
+let AC=null;
+function beep(f=660, d=0.06, type='sine', vol=0.05){
+  try{ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(), g=AC.createGain(); o.type=type; o.frequency.value=f;
+    g.gain.value=vol; g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime+d);
+    o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+d);
+  }catch(e){}
+}
+function fanfare(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,0.18,'triangle',0.07),i*120)); }
+
+/* ---------- voz ---------- */
+function stripEmoji(t){ return t.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/[«»]/g,''); }
+function speakNow(text){
+  try{
+    if(!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(stripEmoji(text));
+    u.lang='es-ES'; u.rate=0.95;
+    const v=speechSynthesis.getVoices().find(v=>/^es(-|_)ES/i.test(v.lang)) || speechSynthesis.getVoices().find(v=>/^es/i.test(v.lang));
+    if(v) u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function speakAuto(text){ const p=P(); if(p&&p.voice) speakNow(text); }
+function stopSpeak(){ try{ speechSynthesis.cancel(); }catch(e){} }
+
+/* =========================================================
+   TELA (dibujo de puntos)
+   ========================================================= */
+function drawStitch(ctx,x,y,s,col){
+  const c=COLORS[col].c, edge=shade(c,-0.28);
+  ctx.lineWidth=Math.max(1,s*0.06); ctx.fillStyle=c; ctx.strokeStyle=edge;
+  for(const dir of [-1,1]){
+    ctx.save(); ctx.translate(x+s/2+dir*s*0.19, y+s*0.5); ctx.rotate(dir*0.48);
+    ctx.beginPath(); ctx.ellipse(0,0,s*0.2,s*0.42,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+}
+/* cells: array de claves de color, null (vacío), '?' (falta) ; opt: {s, ghost:n, hl:[idx], sel:idx} */
+function fabricCanvas(cells, w, opt={}){
+  const s=opt.s||28, total=Math.max(cells.length, opt.ghost||0), rows=Math.max(1,Math.ceil(total/w));
+  const pad=6, W=w*s+pad*2, H=rows*s+pad*2, dpr=window.devicePixelRatio||1;
+  const cv=document.createElement('canvas'); cv.width=W*dpr; cv.height=H*dpr; cv.style.width=W+'px'; cv.style.height=H+'px'; cv.className='fab';
+  const ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+  ctx.fillStyle=opt.bg||'#efe3cc'; roundRect(ctx,0,0,W,H,10); ctx.fill();
+  for(let i=0;i<total;i++){
+    const x=pad+(i%w)*s, y=pad+Math.floor(i/w)*s, v=cells[i];
+    if(v && v!=='?' && COLORS[v]) drawStitch(ctx,x,y,s,v);
+    else if(v==='?'){ ctx.setLineDash([4,3]); ctx.strokeStyle='#b89b6a'; ctx.lineWidth=2; roundRect(ctx,x+3,y+3,s-6,s-6,6); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle='#b89b6a'; ctx.font=`700 ${s*0.55}px 'Baloo 2',sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('?',x+s/2,y+s/2+1); }
+    else { ctx.fillStyle='rgba(255,255,255,.45)'; ctx.beginPath(); ctx.arc(x+s/2,y+s/2,s*0.12,0,Math.PI*2); ctx.fill(); }
+  }
+  for(const i of (opt.hl||[])){ const x=pad+(i%w)*s, y=pad+Math.floor(i/w)*s; ctx.strokeStyle='#d62828'; ctx.lineWidth=3.5; roundRect(ctx,x+1,y+1,s-2,s-2,7); ctx.stroke(); }
+  if(opt.sel!=null && opt.sel>=0){ const i=opt.sel, x=pad+(i%w)*s, y=pad+Math.floor(i/w)*s; ctx.strokeStyle='#2f5f96'; ctx.lineWidth=3.5; roundRect(ctx,x+1,y+1,s-2,s-2,7); ctx.stroke(); }
+  cv._meta={s,pad,w};
+  return cv;
+}
+function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function stitchIcon(col, s=34){ const cv=document.createElement('canvas'), dpr=window.devicePixelRatio||1; cv.width=s*dpr; cv.height=s*dpr; cv.style.width=s+'px'; cv.style.height=s+'px'; const c=cv.getContext('2d'); c.scale(dpr,dpr); drawStitch(c,0,0,s,col); return cv; }
+
+/* =========================================================
+   NAVEGACIÓN
+   ========================================================= */
+let curScreen='profiles';
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  $('#scr-'+id).classList.add('on'); curScreen=id;
+  if(id==='village'){ resizeVillage(); updateHUD(); startLoop(); } else stopLoop();
+}
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{ stopSpeak(); show(b.dataset.go); }));
+
+/* ---------- diálogo ---------- */
+function say({face='', name='', text='', html='', buttons=[{t:'¡Vale!',cls:'primary'}], center=false, speak=true}){
+  return new Promise(res=>{
+    const box=$('#dlgbox'); box.innerHTML='';
+    if(face||name){ const h=el('div','dlghead'); h.append(el('div','dlgface',face), el('div','dlgname',esc(name)));
+      if(text){ const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(text); h.append(sp); } box.append(h); }
+    if(text) box.append(el('div','dlgtext',esc(text)));
+    if(html){ const d=el('div'); d.innerHTML=html; box.append(d); }
+    const bb=el('div','dlgbtns');
+    buttons.forEach((b,i)=>{ const x=el('button','btn '+(b.cls||''),b.t); x.onclick=()=>{ $('#dlg').classList.remove('on','center'); stopSpeak(); res(i); }; bb.append(x); });
+    box.append(bb);
+    $('#dlg').classList.toggle('center',center); $('#dlg').classList.add('on');
+    if(speak && text) speakAuto(text);
+  });
+}
+let toastT=null;
+function toast(t, ms=2600){ const e=$('#toast'); e.textContent=t; e.style.display='block'; clearTimeout(toastT); toastT=setTimeout(()=>e.style.display='none',ms); }
+
+/* =========================================================
+   PERFILES
+   ========================================================= */
+const DRESS=['#e4574f','#4a8fdc','#a678d6','#55b05a','#f29b38','#e46fa8'];
+function renderProfiles(){
+  const wrap=$('#slots'); wrap.innerHTML='';
+  DB.profiles.forEach((p,i)=>{
+    const s=el('div','slot');
+    if(p){
+      const av=avatarCanvas(p.color,110); s.append(av);
+      s.append(el('div','big',esc(p.name)));
+      const nd=Object.keys(p.done).length;
+      s.append(el('div','meta',`Nivel ${p.unlocked} · ${LEVELS[p.unlocked]}<br>${nd} encargos · 🔘 ${p.coins} botones`));
+      const b=el('button','btn primary','¡A jugar!'); b.onclick=()=>enterGame(i); s.append(b);
+      const del=el('button','smalllink','Borrar partida'); del.onclick=async()=>{
+        const r=await say({face:'⚠️',name:'¿Seguro?',text:`Se borrará toda la partida de ${p.name}. No se puede deshacer.`,buttons:[{t:'No, volver'},{t:'Sí, borrar',cls:'primary'}],center:true,speak:false});
+        if(r===1){ DB.profiles[i]=null; save(); renderProfiles(); }
+      }; s.append(del);
+    } else {
+      s.append(el('div','big','Nueva jugadora'));
+      const inp=el('input'); inp.placeholder='Tu nombre'; inp.maxLength=14; s.append(inp);
+      s.append(el('div','meta','¿Cuántos años tienes?'));
+      const ch=el('div','choice'); let age=null;
+      [['6','6-7 años'],['9','8-10 años']].forEach(([v,t])=>{ const b=el('button','',t); b.onclick=()=>{age=+v; ch.querySelectorAll('button').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');}; ch.append(b); });
+      s.append(ch);
+      s.append(el('div','meta','Elige tu color'));
+      const cc=el('div','choice'); let color=DRESS[i===0?0:2];
+      DRESS.forEach(c=>{ const d=el('button','dot'+(c===color?' sel':'')); d.style.background=c; d.onclick=()=>{color=c; cc.querySelectorAll('.dot').forEach(x=>x.classList.remove('sel')); d.classList.add('sel');}; cc.append(d); });
+      s.append(cc);
+      const go=el('button','btn green','Crear'); go.onclick=()=>{
+        const name=inp.value.trim(); if(!name){ inp.classList.add('shake'); setTimeout(()=>inp.classList.remove('shake'),400); inp.focus(); return; }
+        if(!age){ ch.classList.add('shake'); setTimeout(()=>ch.classList.remove('shake'),400); return; }
+        DB.profiles[i]=newProfile(name,age,color); save(); renderProfiles();
+      }; s.append(go);
+    }
+    wrap.append(s);
+  });
+  renderProfileTools();
+}
+function avatarCanvas(color, size){
+  const cv=document.createElement('canvas'), dpr=window.devicePixelRatio||1; cv.width=size*dpr; cv.height=size*dpr; cv.style.width=size+'px'; cv.style.height=size+'px';
+  const c=cv.getContext('2d'); c.scale(dpr*size/80,dpr*size/80); drawGirl(c,40,74,color,0,1.6); return cv;
+}
+
+async function enterGame(i){
+  DB.cur=i; save(); show('village');
+  const p=P();
+  if(!p.met){
+    p.met=true; save();
+    await say({face:'🐑',name:NPCS.rosa.n,text:`¡Hola, ${p.name}! Bienvenida a Villaovillo. Nuestro taller del telar necesita una tejedora… ¡y creo que eres tú!`});
+    await say({face:'🐑',name:NPCS.rosa.n,text:'Toca el suelo para caminar y toca los edificios para entrar. Empieza por el taller, el edificio del ovillo. Cada encargo que termines hará crecer el pueblo y tu jardín.'});
+  } else toast(`¡Hola de nuevo, ${p.name}!`);
+}
+
+/* =========================================================
+   PUEBLO (canvas)
+   ========================================================= */
+const VW=1200, VH=720;
+const vcanvas=$('#vcanvas'), vctx=vcanvas.getContext('2d');
+let vScale=1, vOffX=0, vOffY=0, vDpr=1, rafId=null, lastT=0, tGlobal=0;
+const player={x:600,y:548,tx:600,ty:548,moving:false,dir:1,act:null};
+let npcs=[], tapFx=null, butterflies=[];
+
+const B = { // edificios y zonas (coordenadas lógicas)
+  taller:{x:160,y:90,w:280,h:210,door:[300,318]},
+  tienda:{x:510,y:110,w:180,h:130,door:[600,258]},
+  tend:{x:750,y:96,w:220,h:120,door:[860,226]},
+  houseA:{x:120,y:410,w:170,h:140,door:[205,566]},
+  plotA:{x:96,y:578,w:218,h:110},
+  houseB:{x:810,y:410,w:170,h:140,door:[895,566]},
+  plotB:{x:786,y:578,w:218,h:110},
+  plaza:{x:600,y:430,r:95},
+  locked:{x:1018,y:0,w:182,h:720}
+};
+const TREE_SPOTS=[[70,90],[60,300],[470,70],[728,262],[78,385],[350,640],[640,650],[960,330],[345,470],[110,210],[470,290],[760,400],[52,690],[445,590],[430,700],[930,262],[520,640],[250,370],[720,705],[40,520]];
+
+function resizeVillage(){
+  const r=$('#vwrap').getBoundingClientRect(); vDpr=window.devicePixelRatio||1;
+  vcanvas.width=Math.round(r.width*vDpr); vcanvas.height=Math.round(r.height*vDpr);
+  vScale=Math.min(r.width/VW, r.height/VH); vOffX=(r.width-VW*vScale)/2; vOffY=(r.height-VH*vScale)/2;
+}
+window.addEventListener('resize',()=>{ if(curScreen==='village') resizeVillage(); });
+
+function setupNPCs(){
+  const p=P(); const lv=p.unlocked;
+  const list=['alcalde','rosa','tomas','coco']; if(lv>=2) list.push('bruno','lia'); if(lv>=3) list.push('nube','hilo');
+  const homes={alcalde:[650,500],rosa:[420,420],tomas:[700,330],coco:[540,300],bruno:[380,560],lia:[940,430],nube:[700,480],hilo:[560,560]};
+  npcs=list.map(k=>{ const old=npcs.find(n=>n.k===k); return old||{k,x:homes[k][0],y:homes[k][1],tx:homes[k][0],ty:homes[k][1],home:homes[k],wait:Math.random()*3}; });
+  butterflies=[]; const nb=lv>=2?lv*2:0; for(let i=0;i<nb;i++) butterflies.push({x:100+Math.random()*850,y:100+Math.random()*550,a:Math.random()*6,sp:0.5+Math.random()});
+}
+
+function startLoop(){ setupNPCs(); lastT=performance.now(); if(!rafId) rafId=requestAnimationFrame(loop); }
+function stopLoop(){ if(rafId) cancelAnimationFrame(rafId); rafId=null; }
+function loop(t){
+  const dt=Math.min(0.05,(t-lastT)/1000); lastT=t; tGlobal+=dt;
+  update(dt); drawVillage(); rafId=requestAnimationFrame(loop);
+}
+function update(dt){
+  // jugadora
+  const dx=player.tx-player.x, dy=player.ty-player.y, d=Math.hypot(dx,dy);
+  if(d>4){ const sp=260*dt; player.x+=dx/d*Math.min(sp,d); player.y+=dy/d*Math.min(sp,d); player.moving=true; if(Math.abs(dx)>2) player.dir=dx>0?1:-1; }
+  else if(player.moving){ player.moving=false; if(player.act){ const a=player.act; player.act=null; a(); } }
+  // vecinos
+  for(const n of npcs){
+    const ddx=n.tx-n.x, ddy=n.ty-n.y, dd=Math.hypot(ddx,ddy);
+    if(dd>3){ const sp=45*dt; n.x+=ddx/dd*Math.min(sp,dd); n.y+=ddy/dd*Math.min(sp,dd); n.dir=ddx>0?1:-1; }
+    else { n.wait-=dt; if(n.wait<=0){ n.wait=2+Math.random()*4; n.tx=clamp(n.home[0]+(Math.random()-0.5)*220,40,970); n.ty=clamp(n.home[1]+(Math.random()-0.5)*160,330,700); if(insideBuilding(n.tx,n.ty)){ n.tx=n.home[0]; n.ty=n.home[1]; } } }
+  }
+  for(const b of butterflies){ b.a+=dt*b.sp; b.x+=Math.cos(b.a*0.7)*30*dt; b.y+=Math.sin(b.a)*22*dt; if(b.x<40||b.x>970) b.a+=Math.PI; }
+  if(tapFx){ tapFx.t+=dt; if(tapFx.t>0.5) tapFx=null; }
+}
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function inRect(x,y,r){ return x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h; }
+function insideBuilding(x,y){ return ['taller','tienda','houseA','houseB','plotA','plotB','tend'].some(k=>inRect(x,y,B[k])); }
+
+// --- cálculo de crecimiento
+function progressStats(p){
+  const done=Object.keys(p.done).length, stars=Object.values(p.done).reduce((a,b)=>a+b,0);
+  return {done, stars, lv:p.unlocked, trees:Math.min(TREE_SPOTS.length, 3+done+(p.unlocked-1)*2+(p.master?3:0))};
+}
+function seeded(i){ const x=Math.sin(i*127.1+311.7)*43758.5453; return x-Math.floor(x); }
+
+function drawVillage(){
+  const c=vctx, p=P(); if(!p) return;
+  const st=progressStats(p);
+  c.setTransform(vDpr,0,0,vDpr,0,0);
+  c.fillStyle='#9fd27c'; c.fillRect(0,0,vcanvas.width,vcanvas.height);
+  c.translate(vOffX,vOffY); c.scale(vScale,vScale);
+  // hierba con manchas
+  c.fillStyle='#9fd27c'; c.fillRect(0,0,VW,VH);
+  for(let i=0;i<70;i++){ c.fillStyle=i%2?'rgba(255,255,255,.08)':'rgba(60,120,40,.08)'; c.beginPath(); c.ellipse(seeded(i)*VW, seeded(i+99)*VH, 30+seeded(i+7)*40, 12+seeded(i+3)*14, 0,0,Math.PI*2); c.fill(); }
+  // zona bloqueada (otra orilla)
+  c.fillStyle='#b9d7a3'; c.fillRect(1018,0,182,VH);
+  // caminos
+  c.strokeStyle='#e9d6a6'; c.lineCap='round'; c.lineWidth=34;
+  const pc=[B.plaza.x,B.plaza.y];
+  for(const k of ['taller','tienda','houseA','houseB','tend']){ c.beginPath(); c.moveTo(pc[0],pc[1]); c.lineTo(B[k].door[0],B[k].door[1]); c.stroke(); }
+  c.beginPath(); c.moveTo(pc[0],pc[1]); c.lineTo(990,430); c.stroke();
+  c.strokeStyle='#dcc68f'; c.lineWidth=3; c.setLineDash([2,10]);
+  for(const k of ['taller','tienda','houseA','houseB','tend']){ c.beginPath(); c.moveTo(pc[0],pc[1]); c.lineTo(B[k].door[0],B[k].door[1]); c.stroke(); }
+  c.setLineDash([]);
+  // plaza
+  c.fillStyle='#ead9b0'; c.beginPath(); c.arc(pc[0],pc[1],B.plaza.r,0,Math.PI*2); c.fill();
+  c.strokeStyle='#d8c08a'; c.lineWidth=4; c.stroke();
+  // flores en los caminos (crecen con las estrellas)
+  const nf=Math.min(70, st.stars*2+4);
+  for(let i=0;i<nf;i++){
+    const ks=['taller','tienda','houseA','houseB','tend']; const k=ks[i%ks.length]; const t=0.15+seeded(i+500)*0.7;
+    const x=pc[0]+(B[k].door[0]-pc[0])*t, y=pc[1]+(B[k].door[1]-pc[1])*t; const side=(i%2?1:-1)*(26+seeded(i)*10);
+    const ang=Math.atan2(B[k].door[1]-pc[1],B[k].door[0]-pc[0])+Math.PI/2;
+    drawFlower(c, x+Math.cos(ang)*side, y+Math.sin(ang)*side, ['#e4574f','#f4c430','#ffffff','#e46fa8','#a678d6'][i%5]);
+  }
+  // río
+  c.fillStyle='#6ab7e6'; c.beginPath(); c.moveTo(985,0);
+  for(let y=0;y<=VH;y+=20) c.lineTo(985+Math.sin(y/60)*8, y);
+  c.lineTo(1022+Math.sin(VH/60)*8,VH); for(let y=VH;y>=0;y-=20) c.lineTo(1022+Math.sin(y/60)*8, y); c.closePath(); c.fill();
+  c.strokeStyle='rgba(255,255,255,.5)'; c.lineWidth=2;
+  for(let i=0;i<8;i++){ const y=(i*95+tGlobal*30)%VH; c.beginPath(); c.moveTo(995,y); c.lineTo(1008,y+6); c.stroke(); }
+  // puente (nivel 3)
+  if(st.lv>=3){ c.fillStyle='#a8754a'; c.fillRect(972,410,62,42); c.strokeStyle='#7d5333'; c.lineWidth=3; for(let x=978;x<1032;x+=10){ c.beginPath(); c.moveTo(x,410); c.lineTo(x,452); c.stroke(); } }
+  // zonas bloqueadas
+  drawLockedZone(c,1036,50,148,250,'🤖','Huerto del robot');
+  drawLockedZone(c,1036,400,148,250,'🔭','Laboratorio');
+  // tendedero
+  drawTendedero(c,p);
+  // árboles (crecen con los logros)
+  const trees=TREE_SPOTS.slice(0,st.trees).map(([x,y],i)=>({x,y,i}));
+  // edificios
+  drawBuilding(c,B.taller,'#e9c79a','#c0443d','🧶 TALLER',true);
+  drawShop(c,B.tienda);
+  const pA=DB.profiles[0], pB=DB.profiles[1];
+  drawHouse(c,B.houseA, pA?pA.color:'#c9b89c', pA?('Casa de '+pA.name):'Casa vacía');
+  drawHouse(c,B.houseB, pB?pB.color:'#c9b89c', pB?('Casa de '+pB.name):'Casa vacía');
+  drawPlot(c,B.plotA,pA); drawPlot(c,B.plotB,pB);
+  // fuente / pozo
+  if(st.lv>=2) drawFountain(c,pc[0],pc[1]); else drawWell(c,pc[0],pc[1]);
+  if(st.lv>=2) for(const [lx,ly] of [[505,350],[695,350],[505,510],[695,510]]) drawLamp(c,lx,ly);
+  if(st.lv>=3) drawBunting(c);
+  // entidades ordenadas por y
+  const ents=[...trees.map(t=>({y:t.y,d:()=>drawTree(c,t.x,t.y,t.i)})), ...npcs.map(n=>({y:n.y,d:()=>drawNPC(c,n)})), {y:player.y,d:()=>drawPlayer(c)}];
+  ents.sort((a,b)=>a.y-b.y).forEach(e=>e.d());
+  c.fillStyle='#000'; for(const b of butterflies){ c.font='22px serif'; c.textAlign='center'; c.fillText('🦋',b.x,b.y); }
+  if(tapFx){ c.strokeStyle=`rgba(255,255,255,${1-tapFx.t*2})`; c.lineWidth=4; c.beginPath(); c.ellipse(tapFx.x,tapFx.y,10+tapFx.t*40,5+tapFx.t*20,0,0,Math.PI*2); c.stroke(); }
+}
+function drawFlower(c,x,y,col){ c.fillStyle=col; for(let k=0;k<5;k++){ const a=k/5*Math.PI*2; c.beginPath(); c.arc(x+Math.cos(a)*4,y+Math.sin(a)*4,3.4,0,Math.PI*2); c.fill(); } c.fillStyle='#f2a93b'; c.beginPath(); c.arc(x,y,2.6,0,Math.PI*2); c.fill(); }
+function drawTree(c,x,y,i){
+  c.fillStyle='rgba(0,0,0,.12)'; c.beginPath(); c.ellipse(x,y+4,30,10,0,0,Math.PI*2); c.fill();
+  c.fillStyle='#8a5a36'; c.fillRect(x-6,y-26,12,30);
+  const g=['#4f9e45','#5bb04f','#68bd5a']; const sway=Math.sin(tGlobal*1.5+i)*1.5;
+  c.fillStyle=g[0]; c.beginPath(); c.arc(x-16+sway,y-36,20,0,Math.PI*2); c.fill();
+  c.fillStyle=g[1]; c.beginPath(); c.arc(x+16+sway,y-38,20,0,Math.PI*2); c.fill();
+  c.fillStyle=g[2]; c.beginPath(); c.arc(x+sway,y-56,24,0,Math.PI*2); c.fill();
+  if(i%3===0){ c.fillStyle=i%2?'#f29b38':'#e4574f'; for(let k=0;k<4;k++){ c.beginPath(); c.arc(x-14+k*9+sway,y-44+(k%2)*10,3.5,0,Math.PI*2); c.fill(); } }
+}
+function drawBuilding(c,b,wall,roof,label,big){
+  c.fillStyle='rgba(0,0,0,.12)'; c.fillRect(b.x+8,b.y+b.h-8,b.w,14);
+  const roofH=b.h*0.38;
+  c.fillStyle=wall; roundRect(c,b.x+12,b.y+roofH-6,b.w-24,b.h-roofH+6,10); c.fill();
+  c.strokeStyle=shade(wall,-0.25); c.lineWidth=3; c.stroke();
+  c.fillStyle=roof; c.beginPath(); c.moveTo(b.x,b.y+roofH+4); c.lineTo(b.x+b.w/2,b.y); c.lineTo(b.x+b.w,b.y+roofH+4); c.closePath(); c.fill();
+  c.strokeStyle=shade(roof,-0.25); c.stroke();
+  // puerta
+  const dw=big?46:34, dh=big?62:48; c.fillStyle='#8a5a36'; roundRect(c,b.x+b.w/2-dw/2,b.y+b.h-dh,dw,dh,8); c.fill();
+  c.fillStyle='#f4c430'; c.beginPath(); c.arc(b.x+b.w/2+dw/4,b.y+b.h-dh/2,3,0,Math.PI*2); c.fill();
+  // ventanas
+  c.fillStyle='#bfe3f2'; c.strokeStyle='#fff'; c.lineWidth=4;
+  for(const wx of [b.x+30, b.x+b.w-30-40]){ roundRect(c,wx,b.y+roofH+18,40,34,6); c.fill(); c.stroke(); }
+  // cartel
+  c.font=`800 ${big?24:18}px 'Baloo 2',sans-serif`; const tw=c.measureText(label).width+22;
+  c.fillStyle='#fffaf1'; roundRect(c,b.x+b.w/2-tw/2,b.y+roofH-22,tw,32,10); c.fill(); c.strokeStyle='#c9a978'; c.lineWidth=3; c.stroke();
+  c.fillStyle='#5a3d22'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(label,b.x+b.w/2,b.y+roofH-5);
+}
+function drawHouse(c,b,color,label){ drawBuilding(c,b,shade(color,0.6),shade(color,-0.05),label,false); }
+function drawShop(c,b){
+  drawBuilding(c,b,'#f3e4c4','#8c63c9','🏪 TIENDA',false);
+  // toldo a rayas
+  const y=b.y+b.h*0.38+30; for(let i=0;i<8;i++){ c.fillStyle=i%2?'#fff':'#e4574f'; c.beginPath(); const x=b.x+16+i*(b.w-32)/8; c.moveTo(x,y); c.lineTo(x+(b.w-32)/8,y); c.lineTo(x+(b.w-32)/16,y+14); c.closePath(); c.fill(); }
+}
+function drawPlot(c,b,p){
+  c.fillStyle='#8b5e3c'; roundRect(c,b.x,b.y,b.w,b.h,10); c.fill();
+  c.strokeStyle='#d7b98c'; c.lineWidth=5; c.stroke();
+  const cw=(b.w-10)/8, ch=(b.h-10)/4;
+  c.fillStyle='#a8d58a';
+  for(let i=0;i<32;i++){ const x=b.x+5+(i%8)*cw, y=b.y+5+Math.floor(i/8)*ch; roundRect(c,x+1,y+1,cw-2,ch-2,4); c.fill(); }
+  if(!p) return;
+  c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#000';
+  p.garden.forEach((k,i)=>{ if(!k) return; const info=itemInfo(k); const x=b.x+5+(i%8)*cw+cw/2, y=b.y+5+Math.floor(i/8)*ch+ch/2;
+    c.font=`${ch*0.9}px serif`; c.fillText(info.e,x,y+1); if(info.f){ c.font=`${ch*0.45}px serif`; c.fillText(info.f,x+cw*0.28,y+ch*0.25); } });
+  // valla
+  c.strokeStyle='#f6ead2'; c.lineWidth=3; for(let x=b.x;x<=b.x+b.w;x+=14){ c.beginPath(); c.moveTo(x,b.y+b.h-2); c.lineTo(x,b.y+b.h+10); c.stroke(); }
+}
+function drawFountain(c,x,y){
+  c.fillStyle='#b7c3cc'; c.beginPath(); c.ellipse(x,y+6,46,22,0,0,Math.PI*2); c.fill();
+  c.fillStyle='#7fc6ee'; c.beginPath(); c.ellipse(x,y+4,38,16,0,0,Math.PI*2); c.fill();
+  c.fillStyle='#b7c3cc'; c.fillRect(x-6,y-30,12,34);
+  for(let k=0;k<6;k++){ const a=tGlobal*2+k; c.fillStyle='rgba(255,255,255,.8)'; c.beginPath(); c.arc(x+Math.cos(k)*20*((a%1)), y-30+((a*40)%30), 2.5,0,Math.PI*2); c.fill(); }
+}
+function drawWell(c,x,y){ c.fillStyle='#b7a58a'; c.beginPath(); c.ellipse(x,y,26,14,0,0,Math.PI*2); c.fill(); c.fillStyle='#4e7aa0'; c.beginPath(); c.ellipse(x,y-2,18,8,0,0,Math.PI*2); c.fill(); c.strokeStyle='#8a5a36'; c.lineWidth=4; c.beginPath(); c.moveTo(x-22,y); c.lineTo(x-22,y-36); c.lineTo(x+22,y-36); c.lineTo(x+22,y); c.stroke(); }
+function drawLamp(c,x,y){ c.fillStyle='#5a4a3a'; c.fillRect(x-3,y-46,6,46); c.fillStyle=`rgba(255,220,120,${0.7+Math.sin(tGlobal*3+x)*0.2})`; c.beginPath(); c.arc(x,y-52,9,0,Math.PI*2); c.fill(); }
+function drawBunting(c){
+  const pts=[[480,330],[600,300],[720,330]];
+  c.strokeStyle='#8a5a36'; c.lineWidth=2; c.beginPath(); c.moveTo(...pts[0]); c.quadraticCurveTo(...pts[1],...pts[2]); c.stroke();
+  const cols=Object.values(COLORS).map(o=>o.c);
+  for(let i=0;i<12;i++){ const t=(i+0.5)/12; const x=(1-t)*(1-t)*pts[0][0]+2*(1-t)*t*pts[1][0]+t*t*pts[2][0], y=(1-t)*(1-t)*pts[0][1]+2*(1-t)*t*pts[1][1]+t*t*pts[2][1];
+    c.fillStyle=cols[i%cols.length]; c.beginPath(); c.moveTo(x-7,y); c.lineTo(x+7,y); c.lineTo(x,y+14); c.closePath(); c.fill(); }
+}
+function drawLockedZone(c,x,y,w,h,icon,label){
+  c.fillStyle='rgba(255,255,255,.25)'; roundRect(c,x,y,w,h,14); c.fill();
+  c.strokeStyle='#a8754a'; c.lineWidth=4; c.setLineDash([10,8]); roundRect(c,x,y,w,h,14); c.stroke(); c.setLineDash([]);
+  c.fillStyle='#000'; c.font='54px serif'; c.textAlign='center'; c.textBaseline='middle'; c.globalAlpha=.55; c.fillText(icon,x+w/2,y+h/2-30); c.globalAlpha=1;
+  c.font='30px serif'; c.fillText('🔒',x+w/2,y+h/2+22);
+  c.font="800 17px 'Baloo 2',sans-serif"; c.fillStyle='#5a3d22'; c.fillText(label,x+w/2,y+h/2+58); c.font="600 14px 'Baloo 2',sans-serif"; c.fillText('Próximamente',x+w/2,y+h/2+78);
+}
+function drawTendedero(c,p){
+  const x1=770,x2=950,y=120;
+  c.strokeStyle='#8a5a36'; c.lineWidth=6; c.beginPath(); c.moveTo(x1,y+90); c.lineTo(x1,y-10); c.moveTo(x2,y+90); c.lineTo(x2,y-10); c.stroke();
+  c.strokeStyle='#d9c7a6'; c.lineWidth=2; c.beginPath(); c.moveTo(x1,y); c.quadraticCurveTo((x1+x2)/2,y+16,x2,y); c.stroke();
+  const fabs=(p.fabrics||[]).slice(-4);
+  if(!fabs.length){ c.font="600 14px 'Baloo 2',sans-serif"; c.fillStyle='#5a3d22'; c.textAlign='center'; c.fillText('Tendedero',(x1+x2)/2,y+60); return; }
+  fabs.forEach((f,i)=>{
+    const fx=x1+14+i*42, fy=y+6+Math.sin((i+0.5)/4*Math.PI)*8, s=Math.max(3,Math.min(6,36/f.w));
+    const rows=Math.ceil(f.cells.length/f.w), sway=Math.sin(tGlobal*2+i)*1.5;
+    c.save(); c.translate(fx+sway,fy);
+    c.fillStyle='#efe3cc'; c.fillRect(-1,0,f.w*s+2,rows*s+2);
+    f.cells.forEach((k,j)=>{ if(!k||!COLORS[k]) return; c.fillStyle=COLORS[k].c; c.fillRect((j%f.w)*s,Math.floor(j/f.w)*s+1,s-0.5,s-0.5); });
+    c.fillStyle='#c0443d'; c.fillRect(2,-3,3,6); c.fillRect(f.w*s-5,-3,3,6);
+    c.restore();
+  });
+}
+function drawGirl(c,x,y,color,walk,sc=1){
+  c.save(); c.translate(x,y); c.scale(sc,sc);
+  c.fillStyle='rgba(0,0,0,.15)'; c.beginPath(); c.ellipse(0,2,16,6,0,0,Math.PI*2); c.fill();
+  const lg=Math.sin(walk)*5;
+  c.strokeStyle='#6b4a32'; c.lineWidth=4; c.lineCap='round';
+  c.beginPath(); c.moveTo(-5,-10); c.lineTo(-5-lg/2,0); c.moveTo(5,-10); c.lineTo(5+lg/2,0); c.stroke();
+  c.fillStyle=color; c.beginPath(); c.moveTo(-14,-10); c.lineTo(14,-10); c.lineTo(8,-34); c.lineTo(-8,-34); c.closePath(); c.fill();
+  c.fillStyle='#f2c9a0'; c.beginPath(); c.arc(0,-44,12,0,Math.PI*2); c.fill();
+  c.fillStyle='#6b4226'; c.beginPath(); c.arc(0,-47,12.5,Math.PI,Math.PI*2); c.fill();
+  c.beginPath(); c.arc(-11,-40,5,0,Math.PI*2); c.arc(11,-40,5,0,Math.PI*2); c.fill();
+  c.fillStyle='#3a2a1c'; c.beginPath(); c.arc(-4,-43,1.8,0,Math.PI*2); c.arc(4,-43,1.8,0,Math.PI*2); c.fill();
+  c.fillStyle='#e88f8f'; c.beginPath(); c.arc(-7,-39,2.2,0,Math.PI*2); c.arc(7,-39,2.2,0,Math.PI*2); c.fill();
+  c.restore();
+}
+function drawPlayer(c){
+  const p=P(); const walk=player.moving?tGlobal*12:0;
+  drawGirl(c,player.x,player.y,p.color,walk,1.25);
+  c.font="800 16px 'Baloo 2',sans-serif"; c.textAlign='center'; c.textBaseline='middle';
+  const tw=c.measureText(p.name).width+14; c.fillStyle='rgba(255,250,241,.9)'; roundRect(c,player.x-tw/2,player.y-92,tw,22,8); c.fill();
+  c.fillStyle='#5a3d22'; c.fillText(p.name,player.x,player.y-81);
+}
+function drawNPC(c,n){
+  const bob=Math.abs(Math.sin(tGlobal*6+n.x))*((Math.hypot(n.tx-n.x,n.ty-n.y)>3)?4:0);
+  c.fillStyle='rgba(0,0,0,.15)'; c.beginPath(); c.ellipse(n.x,n.y+2,16,6,0,0,Math.PI*2); c.fill();
+  c.fillStyle='#000'; c.font='40px serif'; c.textAlign='center'; c.textBaseline='bottom'; c.fillText(NPCS[n.k].e,n.x,n.y-bob+4);
+  if(n.k==='alcalde'){ c.font='26px serif'; c.fillText('🎩',n.x,n.y-bob-28); c.font="800 13px 'Baloo 2',sans-serif"; c.fillStyle='#5a3d22'; c.textBaseline='middle'; c.fillText('Alcalde',n.x,n.y+14); }
+  if(hasEncargo(n.k)){ c.fillStyle='#fffaf1'; c.beginPath(); c.arc(n.x+18,n.y-48,11,0,Math.PI*2); c.fill(); c.strokeStyle='#f2b632'; c.lineWidth=3; c.stroke(); c.fillStyle='#e4574f'; c.font="800 16px 'Baloo 2',sans-serif"; c.textBaseline='middle'; c.fillText('!',n.x+18,n.y-47); }
+}
+function hasEncargo(k){ const p=P(); if(k==='alcalde') return mailCount()>0; return ENC.some(e=>e.npc===k && e.lvl<=p.unlocked && !p.done[e.id]); }
+
+// --- toques en el pueblo
+vcanvas.addEventListener('pointerdown',ev=>{
+  const r=vcanvas.getBoundingClientRect(); const x=(ev.clientX-r.left-vOffX)/vScale, y=(ev.clientY-r.top-vOffY)/vScale;
+  beep(520,0.04);
+  // vecinos
+  for(const n of npcs){ if(Math.hypot(n.x-x,n.y-15-y)<34){ talkNPC(n); return; } }
+  const p=P(); const mine=DB.cur===0?'A':'B', other=mine==='A'?'B':'A';
+  const go=(door,fn)=>{ player.tx=door[0]; player.ty=door[1]; player.act=fn; tapFx={x:door[0],y:door[1],t:0}; };
+  if(inRect(x,y,B.taller)) return go(B.taller.door,openWorkshop);
+  if(inRect(x,y,B.tienda)) return go(B.tienda.door,openShop);
+  if(inRect(x,y,B.tend)) return go(B.tend.door,()=>openBook('telas'));
+  if(inRect(x,y,B['house'+mine])||inRect(x,y,B['plot'+mine])) return go(B['house'+mine].door,()=>openHouse(DB.cur));
+  if(inRect(x,y,B['house'+other])||inRect(x,y,B['plot'+other])) return go(B['house'+other].door,()=>visitOther());
+  if(x>=968){ return go([960,430],()=>say({face:'🦦',name:NPCS.lia.n,text:'Al otro lado del río están el Huerto del robot y el Laboratorio. ¡Se abrirán más adelante, cuando seas una gran tejedora!'})); }
+  player.tx=clamp(x,20,960); player.ty=clamp(y,40,705); player.act=null; tapFx={x:player.tx,y:player.ty,t:0};
+});
+async function talkNPC(n){
+  const info=NPCS[n.k]; const p=P();
+  if(n.k==='alcalde'){
+    const c=mailCount();
+    const r=await say({face:'🧔',name:info.n,text:c?`¡Hola, ${p.name}! Tienes ${c===1?'algo nuevo':c+' cosas nuevas'} en tu buzón.`:pick(info.hi),buttons:c?[{t:'Luego'},{t:'📬 Abrir buzón',cls:'primary'}]:[{t:'¡Adiós, papá!',cls:'primary'}]});
+    if(c&&r===1) openMail(); return;
+  }
+  let text=pick(info.hi);
+  if(hasEncargo(n.k)) text='¡Hola, '+p.name+'! Tengo un encargo para ti en el taller. ¿Vamos?';
+  const r=await say({face:info.e,name:info.n,text,buttons:hasEncargo(n.k)?[{t:'Luego'},{t:'¡Al taller!',cls:'primary'}]:[{t:'¡Adiós!',cls:'primary'}]});
+  if(hasEncargo(n.k)&&r===1){ player.tx=B.taller.door[0]; player.ty=B.taller.door[1]; player.act=openWorkshop; }
+}
+async function visitOther(){
+  const oi=DB.cur===0?1:0, o=DB.profiles[oi];
+  if(!o){ say({face:'🏚️',name:'Casa vacía',text:'Esta casa espera a una nueva vecina. Se puede crear otra jugadora desde la pantalla de inicio.'}); return; }
+  const r=await say({face:'🏡',name:'Casa de '+o.name,text:`Es la casa de ${o.name}. ¿Quieres ver su jardín?`,buttons:[{t:'No'},{t:'Ver jardín',cls:'primary'}]});
+  if(r===1) openHouse(oi);
+}
+
+// --- HUD
+function updateHUD(){
+  const p=P();
+  $('#hud-name').innerHTML=`<span class="dot" style="width:22px;height:22px;background:${p.color}"></span>${esc(p.name)} · Nivel ${p.unlocked}`;
+  $('#hud-coins').textContent='🔘 '+p.coins;
+  $('#hb-voz').textContent=p.voice?'🔊':'🔇';
+  renderBracelet($('#hud-bracelet'),p);
+  const mc=mailCount(); const bd=$('#mail-badge'); bd.style.display=mc?'flex':'none'; bd.textContent=mc;
+}
+function renderBracelet(box,p){
+  box.innerHTML='<span style="font-size:15px;margin-right:6px">Mi pulsera</span>';
+  if(!p.beads.length){ box.innerHTML+='<span style="font-size:15px;color:#b4a58e">¡Consigue tu primera cuenta!</span>'; return; }
+  p.beads.forEach(b=>{ if(b.startsWith('c:')) box.append(el('span','charm',b.slice(2))); else { const d=el('span','bead'); d.style.background=COLORS[b]?COLORS[b].c:b; box.append(d); } });
+}
+$('#hb-taller').onclick=()=>openWorkshop();
+$('#hb-casa').onclick=()=>openHouse(DB.cur);
+$('#hb-libro').onclick=()=>openBook('historias');
+$('#hb-mail').onclick=()=>openMail();
+$('#hb-voz').onclick=()=>{ const p=P(); p.voice=!p.voice; save(); updateHUD(); toast(p.voice?'🔊 La voz leerá los textos':'🔇 Voz apagada (puedes usar los botones 🔊)'); if(p.voice) speakNow('Voz encendida'); };
+$('#hb-perfil').onclick=()=>{ renderProfiles(); show('profiles'); };
+
+/* =========================================================
+   TALLER
+   ========================================================= */
+let wsTab=1;
+function openWorkshop(){ wsTab=P().unlocked; renderWorkshop(); show('workshop'); }
+function renderWorkshop(){
+  const p=P(); $('#ws-coins').textContent='🔘 '+p.coins;
+  const tabs=$('#ws-tabs'); tabs.innerHTML='';
+  [1,2,3].forEach(l=>{ const t=el('button','tab'+(l===wsTab?' sel':'')+(l>p.unlocked?' lock':''), (l>p.unlocked?'🔒 ':'')+`Nivel ${l} · ${LEVELS[l]}`);
+    t.onclick=()=>{ if(l>p.unlocked){ toast('Termina los encargos del nivel '+(l-1)+' para abrir este.'); return; } wsTab=l; renderWorkshop(); }; tabs.append(t); });
+  const list=$('#ws-list'); list.innerHTML='';
+  ENC.filter(e=>e.lvl===wsTab).forEach(e=>{
+    const c=el('button','ecard'); const s=p.done[e.id]||0;
+    c.innerHTML=`<div class="who">${NPCS[e.npc].e}</div><div class="t">${esc(e.title)}</div><div class="badge">${TYPE_NAMES[e.type]}</div><div class="st">${starsHTML(s)}</div><div class="counter">${esc(NPCS[e.npc].n)}</div>`;
+    c.onclick=()=>openPuzzle(e); list.append(c);
+  });
+  const f=el('button','ecard free'); f.innerHTML='<div class="who">🎨</div><div class="t">Diseño libre</div><div class="badge" style="background:#ece0ff;color:#6a45a8">Crea tu propia tela</div><div class="counter">Se cuelga en el tendedero</div>';
+  f.onclick=openDraw; list.append(f);
+}
+
+/* =========================================================
+   PUZLE
+   ========================================================= */
+let PZ=null;
+function variant(e){ return P().age<=7?e.v6:e.v9; }
+function expand(prog){ const out=[]; const rep=prog.rep||1; for(let k=0;k<rep;k++){ for(const t of (prog.main||[])){ if(t==='A') out.push(...(prog.A||[])); else if(t==='B') out.push(...(prog.B||[])); else out.push(t); if(out.length>400) return out; } } return out; }
+function cardCount(prog){ return (prog.main||[]).length+((prog.main||[]).includes('A')?(prog.A||[]).length:0)+((prog.main||[]).includes('B')?(prog.B||[]).length:0); }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+function openPuzzle(e){
+  const v=variant(e);
+  const target = v.t ? v.t.split('') : expand(v.sol);
+  const features = e.type==='seq'?{rep:false,mot:false}: e.type==='rep'?{rep:true,mot:false}: e.type==='custom'?{rep:true,mot:P().age>7}: {rep:true,mot:true};
+  PZ={e,v,target,features,attempts:0,hints:0,t0:Date.now(),best:v.sol?cardCount(v.sol):target.length,
+      prog:{main:[],A:[],B:[],rep:1}, row:'main', running:false, phase:null, predicted:null, fill:null, sel:'r'};
+  if(e.type==='reglas'){ PZ.fill=target.map((c,i)=>i>=target.length-v.miss?'?':c); PZ.sel=uniqColors(target)[0]; }
+  if(e.type==='hilo'){ PZ.prog=Object.assign({main:[],A:[],B:[],rep:1},clone(v.hilo)); PZ.phase='predict'; PZ.features={rep:true,mot:!!(v.sol.A)}; }
+  $('#pz-title').textContent=e.title; $('#pz-type').textContent=TYPE_NAMES[e.type];
+  $('#pz-face').textContent=NPCS[e.npc].e; $('#pz-ask').textContent=e.ask;
+  $('#pz-askspeak').onclick=()=>speakNow(e.ask);
+  setMsg('');
+  show('puzzle'); renderPuzzle(); renderResult([]);
+  speakAuto(e.ask);
+}
+$('#pz-back').onclick=()=>{ if(PZ&&PZ.running) return; stopSpeak(); if(PZ&&PZ.e.type==='custom') openMail(); else openWorkshop(); };
+function uniqColors(arr){ return [...new Set(arr.filter(c=>COLORS[c]))]; }
+function fabS(w){ const avail=Math.min(window.innerWidth*0.42, 460); return Math.max(18,Math.min(40,Math.floor((avail-12)/w))); }
+function setMsg(t,cls){ const m=$('#pz-msg'); m.textContent=t; m.className=cls||''; }
+
+function renderTarget(hl=[]){
+  const box=$('#pz-target'); box.innerHTML='';
+  if(PZ.e.type==='reglas'){
+    const cv=fabricCanvas(PZ.fill,PZ.v.w,{s:fabS(PZ.v.w),hl});
+    cv.style.cursor='pointer';
+    cv.addEventListener('pointerdown',ev=>{
+      const r=cv.getBoundingClientRect(), m=cv._meta; const cx=ev.clientX-r.left-m.pad, cy=ev.clientY-r.top-m.pad;
+      const col=Math.floor(cx/m.s), row=Math.floor(cy/m.s), i=row*m.w+col;
+      const firstMiss=PZ.target.length-PZ.v.miss;
+      if(col<0||col>=m.w||i<firstMiss||i>=PZ.target.length) return;
+      PZ.fill[i]=PZ.sel; beep(700,0.05); renderTarget(); setMsg('');
+    });
+    box.append(cv);
+  } else box.append(fabricCanvas(PZ.target,PZ.v.w,{s:fabS(PZ.v.w),hl}));
+}
+function renderResult(cells,hl=[]){
+  const box=$('#pz-result'); box.innerHTML='';
+  if(PZ.e.type==='reglas'){ $('#pz-reslbl').style.display='none'; return; }
+  $('#pz-reslbl').style.display='';
+  box.append(fabricCanvas(cells,PZ.v.w,{s:fabS(PZ.v.w),ghost:PZ.target.length,hl,bg:'#f6ecd8'}));
+}
+
+const HELP={
+  seq:'Toca los hilos de colores para ponerlos en tu programa. Luego pulsa «Tejer». El telar teje los puntos en orden: de izquierda a derecha y fila a fila.',
+  rep:'¡Truco nuevo! Pon solo el trocito que se repite y usa «Repetir» para decir cuántas veces. Cuantas menos tarjetas uses, más estrellas.',
+  mot:'Un motivo es un trocito de programa con nombre. Toca la fila «Motivo A» o «Motivo B» para llenarla. Luego, en el programa, usa las tarjetas A y B.',
+  reglas:'Mira bien el dibujo: ¿qué se repite? Elige un hilo y toca los huecos con «?» para completarlo.',
+  custom:'Este reto lo ha diseñado el alcalde. Puedes usar todas tus tarjetas. ¡Intenta usar pocas!',
+  hilo:'Hilo ha escrito este programa. Antes de tejer, piensa: ¿hará la tela del pedido? Sigue el programa con el dedo, paso a paso.'
+};
+
+function renderPuzzle(){
+  const R=$('#pz-right'); R.innerHTML='';
+  const t=PZ.e.type;
+  const help=el('div','help'); const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(HELP[t]); help.append(sp, el('div','',esc(HELP[t])));
+  R.append(help);
+  renderTarget();
+  if(t==='reglas'){
+    R.append(el('div','lbl','Elige un hilo'));
+    const pal=el('div','palette');
+    paletteColors().forEach(k=>{ const c=colorCard(k); if(PZ.sel===k) c.style.outline='4px solid #2f5f96'; c.onclick=()=>{ PZ.sel=k; beep(600,0.04); renderPuzzle(); }; pal.append(c); });
+    R.append(pal);
+    const act=el('div','actions'); const b=el('button','btn green','✔ Comprobar'); b.onclick=checkReglas; act.append(b); R.append(act);
+    return;
+  }
+  // filas de programa
+  const locked = PZ.phase==='predict' || PZ.running;
+  const rows=[['main', PZ.features.mot?'Programa':'Programa']];
+  if(PZ.features.mot){ rows.push(['A','Motivo A'],['B','Motivo B']); }
+  rows.forEach(([k,label])=>{
+    const r=el('div','prow'+(PZ.row===k&&!locked?' sel':'')+(locked?' locked':''));
+    const nm=el('div','rname',label); if(k==='A') nm.style.color='var(--purple)'; if(k==='B') nm.style.color='var(--teal)'; r.append(nm);
+    const arr=PZ.prog[k];
+    if(!arr.length) r.append(el('span','empty',locked?'(vacío)':'Toca los hilos para añadir…'));
+    arr.forEach((tok,i)=>{ const c=tok==='A'||tok==='B'?tokenCard(tok):colorCard(tok); c.dataset.row=k; c.dataset.i=i;
+      c.onclick=(ev)=>{ ev.stopPropagation(); if(locked) return; arr.splice(i,1); beep(300,0.05); renderPuzzle(); }; r.append(c); });
+    r.onclick=()=>{ if(locked) return; PZ.row=k; renderPuzzle(); };
+    R.append(r);
+  });
+  if(PZ.features.rep){
+    const rb=el('div','repbox'); rb.append(el('span','','🔁 Repetir ×'));
+    const minus=el('button','','–'), n=el('span','n',String(PZ.prog.rep)), plus=el('button','','+');
+    minus.onclick=()=>{ if(locked) return; PZ.prog.rep=Math.max(1,PZ.prog.rep-1); beep(400,0.04); renderPuzzle(); };
+    plus.onclick=()=>{ if(locked) return; PZ.prog.rep=Math.min(12,PZ.prog.rep+1); beep(500,0.04); renderPuzzle(); };
+    rb.append(minus,n,plus); R.append(rb);
+  }
+  const cnt=cardCount(PZ.prog);
+  R.append(el('div','counter',`Tarjetas usadas: ${cnt}`+(t!=='seq'&&t!=='hilo'&&t!=='custom'?` · reto: ${PZ.best} o menos`:'')));
+  if(PZ.phase==='predict'){
+    const q=el('div','help'); q.style.background='#fff4d6'; q.style.borderColor='#ecd290';
+    q.innerHTML='<div style="font-size:30px">🤖</div><div><b>¿El programa de Hilo teje bien la tela del pedido?</b><br>Piénsalo antes de probarlo.</div>';
+    R.append(q);
+    const act=el('div','actions'); const no=el('button','btn','❌ Tiene un error'), si=el('button','btn green','✅ Está bien');
+    no.onclick=()=>predict(false); si.onclick=()=>predict(true); act.append(no,si); R.append(act); return;
+  }
+  R.append(el('div','lbl','Tarjetas'));
+  const pal=el('div','palette');
+  paletteColors().forEach(k=>{ const c=colorCard(k); c.onclick=()=>addCard(k); pal.append(c); });
+  if(PZ.features.mot){ ['A','B'].forEach(k=>{ const c=tokenCard(k); c.onclick=()=>addCard(k); pal.append(c); }); }
+  R.append(pal);
+  const act=el('div','actions');
+  const clr=el('button','btn','↺ Borrar todo'); clr.onclick=()=>{ if(PZ.running) return; PZ.prog={main:[],A:[],B:[],rep:1}; PZ.row='main'; renderPuzzle(); renderResult([]); setMsg(''); };
+  const run=el('button','btn primary','▶ Tejer'); run.onclick=knit; run.disabled=PZ.running;
+  if(PZ.attempts>=3){ const h=el('button','btn blue','💡 Pista'); h.onclick=showHint; act.append(h); }
+  act.append(clr,run); R.append(act);
+}
+function paletteColors(){ const tc=uniqColors(PZ.target); return P().age<=7?COLOR_KEYS.filter(k=>tc.includes(k)||k==='w'):COLOR_KEYS; }
+function colorCard(k){ const c=el('div','ccard'); c.style.background=shade(COLORS[k].c,0.55); c.append(stitchIcon(k,30)); c.title=COLORS[k].n; return c; }
+function tokenCard(k){ const c=el('div','ccard tok'+k,k); return c; }
+function addCard(k){
+  if(PZ.running) return;
+  const row=PZ.row;
+  if((k==='A'||k==='B') && row!=='main'){ toast('Las tarjetas A y B van en el Programa. ¡Toca la fila «Programa»!'); return; }
+  if(PZ.prog[row].length>=16){ toast('¡Esta fila está llena!'); return; }
+  PZ.prog[row].push(k); beep(640+COLOR_KEYS.indexOf(k)*40,0.05); renderPuzzle();
+}
+function showHint(){
+  PZ.hints++;
+  const t=PZ.e.type, v=PZ.v; let h='';
+  if(t==='custom') h=`Mira el pedido fila a fila. ¿Hay algún trocito que se repita? Empieza por los primeros ${Math.min(4,PZ.target.length)} puntos.`;
+  if(t==='seq') h=`Mira el pedido punto a punto. El primero es ${COLORS[PZ.target[0]].n}. Tu programa necesita ${PZ.target.length} puntos.`;
+  else if(t==='rep'){ h=`El trocito que se repite tiene ${v.sol.main.length} puntos y empieza por ${COLORS[v.sol.main[0]].n}. Mira cuántas veces aparece.`; }
+  else if(t==='custom'){}
+  else if(t==='mot'||t==='hilo'){ h=`Cada fila del pedido mide ${v.w} puntos. ¿Cuántos tipos de fila distintos hay? Haz un motivo para cada tipo.`; }
+  say({face:'💡',name:'Pista',text:h});
+}
+
+async function knit(){
+  if(PZ.running) return;
+  const out=expand(PZ.prog);
+  if(!out.length){ setMsg('Tu programa está vacío. ¡Toca los hilos para añadir puntos!','bad'); $('#pz-right').classList.add('shake'); setTimeout(()=>$('#pz-right').classList.remove('shake'),400); return; }
+  if(PZ.prog.main.some(t=>t==='A')&&!PZ.prog.A.length){ setMsg('Usas el motivo A, ¡pero está vacío!','bad'); return; }
+  if(PZ.prog.main.some(t=>t==='B')&&!PZ.prog.B.length){ setMsg('Usas el motivo B, ¡pero está vacío!','bad'); return; }
+  PZ.attempts++; PZ.running=true; renderPuzzle(); setMsg('🧶 Tejiendo…');
+  await animateKnit(out);
+  PZ.running=false;
+  evaluate(out);
+}
+function animateKnit(out){
+  return new Promise(res=>{
+    const n=Math.min(out.length, PZ.target.length+PZ.v.w*2); let i=0;
+    const speed = n>40?45:n>20?70:110;
+    const tick=()=>{ i++; renderResult(out.slice(0,i)); beep(500+COLOR_KEYS.indexOf(out[i-1])*60,0.03,'triangle',0.03); if(i<n) setTimeout(tick,speed); else res(); };
+    tick();
+  });
+}
+function firstDiff(a,b){ const n=Math.min(a.length,b.length); for(let i=0;i<n;i++) if(a[i]!==b[i]) return i; return a.length===b.length?-1:n; }
+
+function evaluate(out){
+  const T=PZ.target, d=firstDiff(out,T);
+  if(d===-1){ success(); return; }
+  renderPuzzle();
+  if(d<Math.min(out.length,T.length)){
+    renderResult(out.slice(0,Math.min(out.length,T.length+PZ.v.w*2)),[d]); renderTarget([d]);
+    setMsg(`¡Uy! El punto ${d+1} debería ser ${COLORS[T[d]].n} y es ${COLORS[out[d]].n}. ¡Busca el error en el programa!`,'bad');
+  } else if(out.length<T.length){
+    setMsg(`¡Casi! Faltan puntos: tu tela tiene ${out.length} y el pedido ${T.length}.`,'bad');
+  } else {
+    renderResult(out.slice(0,T.length+PZ.v.w*2),[T.length]);
+    setMsg(`¡Te sobran puntos! Tu tela tiene ${out.length} y el pedido solo ${T.length}.`,'bad');
+  }
+  speakAuto($('#pz-msg').textContent); beep(220,0.2,'sawtooth',0.03);
+  if(PZ.e.type==='hilo' && PZ.phase==='fix-intro'){ PZ.phase=null; }
+  if(PZ.attempts===3) toast('💡 Ya puedes pedir una pista');
+}
+
+async function predict(saysOk){
+  PZ.predicted=saysOk; PZ.phase=null;
+  const out=expand(PZ.prog); const hiloOk=firstDiff(out,PZ.target)===-1;
+  PZ.predictRight = (saysOk===hiloOk);
+  PZ.running=true; renderPuzzle(); setMsg('🤖 Probamos el programa de Hilo…');
+  await animateKnit(out); PZ.running=false;
+  if(hiloOk){
+    if(PZ.predictRight) await say({face:'🤖',name:'Hilo',text:'¡Bip! Tenías razón: esta vez mi programa estaba bien. ¡Gracias por comprobarlo!'});
+    else await say({face:'🤖',name:'Hilo',text:'Pues esta vez sí estaba bien. ¡Comprobar siempre ayuda a estar segura!'});
+    success(); return;
+  }
+  const d=firstDiff(out,PZ.target);
+  await say({face:'🤖',name:'Hilo',text: PZ.predictRight?'¡Bien visto! Me había equivocado. ¿Me ayudas a arreglar el programa?':'¡Ups! Mi programa tenía un error. Fíjate bien en la tela… ¿Me ayudas a arreglarlo?'});
+  PZ.attempts=0; renderPuzzle(); evaluate(out);
+}
+
+function checkReglas(){
+  const miss=PZ.fill.slice(PZ.target.length-PZ.v.miss);
+  if(miss.includes('?')){ setMsg('Todavía quedan huecos con «?».','bad'); return; }
+  PZ.attempts++;
+  const d=firstDiff(PZ.fill,PZ.target);
+  if(d===-1){ success(); return; }
+  renderTarget([d]); setMsg(`El punto ${d+1} no sigue la regla. ¡Mira otra vez qué se repite!`,'bad'); speakAuto($('#pz-msg').textContent); beep(220,0.2,'sawtooth',0.03);
+}
+
+async function success(){
+  const p=P(), e=PZ.e, t=e.type; let stars=3, note='';
+  if(t==='custom') return successCustom();
+  if(t==='seq'||t==='reglas'){ stars=PZ.attempts<=1?3:PZ.attempts===2?2:1; }
+  else if(t==='rep'||t==='mot'){
+    const cc=cardCount(PZ.prog);
+    stars = cc<=PZ.best?3: cc<=PZ.best+3?2:1;
+    if(stars<3) note=`¡Funciona! Has usado ${cc} tarjetas. Se puede hacer con ${PZ.best}. ¿Te atreves a intentarlo otra vez?`;
+  } else if(t==='hilo'){ stars=PZ.predictRight?3:2; if(!PZ.predictRight) note='La próxima vez, sigue el programa de Hilo con el dedo antes de decidir.'; }
+  const first=!p.done[e.id], prevStars=p.done[e.id]||0;
+  p.done[e.id]=Math.max(prevStars,stars);
+  recordStats(p,e.id,stars);
+  const firstTry=PZ.attempts<=1&&stars===3;
+  p.streak = firstTry ? (p.streak||0)+1 : 0;
+  // recompensas
+  let coins = first? stars*5 : Math.max(0,(stars-prevStars))*5;
+  if(t==='hilo'&&PZ.predictRight&&first) coins+=5;
+  p.coins+=coins;
+  const items=[];
+  if(coins) items.push(`🔘 +${coins} botones`);
+  let plant=null, story=null;
+  if(first){
+    const [pe,pn]=pick(PLANTS[e.lvl]); plant={k:'pl_'+pe,e:pe,n:pn}; p.inv[plant.k]=(p.inv[plant.k]||0)+1; items.push(`${pe} ${pn}`);
+    const main=mostCommon(PZ.target); p.beads.push(main); items.push('📿 cuenta nueva');
+    if(!p.stories.includes(e.story)){ p.stories.push(e.story); story=STORIES[e.story]; }
+    p.fabrics.push({cells:PZ.target.slice(),w:PZ.v.w,name:e.title,by:e.npc});
+  }
+  save(`${first?'Completó':'Repitió'}: ${e.title} ${'★'.repeat(stars)}`); fanfare();
+  let html=`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:26px;font-weight:800">¡${esc(NPCS[e.npc].n.split(' ')[0])} está feliz!</div>`;
+  if(note) html+=`<div style="font-size:18px">${esc(note)}</div>`;
+  if(items.length) html+=`<div class="rw-items">${items.map(i=>`<div class="rw-item">${i}</div>`).join('')}</div>`;
+  if(story) html+=`<div class="story"><b>${story.e} ${esc(story.t)}</b><br>${esc(story.x)}</div>`;
+  if(plant) html+=`<div style="font-size:16px;color:var(--soft)">Puedes plantar tu ${esc(plant.n)} en el jardín de tu casa.</div>`;
+  html+='</div>';
+  if(story) speakAuto(story.x);
+  const canImprove = stars<3 && t!=='hilo';
+  const choice = await say({html,buttons:canImprove?[{t:'Intentarlo otra vez'},{t:'Seguir',cls:'primary'}]:[{t:'¡Genial!',cls:'primary'}],center:true});
+  await checkLevelUp();
+  if(canImprove && choice===0){ openPuzzle(e); return; }
+  openWorkshop();
+}
+function mostCommon(arr){ const c={}; arr.forEach(x=>c[x]=(c[x]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1])[0][0]; }
+
+async function checkLevelUp(){
+  const p=P();
+  while(p.unlocked<3){
+    const l=p.unlocked; const lvEnc=ENC.filter(e=>e.lvl===l); const nd=lvEnc.filter(e=>p.done[e.id]).length;
+    const fast = p.streak>=3 && nd>=3;
+    if(nd<lvEnc.length && !fast) break;
+    p.unlocked=l+1; p.streak=0;
+    const sp=SPECIAL['L'+l]; p.inv['L'+l]=(p.inv['L'+l]||0)+1; p.beads.push('c:⭐'); p.coins+=10; save('¡Sube al nivel '+(l+1)+'!');
+    const news = l===1?'Han llegado Bruno el oso y Lía la nutria, ¡y la plaza tiene fuente y farolas nuevas!':'Han llegado Nube la coneja y Hilo el robot. ¡Y hay un puente nuevo sobre el río!';
+    fanfare();
+    await say({center:true,html:`<div class="reward"><div style="font-size:64px">🎉</div><div style="font-size:30px;font-weight:800">¡Nivel ${l+1}: ${LEVELS[l+1]}!</div>${fast&&nd<lvEnc.length?'<div style="font-size:18px">¡Vas tan rápida que pasas de nivel antes de tiempo!</div>':''}<div class="rw-items"><div class="rw-item">${sp.e}${sp.f} ${esc(sp.n)}</div><div class="rw-item">⭐ dije para tu pulsera</div><div class="rw-item">🔘 +10 botones</div></div><div style="font-size:19px">${esc(news)}</div></div>`,buttons:[{t:'¡Bien!',cls:'primary'}]});
+    speakAuto('Nivel '+(l+1)+'. '+news);
+  }
+  if(!p.master && ENC.every(e=>p.done[e.id])){
+    p.master=true; p.inv.M=(p.inv.M||0)+1; p.beads.push('c:👑'); p.coins+=20; save('¡Maestra tejedora!'); fanfare();
+    await say({center:true,html:`<div class="reward"><div style="font-size:64px">👑</div><div style="font-size:30px;font-weight:800">¡Maestra tejedora!</div><div class="rw-items"><div class="rw-item">🌳🌈 Árbol arcoíris</div><div class="rw-item">👑 dije de corona</div><div class="rw-item">🔘 +20 botones</div></div><div style="font-size:19px">Has terminado todos los encargos. Hilo dice que muy pronto se abrirá el Huerto del robot…</div></div>`,buttons:[{t:'¡Hurra!',cls:'primary'}]});
+  }
+}
+
+/* =========================================================
+   CASA Y JARDÍN
+   ========================================================= */
+let houseIdx=0, invSel=null;
+function openHouse(i){ houseIdx=i; invSel=null; renderHouse(); show('house'); }
+function renderHouse(){
+  const p=DB.profiles[houseIdx]; const mine=houseIdx===DB.cur;
+  $('#house-title').textContent=mine?'🏡 Mi casa y mi jardín':'🏡 Casa de '+p.name;
+  $('#house-coins').textContent='🔘 '+P().coins;
+  const g=$('#garden'); g.innerHTML='';
+  p.garden.forEach((k,i)=>{
+    const c=el('div','gcell'+(!k&&invSel&&mine?' drop':''));
+    if(k){ const info=itemInfo(k); c.textContent=info.e; if(info.f) c.append(el('span','fr',info.f)); }
+    c.onclick=()=>{
+      if(!mine) return;
+      if(k){ p.garden[i]=null; p.inv[k]=(p.inv[k]||0)+1; beep(350,0.05); }
+      else if(invSel && p.inv[invSel]>0){ p.garden[i]=invSel; p.inv[invSel]--; if(!p.inv[invSel]){ delete p.inv[invSel]; invSel=null; } beep(760,0.07,'triangle'); }
+      else toast('Elige una planta de tu cesta y toca un hueco');
+      save(); renderHouse();
+    };
+    g.append(c);
+  });
+  const inv=$('#inv'); inv.innerHTML='';
+  if(mine){
+    inv.append(el('div','lbl','Mi cesta'));
+    const ig=el('div','invgrid'); const keys=Object.keys(p.inv).filter(k=>p.inv[k]>0);
+    if(!keys.length) ig.append(el('div','counter','Tu cesta está vacía. ¡Completa encargos para ganar plantas o compra en la tienda!'));
+    keys.forEach(k=>{ const info=itemInfo(k); const b=el('button','invitem'+(invSel===k?' sel':'')); b.innerHTML=`${info.e}${info.f?`<span class="fr">${info.f}</span>`:''}<small>×${p.inv[k]}</small>`; b.title=info.n;
+      b.onclick=()=>{ invSel=invSel===k?null:k; beep(600,0.04); renderHouse(); if(invSel) toast(info.n+': toca un hueco del jardín',1600); }; ig.append(b); });
+    inv.append(ig);
+    inv.append(el('div','help','<div>💡 Toca una planta de la cesta y luego un hueco del jardín. Si tocas algo ya plantado, vuelve a la cesta. ¡Tu jardín también se ve en el pueblo!</div>'));
+    const sb=el('button','btn blue','🏪 Ir a la tienda'); sb.onclick=openShop; inv.append(sb);
+  } else inv.append(el('div','help',`<div>Este es el jardín de ${esc(p.name)}. ¡Solo ella puede cambiarlo!</div>`));
+  inv.append(el('div','lbl','Pulsera'));
+  const br=el('div','chip bracelet'); renderBracelet(br,p); inv.append(br);
+}
+
+/* =========================================================
+   TIENDA
+   ========================================================= */
+function openShop(){ renderShop(); show('shop'); const p=P(); if(!p._shopHi){ p._shopHi=true; say({face:'🐔',name:NPCS.coco.n,text:'¡Bienvenida a mi tienda! Aquí puedes cambiar tus botones por cosas bonitas para tu jardín.'}); } }
+function renderShop(){
+  const p=P(); $('#shop-coins').textContent='🔘 '+p.coins;
+  const g=$('#shopgrid'); g.innerHTML='';
+  SHOP.forEach(s=>{
+    const c=el('div','sitem'); c.innerHTML=`<div class="e">${s.e}</div><div class="n">${esc(s.n)}</div>`;
+    const b=el('button','btn green',`🔘 ${s.p}`); b.disabled=p.coins<s.p;
+    b.onclick=()=>{ if(p.coins<s.p) return; p.coins-=s.p; const k='sh_'+s.k; p.inv[k]=(p.inv[k]||0)+1; save('Compró: '+s.n); fanfare(); toast(`${s.e} ¡${s.n} a tu cesta!`); renderShop(); };
+    c.append(b); g.append(c);
+  });
+  const lock=el('div','sitem'); lock.style.opacity=.6; lock.innerHTML='<div class="e">🤖</div><div class="n">Robot jardinero</div><div class="counter">🔒 Muy pronto…</div>'; g.append(lock);
+}
+
+/* =========================================================
+   LIBRO
+   ========================================================= */
+let bookTab='historias';
+function openBook(tab){ bookTab=tab; renderBook(); show('book'); }
+function renderBook(){
+  const p=P(); const tabs=$('#book-tabs'); tabs.innerHTML='';
+  [['historias','📜 Historias'],['telas','🧵 Mis telas']].forEach(([k,t])=>{ const b=el('button','tab'+(bookTab===k?' sel':''),t); b.onclick=()=>{bookTab=k; renderBook();}; tabs.append(b); });
+  const body=$('#book-body'); body.innerHTML='';
+  if(bookTab==='historias'){
+    const g=el('div','storygrid');
+    Object.entries(STORIES).forEach(([k,s])=>{
+      const has=p.stories.includes(k); const c=el('div','storycard'+(has?'':' lock'));
+      if(has){ c.innerHTML=`<div style="font-size:36px">${s.e}</div><div><b>${esc(s.t)}</b><br>${esc(s.x)}</div>`; const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(s.t+'. '+s.x); c.append(sp); }
+      else c.innerHTML='<div style="font-size:36px">❔</div><div><b>Historia secreta</b><br>Completa encargos para descubrirla.</div>';
+      g.append(c);
+    });
+    body.append(g);
+  } else {
+    const g=el('div','fabgrid');
+    if(!p.fabrics.length) g.append(el('div','counter','Todavía no tienes telas. ¡Ve al taller!'));
+    p.fabrics.slice().reverse().forEach(f=>{ const c=el('div','fabcard'); c.append(fabricCanvas(f.cells,f.w,{s:Math.max(8,Math.min(20,Math.floor(140/f.w)))})); c.append(el('div','',esc(f.name))); g.append(c); });
+    body.append(g);
+  }
+}
+
+/* =========================================================
+   DISEÑO LIBRE
+   ========================================================= */
+let DR={w:8,h:8,cells:[],col:'r',painting:false};
+function openDraw(){ DR.cells=Array(DR.w*DR.h).fill('w'); renderDraw(); show('draw'); }
+function renderDraw(){
+  const g=$('#drawgrid'); g.innerHTML=''; g.style.gridTemplateColumns=`repeat(${DR.w},auto)`;
+  DR.cells.forEach((k,i)=>{ const c=el('div','dcell'); c.style.background=COLORS[k].c; c.dataset.i=i; g.append(c); });
+  const pal=$('#draw-pal'); pal.innerHTML='';
+  COLOR_KEYS.forEach(k=>{ const c=colorCard(k); if(DR.col===k) c.style.outline='4px solid #2f5f96'; c.onclick=()=>{DR.col=k; renderDraw();}; pal.append(c); });
+  const sz=$('#draw-size'); sz.innerHTML='';
+  [[6,6],[8,8],[10,8]].forEach(([w,h])=>{ const b=el('button',(DR.w===w&&DR.h===h)?'sel':'',`${w}×${h}`); b.onclick=()=>{ DR.w=w; DR.h=h; DR.cells=Array(w*h).fill('w'); renderDraw(); }; sz.append(b); });
+}
+function paintAt(x,y){ const t=document.elementFromPoint(x,y); if(t&&t.classList.contains('dcell')){ const i=+t.dataset.i; if(DR.cells[i]!==DR.col){ DR.cells[i]=DR.col; t.style.background=COLORS[DR.col].c; beep(600+COLOR_KEYS.indexOf(DR.col)*40,0.03,'triangle',0.03); } } }
+$('#drawgrid').addEventListener('pointerdown',e=>{ DR.painting=true; paintAt(e.clientX,e.clientY); });
+window.addEventListener('pointermove',e=>{ if(DR.painting) paintAt(e.clientX,e.clientY); });
+window.addEventListener('pointerup',()=>DR.painting=false);
+$('#draw-clear').onclick=()=>{ DR.cells=Array(DR.w*DR.h).fill('w'); renderDraw(); };
+$('#draw-back').onclick=openWorkshop;
+$('#draw-save').onclick=async()=>{
+  const p=P(); const n=p.fabrics.filter(f=>f.free).length+1;
+  p.fabrics.push({cells:DR.cells.slice(),w:DR.w,name:'Mi diseño '+n,free:true});
+  let extra='';
+  if(!p.artist){ p.artist=true; p.beads.push('c:🎨'); extra='<div class="rw-items"><div class="rw-item">🎨 dije de artista para tu pulsera</div></div>'; }
+  save(); fanfare();
+  await say({center:true,html:`<div class="reward"><div style="font-size:56px">🧵</div><div style="font-size:26px;font-weight:800">¡Tela guardada!</div>${extra}<div style="font-size:18px">Ya está colgada en el tendedero del pueblo.</div></div>`});
+  openWorkshop();
+};
+
+/* =========================================================
+   ESTADÍSTICAS Y TIEMPO DE JUEGO
+   ========================================================= */
+function recordStats(p,id,stars){
+  const st=p.stats[id]||{tries:0,hints:0,plays:0,best:0,secs:0};
+  st.tries+=PZ.attempts; st.hints+=PZ.hints||0; st.plays++; st.best=Math.max(st.best,stars);
+  st.secs+=Math.round((Date.now()-PZ.t0)/1000); if(st.firstTry===undefined) st.firstTry=(PZ.attempts<=1); st.last=today();
+  p.stats[id]=st;
+}
+let playTicks=0;
+function startPlayClock(){
+  setInterval(()=>{
+    const p=P(); if(!p||curScreen==='profiles'||document.hidden) return;
+    const d=today(); p.play[d]=(p.play[d]||0)+15; p.updatedAt=Date.now(); saveQuiet();
+    if(++playTicks%20===0) scheduleCloud();
+  },15000);
+  setInterval(()=>{ if(P()&&curScreen!=='profiles') cloudPull(false); },90000);
+}
+
+/* =========================================================
+   NUBE (Google Apps Script)
+   ========================================================= */
+let cloudStatus='off', cloudTimer=null;
+function cloudKey(){ try{ return localStorage.getItem('villaovillo.clave')||''; }catch(e){ return ''; } }
+function cloudReady(){ return !TEST && !!(CFG.scriptUrl && cloudKey()); }
+async function api(action,data={}){
+  const r=await fetch(CFG.scriptUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action,key:cloudKey()},data))});
+  const j=await r.json(); if(!j.ok) throw new Error(j.error||'error'); return j;
+}
+function summary(p){ return {nivel:p.unlocked, encargos:Object.keys(p.done).length, estrellas:Object.values(p.done).reduce((a,b)=>a+b,0), botones:p.coins}; }
+function scheduleCloud(){ if(!cloudReady()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(pushCloud,3000); }
+async function pushCloud(){
+  const p=P(); if(!p||!cloudReady()) return;
+  if(JSON.stringify(p).length>45000) p.fabrics=p.fabrics.slice(-40);
+  const ev=lastEvent; setCloud('sync');
+  try{ await api('save',{profile:p,sum:summary(p),evento:ev}); if(lastEvent===ev) lastEvent=''; else lastEvent=lastEvent.slice(ev.length).replace(/^ · /,''); setCloud('ok'); await flushPending(); }
+  catch(e){ setCloud(e.message==='clave'?'clave':'err'); }
+}
+async function flushPending(){
+  for(const p of DB.profiles){ if(!p) continue;
+    for(const [id,est] of Object.entries(p.pendingMsg||{})){ try{ await api('msgState',{id,estado:est}); delete p.pendingMsg[id]; }catch(e){ return; } }
+  }
+  saveQuiet();
+}
+async function cloudPull(mergeProfiles=true){
+  if(!cloudReady()) return false;
+  setCloud('sync');
+  try{
+    const j=await api('load');
+    if(mergeProfiles){
+      for(const cp of (j.profiles||[])){
+        const st=migrate(cp.state); const i=DB.profiles.findIndex(p=>p&&p.id===st.id);
+        if(i>=0){ if((st.updatedAt||0)>(DB.profiles[i].updatedAt||0)) DB.profiles[i]=st; }
+        else { const free=DB.profiles.findIndex(p=>!p); if(free>=0) DB.profiles[free]=st; }
+      }
+    }
+    DB.msgs=(j.msgs||[]);
+    for(const p of DB.profiles){ if(!p) continue; for(const [id,est] of Object.entries(p.pendingMsg||{})){ const m=DB.msgs.find(m=>m.id===id); if(m) m.estado=est; } }
+    saveQuiet(); setCloud('ok'); flushPending();
+    if(curScreen==='village') updateHUD(); if(curScreen==='mail') renderMail();
+    return true;
+  }catch(e){ setCloud(e.message==='clave'?'clave':'err'); return false; }
+}
+function setCloud(s){ cloudStatus=s; const c=$('#cloudchip'); if(c) c.innerHTML=cloudLabel(); }
+function cloudLabel(){
+  if(TEST) return '🧪 Prueba: sin nube';
+  if(!CFG.scriptUrl) return '☁️ Nube: sin configurar';
+  if(!cloudKey()) return '☁️ Nube: falta la clave';
+  return {off:'☁️ Nube',ok:'☁️ Guardado en la nube',sync:'☁️ Sincronizando…',err:'⚠️ Sin conexión (se guarda en la tablet)',clave:'⚠️ Clave incorrecta'}[cloudStatus]||'☁️';
+}
+
+/* =========================================================
+   PERFILES: nube y copias de seguridad
+   ========================================================= */
+function b64e(s){ return btoa(unescape(encodeURIComponent(s))); }
+function b64d(s){ return decodeURIComponent(escape(atob(s))); }
+function renderProfileTools(){
+  const t=$('#ptools'); if(!t) return; t.innerHTML='';
+  const chip=el('div','chip cloudchip'); chip.id='cloudchip'; chip.innerHTML=cloudLabel(); t.append(chip);
+  if(!TEST){ const cb=el('button','btn','⚙️ Nube'); cb.onclick=configCloud; t.append(cb); }
+  const bk=el('button','btn','💾 Copia de seguridad'); bk.onclick=showBackup; t.append(bk);
+  const rs=el('button','btn','♻️ Restaurar'); rs.onclick=restoreBackup; t.append(rs);
+}
+async function configCloud(){
+  const pr=say({center:true,face:'☁️',name:'Nube familiar',speak:false,
+    html:`<div style="font-size:18px">Escribe la clave de la familia (la que pusiste en el script de Google).</div><input class="inputline" id="cl-key" type="password" value="${esc(cloudKey())}" placeholder="Clave">${CFG.scriptUrl?'':'<div class="counter">Aún falta la dirección del script en config.js.</div>'}`,
+    buttons:[{t:'Cancelar'},{t:'Guardar y probar',cls:'primary'}]});
+  const r=await pr; if(r!==1) return;
+  const v=document.getElementById('cl-key').value.trim();
+  try{ localStorage.setItem('villaovillo.clave',v); }catch(e){}
+  const ok=await cloudPull(true); renderProfiles();
+  toast(ok?'☁️ ¡Conectado a la nube!':'No se pudo conectar. Revisa la clave.');
+  if(ok) for(const p of DB.profiles) if(p){ const c=DB.cur; DB.cur=DB.profiles.indexOf(p); await pushCloud(); DB.cur=c; }
+}
+async function showBackup(){
+  const code='VO1:'+b64e(JSON.stringify({profiles:DB.profiles}));
+  const pr=say({center:true,face:'💾',name:'Copia de seguridad',speak:false,
+    html:`<div style="font-size:18px">Copia este código y guárdalo (por ejemplo, envíatelo por WhatsApp). Con él se recupera la partida de las dos.</div><textarea class="code" id="bk-code" readonly>${esc(code)}</textarea><button class="btn blue" id="bk-copy">📋 Copiar</button>`,
+    buttons:[{t:'Cerrar',cls:'primary'}]});
+  $('#bk-copy').onclick=async()=>{ try{ await navigator.clipboard.writeText(code); toast('📋 Código copiado'); }catch(e){ const ta=$('#bk-code'); ta.select(); toast('Selecciona el texto y cópialo'); } };
+  await pr;
+}
+async function restoreBackup(){
+  const r=await say({center:true,face:'♻️',name:'Restaurar partida',speak:false,
+    html:`<div style="font-size:18px">Pega aquí el código de la copia de seguridad. <b>Sustituirá</b> las partidas de esta tablet.</div><textarea class="code" id="rs-code" placeholder="VO1:..."></textarea>`,
+    buttons:[{t:'Cancelar'},{t:'Restaurar',cls:'primary'}]});
+  if(r!==1) return;
+  const v=(document.getElementById('rs-code').value||'').trim();
+  try{
+    if(!v.startsWith('VO1:')) throw 0;
+    const d=JSON.parse(b64d(v.slice(4)));
+    if(!d.profiles||d.profiles.length!==2) throw 0;
+    DB.profiles=d.profiles.map(migrate); DB.profiles.forEach(p=>{ if(p) p.updatedAt=Date.now(); });
+    saveQuiet(); renderProfiles(); toast('✅ Partidas restauradas');
+    if(cloudReady()) for(let i=0;i<2;i++) if(DB.profiles[i]){ const c=DB.cur; DB.cur=i; await pushCloud(); DB.cur=c; }
+  }catch(e){ toast('Ese código no es válido'); }
+}
+
+/* =========================================================
+   BUZÓN: cartas, tareas y retos del alcalde
+   ========================================================= */
+const MAIL_ICON={carta:'✉️',casa:'🧹',deberes:'📚',reto:'🎯'};
+const MAIL_NAME={carta:'Carta del alcalde',casa:'Tarea de casa',deberes:'Deberes',reto:'Reto del alcalde'};
+function myMsgs(){ const p=P(); if(!p) return []; return (DB.msgs||[]).filter(m=>m.para===p.id && m.estado!=='borrada'); }
+function mailCount(){ const p=P(); if(!p) return 0; return myMsgs().filter(m=>m.estado==='nuevo'||(m.estado==='validada'&&!p.rewarded[m.id])).length; }
+function setMsgState(m,estado){
+  m.estado=estado; const p=P();
+  if(!TEST){ p.pendingMsg[m.id]=estado; }
+  save(); if(!TEST&&cloudReady()) api('msgState',{id:m.id,estado}).then(()=>{ delete p.pendingMsg[m.id]; saveQuiet(); }).catch(()=>{});
+}
+function openMail(){ renderMail(); show('mail'); if(!TEST) cloudPull(false); }
+function renderMail(){
+  const p=P(); $('#mail-coins').textContent='🔘 '+p.coins;
+  const L=$('#mlist'); L.innerHTML='';
+  const list=myMsgs().slice().reverse();
+  if(!list.length){ L.append(el('div','help','<div style="font-size:30px">📭</div><div>Tu buzón está vacío. ¡El alcalde te escribirá pronto!</div>')); return; }
+  list.forEach(m=>{
+    const it=el('div','mitem'+((m.estado==='nuevo'||(m.estado==='validada'&&!p.rewarded[m.id]))?' nuevo':''));
+    it.append(el('div','mi',MAIL_ICON[m.tipo]||'✉️'));
+    const tx=el('div','mt',`<b>${MAIL_NAME[m.tipo]||'Mensaje'}${m.premio?` · 🔘 ${m.premio}`:''}</b>${esc(m.texto||'')}`);
+    if(m.tipo==='reto'&&m.extra&&m.extra.t) tx.append(fabricCanvas(m.extra.t.split(''),m.extra.w,{s:Math.max(10,Math.min(22,Math.floor(180/m.extra.w)))}));
+    it.append(tx);
+    const a=el('div','ma');
+    const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(m.texto||''); a.append(sp);
+    const B=(t,cls,fn)=>{ const b=el('button','btn '+(cls||''),t); b.onclick=fn; a.append(b); };
+    if(m.tipo==='carta'){
+      if(m.estado==='nuevo') B('Leer','primary',()=>readLetter(m)); else a.append(el('div','counter','Leída'));
+    } else if(m.tipo==='reto'){
+      if(m.estado==='completado') a.append(el('div','counter','✅ Superado')); else B('🎯 Aceptar reto','primary',()=>openReto(m));
+    } else {
+      if(m.estado==='nuevo') B('✅ ¡Ya la hice!','green',()=>doneTask(m));
+      else if(m.estado==='hecha') a.append(el('div','counter','⏳ Esperando a que papá lo compruebe'));
+      else if(m.estado==='validada'&&!p.rewarded[m.id]) B('🎁 Recoger premio','primary',()=>collectTask(m));
+      else a.append(el('div','counter','✅ Premio recogido'));
+    }
+    it.append(a); L.append(it);
+  });
+}
+async function readLetter(m){
+  const p=P();
+  await say({face:'🧔',name:'Carta del alcalde',text:m.texto||''});
+  if(m.premio&&!p.rewarded[m.id]){ p.rewarded[m.id]=1; p.coins+=m.premio; fanfare(); toast(`🔘 +${m.premio} botones de regalo`); }
+  setMsgState(m,'leida'); renderMail();
+}
+async function doneTask(m){
+  setMsgState(m,'hecha'); beep(700,0.1,'triangle');
+  await say({face:'🧔',name:'Papá, el alcalde',text:'¡Muy bien! Lo comprobaré y, si está hecho, te daré tu premio.'});
+  renderMail();
+}
+async function collectTask(m){
+  const p=P(); if(p.rewarded[m.id]) return;
+  p.rewarded[m.id]=1; p.coins+=m.premio||10; p.beads.push(m.tipo==='deberes'?'#4a8fdc':'#f29b38');
+  const [pe,pn]=pick(PLANTS[Math.min(3,p.unlocked)]); const k='pl_'+pe; p.inv[k]=(p.inv[k]||0)+1;
+  setMsgState(m,'cobrada'); save('Premio: '+(MAIL_NAME[m.tipo]||'')); fanfare();
+  await say({center:true,html:`<div class="reward"><div style="font-size:56px">🎁</div><div style="font-size:26px;font-weight:800">¡Papá lo ha comprobado!</div><div class="rw-items"><div class="rw-item">🔘 +${m.premio||10} botones</div><div class="rw-item">${pe} ${esc(pn)}</div><div class="rw-item">📿 cuenta nueva</div></div></div>`});
+  renderMail();
+}
+function openReto(m){
+  const x=m.extra||{w:6,t:'rwrwrw'};
+  const e={id:'msg_'+m.id,lvl:P().unlocked,type:'custom',npc:'alcalde',title:'Reto del alcalde',story:null,ask:m.texto||'¿Puedes tejer esto?',v6:{w:x.w,t:x.t},v9:{w:x.w,t:x.t},msg:m};
+  openPuzzle(e);
+}
+async function successCustom(){
+  const p=P(), e=PZ.e, m=e.msg; const stars=PZ.attempts<=1?3:PZ.attempts===2?2:1;
+  const first=!p.rewarded[m.id]; let items=[];
+  if(first){
+    p.rewarded[m.id]=1; const coins=m.premio||15; p.coins+=coins; items.push(`🔘 +${coins} botones`);
+    const [pe,pn]=pick(PLANTS[Math.min(3,p.unlocked)]); p.inv['pl_'+pe]=(p.inv['pl_'+pe]||0)+1; items.push(`${pe} ${pn}`);
+    p.beads.push(mostCommon(PZ.target)); items.push('📿 cuenta nueva');
+    p.fabrics.push({cells:PZ.target.slice(),w:PZ.v.w,name:'Reto del alcalde',by:'alcalde'});
+  }
+  recordStats(p,e.id,stars);
+  setMsgState(m,'completado'); save('Superó un reto del alcalde '+'★'.repeat(stars)); fanfare();
+  await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:26px;font-weight:800">¡Reto superado!</div><div class="rw-items">${items.map(i=>`<div class="rw-item">${i}</div>`).join('')}</div><div style="font-size:18px">🧔 «¡Sabía que lo conseguirías!»</div></div>`});
+  openMail();
+}
+
+/* =========================================================
+   MODO PRUEBA
+   ========================================================= */
+function refreshScreen(){
+  if(curScreen==='village'){ setupNPCs(); updateHUD(); }
+  else if(curScreen==='workshop') renderWorkshop(); else if(curScreen==='house') renderHouse();
+  else if(curScreen==='mail') renderMail(); else if(curScreen==='profiles') renderProfiles(); else if(curScreen==='shop') renderShop();
+  $('#tb-day').textContent=DB.dayOffset?`(día +${DB.dayOffset})`:'';
+}
+function initTestBar(){
+  $('#testflag').style.display='block'; $('#testbar').classList.add('on');
+  $('#tb-min').onclick=()=>$('#testbar').classList.toggle('min');
+  const need=fn=>()=>{ const p=P(); if(!p||curScreen==='profiles'){ toast('Entra con una jugadora primero'); return; } fn(p); saveQuiet(); refreshScreen(); };
+  const fakeMsg=(tipo,texto,extra)=>need(p=>{ DB.msgs.push({id:'t'+Date.now(),para:p.id,tipo,texto,premio:10,estado:'nuevo',extra}); toast('📬 Mensaje de prueba en el buzón'); });
+  const B=[
+    ['Nivel 1',need(p=>setLevel(p,1))],['Nivel 2',need(p=>setLevel(p,2))],['Nivel 3',need(p=>setLevel(p,3))],
+    ['+100 🔘',need(p=>{p.coins+=100;})],
+    ['+plantas',need(p=>{ for(const l in PLANTS) for(const [e] of PLANTS[l]) p.inv['pl_'+e]=(p.inv['pl_'+e]||0)+1; ['L1','L2','L3','M'].forEach(k=>p.inv[k]=(p.inv[k]||0)+1); })],
+    ['Todo hecho',need(async p=>{ ENC.forEach(e=>p.done[e.id]=3); p.unlocked=3; saveQuiet(); await checkLevelUp(); refreshScreen(); })],
+    ['+1 día',()=>{ DB.dayOffset=(DB.dayOffset||0)+1; saveQuiet(); refreshScreen(); toast('📅 Ahora es '+today()); }],
+    ['Carta',fakeMsg('carta','¡Hola, tejedora! Estoy muy orgulloso de ti. Te mando unos botones de regalo.')],
+    ['Tarea casa',fakeMsg('casa','Recoge los juguetes de tu cuarto.')],
+    ['Deberes',fakeMsg('deberes','Repasa la tabla del 7.')],
+    ['Reto',fakeMsg('reto','He diseñado esta tela para ti. ¿Te atreves?',{w:6,t:'rrwwrrwwrrwwbbbbbb'})],
+    ['Papá valida',need(()=>{ DB.msgs.forEach(m=>{ if(m.estado==='hecha') m.estado='validada'; }); toast('✅ Tareas validadas'); })],
+    ['Copiar partidas reales',()=>{ try{ const d=JSON.parse(localStorage.getItem('villaovillo.v1')); if(!d) throw 0; DB.profiles=d.profiles.map(migrate); saveQuiet(); renderProfiles(); show('profiles'); toast('Copiadas (los cambios aquí no les afectan)'); }catch(e){ toast('No hay partidas reales en este dispositivo'); } }],
+    ['Reiniciar prueba',()=>{ try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); }]
+  ];
+  const box=$('#tb-btns'); B.forEach(([t,fn])=>{ const b=el('button','',t); b.onclick=fn; box.append(b); });
+  refreshScreen();
+}
+function setLevel(p,n){ p.unlocked=n; ENC.forEach(e=>{ if(e.lvl<n) p.done[e.id]=p.done[e.id]||3; }); }
+
+function initExtras(){
+  if(TEST) initTestBar();
+  startPlayClock();
+  if(cloudReady()) cloudPull(true).then(ok=>{ if(ok&&curScreen==='profiles') renderProfiles(); });
+}
+
+/* =========================================================
+   INICIO
+   ========================================================= */
+load();
+initExtras();
+if('speechSynthesis' in window){ try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>{}; }catch(e){} }
+renderProfiles(); show('profiles');
+</script>
+</body>
+</html>

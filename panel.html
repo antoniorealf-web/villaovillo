@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Villaovillo · Panel del alcalde</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6eedf;--ink:#4a3b2c;--soft:#8a7660;--card:#fffaf1;--line:#e5d6bd;--accent:#e4574f;--blue:#4a8fdc;--ok:#4fa45a;--gold:#f2b632}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Baloo 2',system-ui,sans-serif;font-size:17px}
+header{background:#fff6e6;border-bottom:3px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:22px;flex:1}
+main{max-width:860px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+.btn{font-family:inherit;font-size:17px;font-weight:700;border-radius:14px;border:3px solid var(--line);background:#fff;padding:6px 14px;min-height:44px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:#c0443d;color:#fff}
+.btn.green{background:var(--ok);border-color:#3c8546;color:#fff}
+.btn.small{min-height:34px;font-size:15px;padding:2px 10px}
+input,select,textarea{font-family:inherit;font-size:17px;padding:8px 10px;border-radius:12px;border:3px solid var(--line);width:100%;background:#fff;color:var(--ink)}
+label{font-weight:700;font-size:15px;color:var(--soft);display:block;margin:8px 0 3px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tab{font-family:inherit;font-weight:700;font-size:16px;padding:6px 14px;border-radius:14px;border:3px solid var(--line);background:#efe2c9;cursor:pointer}
+.tab.sel{background:var(--card);border-color:var(--blue)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.kpi{background:#fff;border:2px solid var(--line);border-radius:12px;padding:6px 10px}
+.kpi b{display:block;font-size:22px}
+.kpi span{font-size:13px;color:var(--soft)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--soft);font-size:13px}
+.bars{display:flex;gap:6px;align-items:flex-end;height:90px;margin-top:6px}
+.bar{flex:1;background:var(--blue);border-radius:6px 6px 0 0;position:relative;min-height:2px}
+.bar i{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-style:normal;font-size:12px;color:var(--soft)}
+.bar u{position:absolute;top:-18px;left:0;right:0;text-align:center;text-decoration:none;font-size:12px}
+.msg{display:flex;gap:10px;align-items:flex-start;border-bottom:2px dashed var(--line);padding:8px 0}
+.msg .i{font-size:28px}
+.msg .t{flex:1}
+.pill{display:inline-block;font-size:13px;font-weight:700;padding:1px 8px;border-radius:10px;background:#eee}
+.pill.nuevo{background:#fff1c9}.pill.hecha{background:#ffe0d6}.pill.validada,.pill.completado,.pill.cobrada,.pill.leida{background:#d9f0d9}
+#designer{display:grid;gap:3px;background:#d9c7a6;padding:6px;border-radius:12px;width:max-content;touch-action:none}
+.dc{width:34px;height:34px;border-radius:7px;background:#fff}
+.pal{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.pc{width:40px;height:40px;border-radius:10px;border:3px solid rgba(0,0,0,.15);cursor:pointer}
+.pc.sel{outline:4px solid var(--blue)}
+.note{font-size:14px;color:var(--soft)}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#2c2c3a;color:#fff;padding:8px 16px;border-radius:14px;display:none;z-index:9}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header><div style="font-size:30px">🧔🎩</div><h1>Panel del alcalde</h1><button class="btn small" id="reload">↻</button></header>
+<main>
+  <div class="card" id="login">
+    <h2 style="margin:0 0 6px">Entrar</h2>
+    <div class="note">La clave de la familia y el PIN son los que pusiste en el script de Google.</div>
+    <label>Clave de la familia</label><input id="in-key" type="password">
+    <label>PIN del alcalde</label><input id="in-pin" type="password" inputmode="numeric">
+    <div style="margin-top:10px"><button class="btn primary" id="do-login">Entrar</button></div>
+    <div class="note" id="login-msg" style="margin-top:6px"></div>
+  </div>
+  <div id="app" class="hidden">
+    <div class="tabs" id="tabs"></div>
+    <div id="view"></div>
+  </div>
+</main>
+<div id="toast"></div>
+<script src="config.js"></script>
+<script>
+"use strict";
+const CFG=window.VILLA_CONFIG||{scriptUrl:''};
+const COLORS={r:'#e4574f',b:'#4a8fdc',y:'#f4c430',g:'#55b05a',w:'#f7f2e8',p:'#a678d6'};
+const ENC={e1:['seq','Bufanda de rayas'],e2:['seq','Cinta para el pelo'],e3:['reglas','¿Qué punto sigue?'],e4:['seq','Mantel de la merienda'],
+  e5:['rep','Manta para hibernar'],e6:['rep','Calcetines de colores'],e7:['reglas','El dibujo misterioso'],e8:['rep','Jersey de bandas'],
+  e9:['mot','Tapiz de filas'],e10:['mot','Toalla de playa'],e11:['hilo','Hilo quiere ayudar'],e12:['hilo','Hilo lo intenta otra vez']};
+const TYPE={seq:'Secuencias',reglas:'Encontrar la regla',rep:'Repetir (bucles)',mot:'Motivos (funciones)',hilo:'Revisar a Hilo (IA)',custom:'Retos del alcalde'};
+const LEVELS={1:'Secuencias',2:'Repetir',3:'Motivos'};
+const ICON={carta:'✉️',casa:'🧹',deberes:'📚',reto:'🎯'};
+const ESTADO={nuevo:'Sin abrir',leida:'Leída',hecha:'Dice que la ha hecho',validada:'Validada',cobrada:'Premio recogido',completado:'Superado'};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let KEYV='', PIN='', DATA=null, tab='resumen';
+function toast(t){ const e=$('#toast'); e.textContent=t; e.style.display='block'; clearTimeout(toast.t); toast.t=setTimeout(()=>e.style.display='none',2500); }
+async function api(action,data={}){
+  if(!CFG.scriptUrl) throw new Error('Falta la dirección del script en config.js');
+  const r=await fetch(CFG.scriptUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action,key:KEYV,pin:PIN},data))});
+  const j=await r.json(); if(!j.ok) throw new Error(j.error||'error'); return j;
+}
+try{ KEYV=localStorage.getItem('villaovillo.clave')||''; PIN=sessionStorage.getItem('villaovillo.pin')||''; }catch(e){}
+$('#in-key').value=KEYV;
+$('#do-login').onclick=async()=>{
+  KEYV=$('#in-key').value.trim(); PIN=$('#in-pin').value.trim(); $('#login-msg').textContent='Comprobando…';
+  try{ await api('checkPin'); try{ localStorage.setItem('villaovillo.clave',KEYV); sessionStorage.setItem('villaovillo.pin',PIN); }catch(e){} await refresh(); }
+  catch(e){ $('#login-msg').textContent= e.message==='clave'?'Clave incorrecta.': e.message==='pin'?'PIN incorrecto.':'No se pudo conectar: '+e.message; }
+};
+$('#reload').onclick=()=>refresh();
+async function refresh(){
+  if(!KEYV||!PIN) return;
+  try{ DATA=await api('load'); $('#login').classList.add('hidden'); $('#app').classList.remove('hidden'); render(); }
+  catch(e){ $('#login').classList.remove('hidden'); $('#app').classList.add('hidden'); $('#login-msg').textContent='Vuelve a entrar ('+e.message+')'; }
+}
+function profiles(){ return (DATA.profiles||[]).map(p=>p.state).filter(Boolean); }
+function render(){
+  const T=$('#tabs'); T.innerHTML='';
+  const pend=(DATA.msgs||[]).filter(m=>m.estado==='hecha').length;
+  [['resumen','📊 Resumen'],['buzon','📬 Buzón'+(pend?` (${pend})`:'')],['enviar','✍️ Enviar'],['prueba','🧪 Prueba']].forEach(([k,t])=>{
+    const b=document.createElement('button'); b.className='tab'+(tab===k?' sel':''); b.textContent=t; b.onclick=()=>{tab=k; render();}; T.append(b); });
+  const V=$('#view'); V.innerHTML='';
+  ({resumen:vResumen,buzon:vBuzon,enviar:vEnviar,prueba:vPrueba})[tab](V);
+}
+function dayKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function vResumen(V){
+  const ps=profiles();
+  if(!ps.length){ V.innerHTML='<div class="card">Todavía no hay partidas en la nube. Configura la nube en la tablet (botón ⚙️ Nube en la pantalla de inicio del juego).</div>'; return; }
+  ps.forEach(p=>{
+    const c=document.createElement('div'); c.className='card';
+    const done=Object.keys(p.done||{}).length, stars=Object.values(p.done||{}).reduce((a,b)=>a+b,0);
+    const plants=(p.garden||[]).filter(Boolean).length;
+    // minutos 7 días
+    const days=[]; const nowD=new Date(); for(let i=6;i>=0;i--){ const d=new Date(nowD); d.setDate(d.getDate()-i); const k=dayKey(d); days.push([k,Math.round(((p.play||{})[k]||0)/60), ['D','L','M','X','J','V','S'][d.getDay()]]); }
+    const mx=Math.max(10,...days.map(d=>d[1]));
+    let streak=0; for(let i=0;i<60;i++){ const d=new Date(nowD); d.setDate(d.getDate()-i); if((p.play||{})[dayKey(d)]) streak++; else if(i>0) break; }
+    const week=days.reduce((a,d)=>a+d[1],0);
+    // dificultad por tipo
+    const byType={};
+    Object.entries(p.stats||{}).forEach(([id,s])=>{ const t=ENC[id]?ENC[id][0]:'custom'; const o=byType[t]=byType[t]||{n:0,tries:0,hints:0,secs:0}; o.n+=s.plays; o.tries+=s.tries; o.hints+=s.hints; o.secs+=s.secs; });
+    const typeRows=Object.entries(byType).map(([t,o])=>({t,avg:o.tries/Math.max(1,o.n),h:o.hints,min:Math.round(o.secs/60)})).sort((a,b)=>b.avg-a.avg);
+    const encRows=Object.keys(ENC).map(id=>{ const s=(p.stats||{})[id]; const st=(p.done||{})[id]||0; return `<tr><td>${esc(ENC[id][1])}</td><td>${st?'★'.repeat(st):'—'}</td><td>${s?s.tries:'—'}</td><td>${s?s.hints:'—'}</td><td>${s?Math.round(s.secs/60)+' min':'—'}</td></tr>`; }).join('');
+    const hist=(DATA.historial||[]).filter(h=>h.nombre===p.name).slice(-12).reverse();
+    c.innerHTML=`<h2 style="margin:0">${esc(p.name)} <span class="note">(${p.age<=7?'6-7':'8-10'} años)</span></h2>
+      <div class="note">Última actividad: ${p.updatedAt?new Date(p.updatedAt).toLocaleString('es-ES'):'—'}</div>
+      <div class="grid2" style="margin-top:8px">
+        <div class="kpi"><b>${p.unlocked}</b><span>Nivel · ${LEVELS[p.unlocked]||''}</span></div>
+        <div class="kpi"><b>${done}/12</b><span>Encargos del taller</span></div>
+        <div class="kpi"><b>${stars}★</b><span>Estrellas</span></div>
+        <div class="kpi"><b>${p.coins}</b><span>Botones</span></div>
+        <div class="kpi"><b>${week} min</b><span>Últimos 7 días</span></div>
+        <div class="kpi"><b>${streak}</b><span>Días seguidos</span></div>
+        <div class="kpi"><b>${plants}</b><span>Cosas en el jardín</span></div>
+        <div class="kpi"><b>${(p.stories||[]).length}</b><span>Historias leídas</span></div>
+      </div>
+      <label style="margin-top:12px">Minutos por día</label>
+      <div class="bars">${days.map(d=>`<div class="bar" style="height:${Math.max(2,d[1]/mx*80)}px"><u>${d[1]||''}</u><i>${d[2]}</i></div>`).join('')}</div>
+      <label style="margin-top:28px">Dónde le cuesta más (intentos por encargo)</label>
+      ${typeRows.length?`<table><tr><th>Tipo</th><th>Intentos medios</th><th>Pistas</th><th>Tiempo</th></tr>${typeRows.map(r=>`<tr><td>${TYPE[r.t]||r.t}</td><td>${r.avg.toFixed(1)}${r.avg>=3?' ⚠️':''}</td><td>${r.h}</td><td>${r.min} min</td></tr>`).join('')}</table>`:'<div class="note">Aún sin datos.</div>'}
+      <details style="margin-top:8px"><summary><b>Encargo a encargo</b></summary><table><tr><th>Encargo</th><th>Estrellas</th><th>Intentos</th><th>Pistas</th><th>Tiempo</th></tr>${encRows}</table></details>
+      <details style="margin-top:6px"><summary><b>Diario reciente</b></summary>${hist.length?hist.map(h=>`<div class="note">${new Date(h.fecha).toLocaleString('es-ES',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} · ${esc(h.evento)}</div>`).join(''):'<div class="note">Sin eventos todavía.</div>'}</details>`;
+    V.append(c);
+  });
+  const c=document.createElement('div'); c.className='card';
+  c.innerHTML='<b>Informe para Claude</b><div class="note">Copia este resumen y pégalo en el chat con Claude para recibir un informe de avances y propuestas.</div>';
+  const b=document.createElement('button'); b.className='btn'; b.textContent='📋 Copiar resumen'; b.onclick=async()=>{
+    const rep=profiles().map(p=>({nombre:p.name,edad:p.age<=7?'6-7':'8-10',nivel:p.unlocked,estrellas:p.done,estadisticas:p.stats,minutosPorDia:Object.fromEntries(Object.entries(p.play||{}).map(([k,v])=>[k,Math.round(v/60)])),botones:p.coins}));
+    try{ await navigator.clipboard.writeText('Informe Villaovillo '+new Date().toLocaleDateString('es-ES')+'\n'+JSON.stringify(rep)); toast('Resumen copiado'); }catch(e){ toast('No se pudo copiar'); } };
+  c.append(b); V.append(c);
+}
+function nameOf(id){ const p=profiles().find(p=>p.id===id); return p?p.name:'?'; }
+function vBuzon(V){
+  const ms=(DATA.msgs||[]).slice().reverse();
+  const c=document.createElement('div'); c.className='card';
+  if(!ms.length){ c.innerHTML='No hay mensajes. Crea uno en «Enviar».'; V.append(c); return; }
+  ms.forEach(m=>{
+    const d=document.createElement('div'); d.className='msg';
+    d.innerHTML=`<div class="i">${ICON[m.tipo]||'✉️'}</div><div class="t"><b>${esc(nameOf(m.para))}</b> · <span class="pill ${m.estado}">${ESTADO[m.estado]||m.estado}</span>${m.premio?` · 🔘 ${m.premio}`:''}<br>${esc(m.texto)}</div>`;
+    const a=document.createElement('div'); a.style.display='flex'; a.style.flexDirection='column'; a.style.gap='4px';
+    if(m.estado==='hecha'||(m.estado==='nuevo'&&(m.tipo==='casa'||m.tipo==='deberes'))){ const v=document.createElement('button'); v.className='btn green small'; v.textContent='✅ Validar'; v.onclick=()=>setState(m,'validada'); a.append(v); }
+    const x=document.createElement('button'); x.className='btn small'; x.textContent='🗑️'; x.title='Borrar'; x.onclick=()=>{ if(window.confirm?confirm('¿Borrar este mensaje?'):true) setState(m,'borrada'); }; a.append(x);
+    d.append(a); c.append(d);
+  });
+  V.append(c);
+}
+async function setState(m,estado){ try{ await api('msgState',{id:m.id,estado}); toast(estado==='validada'?'Validada: recibirá el premio':'Hecho'); await refresh(); }catch(e){ toast('Error: '+e.message); } }
+
+let DES={w:6,h:3,cells:Array(18).fill('w'),col:'r',painting:false};
+function vEnviar(V){
+  const ps=profiles();
+  const c=document.createElement('div'); c.className='card';
+  if(!ps.length){ c.innerHTML='Primero tiene que haber partidas en la nube.'; V.append(c); return; }
+  c.innerHTML=`<label>Para</label><select id="s-para">${ps.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')}${ps.length>1?'<option value="__todas">Las dos</option>':''}</select>
+    <label>Tipo</label><select id="s-tipo"><option value="carta">✉️ Carta</option><option value="casa">🧹 Tarea de casa</option><option value="deberes">📚 Deberes</option><option value="reto">🎯 Reto de tejer</option></select>
+    <label>Texto</label><textarea id="s-texto" rows="3" placeholder="Escribe aquí…"></textarea>
+    <label>Premio (botones)</label><input id="s-premio" type="number" min="0" max="100" value="0">
+    <div id="s-reto" class="hidden"><label>Diseña la tela del reto</label>
+      <div style="display:flex;gap:8px"><select id="s-w"><option>4</option><option selected>6</option><option>8</option></select><select id="s-h"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></div>
+      <div class="note">Ancho × filas. Toca o arrastra para pintar. Consejo: dibujos con partes que se repiten enseñan a usar Repetir y motivos.</div>
+      <div class="pal" id="s-pal"></div><div id="designer"></div></div>
+    <div style="margin-top:12px"><button class="btn primary" id="s-send">Enviar al buzón</button></div>`;
+  V.append(c);
+  const tipo=$('#s-tipo'), premio=$('#s-premio');
+  const defaults={carta:0,casa:10,deberes:15,reto:20};
+  const ph={carta:'¡Hola! Estoy muy orgulloso de…',casa:'Recoge tu cuarto antes de cenar',deberes:'Repasa la tabla del 7',reto:'He diseñado esta tela para ti. ¿Te atreves?'};
+  tipo.onchange=()=>{ premio.value=defaults[tipo.value]; $('#s-texto').placeholder=ph[tipo.value]; $('#s-reto').classList.toggle('hidden',tipo.value!=='reto'); };
+  const resize=()=>{ DES.w=+$('#s-w').value; DES.h=+$('#s-h').value; DES.cells=Array(DES.w*DES.h).fill('w'); drawDes(); };
+  $('#s-w').onchange=resize; $('#s-h').onchange=resize;
+  drawPal(); drawDes();
+  $('#s-send').onclick=async()=>{
+    const texto=$('#s-texto').value.trim()||$('#s-texto').placeholder; const t=tipo.value; const prem=+premio.value||0;
+    const targets=$('#s-para').value==='__todas'?ps:ps.filter(p=>p.id===$('#s-para').value);
+    const extra=t==='reto'?{w:DES.w,t:DES.cells.join('')}:null;
+    try{ for(const p of targets) await api('addMsg',{msg:{para:p.id,nombre:p.name,tipo:t,texto,premio:prem,extra}}); toast('📬 ¡Enviado!'); tab='buzon'; await refresh(); }
+    catch(e){ toast('Error: '+e.message); }
+  };
+}
+function drawPal(){ const P=$('#s-pal'); P.innerHTML=''; Object.entries(COLORS).forEach(([k,c])=>{ const d=document.createElement('div'); d.className='pc'+(DES.col===k?' sel':''); d.style.background=c; d.onclick=()=>{DES.col=k; drawPal();}; P.append(d); }); }
+function drawDes(){ const G=$('#designer'); if(!G) return; G.innerHTML=''; G.style.gridTemplateColumns=`repeat(${DES.w},auto)`; DES.cells.forEach((k,i)=>{ const d=document.createElement('div'); d.className='dc'; d.style.background=COLORS[k]; d.dataset.i=i; G.append(d); });
+  G.onpointerdown=e=>{ DES.painting=true; paint(e); }; }
+function paint(e){ const t=document.elementFromPoint(e.clientX,e.clientY); if(t&&t.classList.contains('dc')){ DES.cells[+t.dataset.i]=DES.col; t.style.background=COLORS[DES.col]; } }
+window.addEventListener('pointermove',e=>{ if(DES.painting) paint(e); });
+window.addEventListener('pointerup',()=>DES.painting=false);
+function vPrueba(V){
+  const c=document.createElement('div'); c.className='card';
+  c.innerHTML=`<b>Modo prueba</b><p>Abre el juego en un espacio aparte: puedes saltar de nivel, darte botones, simular días o mandarte mensajes falsos sin tocar las partidas de tus hijas ni la nube.</p>
+  <a class="btn primary" style="display:inline-block;text-decoration:none" href="index.html?prueba" target="_blank">🧪 Abrir modo prueba</a>
+  <p class="note">En la tablet, el modo prueba usa su propio guardado. Si pulsas «Copiar partidas reales» dentro, trabajarás con una copia.</p>`;
+  V.append(c);
+}
+if(KEYV&&PIN) refresh();
+</script>
+</body>
+</html>
