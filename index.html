@@ -152,7 +152,17 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none}
 .ccard.tokA{background:var(--purple);color:#fff}
 .ccard.tokB{background:var(--teal);color:#fff}
 .ccard canvas{pointer-events:none}
-.ccard.run{outline:4px solid var(--gold)}
+.ccard.run,.ccard.run2{outline:4px solid var(--gold);transform:translateY(-3px);z-index:2}
+.ccard.run::before,.ccard.run2::before{content:'';position:absolute;top:-19px;left:50%;margin-left:-9px;border:9px solid transparent;border-top:13px solid #e4574f;border-bottom:0}
+.ccard.run2{outline-color:#a678d6}.ccard.run2::before{border-top-color:#a678d6}
+.ccard.blank{background:#fff;border:3px dashed #b89b6a;color:#b89b6a;box-shadow:none}
+.ccard.isblank{box-shadow:0 0 0 3px #f2b632}
+.ccard.bsel{outline:4px solid #2f5f96}
+.pick{cursor:pointer;animation:pickp 1.4s ease-in-out infinite}
+@keyframes pickp{50%{box-shadow:0 0 0 4px #f2b632}}
+.repbox .vuelta,.rephead .vuelta{font-size:15px;color:#c0443d;margin-left:4px}
+.repbox.isblank .n{color:#b89b6a}
+.prow{padding-top:14px}
 .palette{display:flex;flex-wrap:wrap;gap:8px}
 .palette .ccard{width:58px;height:62px}
 .repbox{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;background:#fff3e0;border:3px solid #f0cf9a;border-radius:16px;padding:6px 12px;align-self:flex-start}
@@ -176,7 +186,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none}
 .cuac{width:68px;height:68px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;border:3px solid transparent}
 .cuac.given{background:#efe3cc;border-color:#c9a978}
 .cuac.bad{border-color:#d62828;background:#ffe5e5}
-.ccard.run{outline:4px solid #f2b632;transform:scale(1.18);box-shadow:0 0 0 8px rgba(242,182,50,.35);z-index:2;background:#fff6cf!important;transition:transform .08s}
+.ccard.run{outline:4px solid #f2b632;transform:scale(1.18);box-shadow:0 0 0 8px rgba(242,182,50,.35);z-index:2;transition:transform .08s}
 .repblk.loopon{border-color:#f2b632;box-shadow:0 0 0 4px rgba(242,182,50,.35)}
 .vuelta{font-size:14px;font-weight:800;color:#c47f00;background:#fff;border-radius:10px;padding:0 8px}
 .vuelta:empty{display:none}
@@ -269,6 +279,7 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
 .pct{display:inline-block;min-width:52px;text-align:center;border-radius:10px;padding:1px 6px;font-weight:800;font-size:15px}
 .pct.g{background:#dff3e0;color:#2e6b35}.pct.a{background:#fff1cc;color:#8a6200}.pct.r{background:#fde2e0;color:#a73a34}.pct.n{background:#f1ebe0;color:#8a7660}
 .fnote{font-size:16px;line-height:1.35}
+.lvctl{display:flex;align-items:center;gap:6px;min-width:112px;justify-content:center}.lvctl button{width:34px;height:34px;border-radius:10px;border:2px solid var(--line);background:#fff;font-size:20px;font-weight:800}.lvctl b{min-width:22px;text-align:center;font-size:18px}
 .vtgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
 </style>
 </head>
@@ -540,7 +551,7 @@ function migrate(p){
   p.counters=Object.assign({encargos:Object.keys(p.done||{}).length,firstTry:0,hiloRight:0,bloomed:0,water:0,tasks:0,designs:0,earned:p.coins||0,retos:0},p.counters||{});
   p.medals=p.medals||{}; p.bloomedKinds=p.bloomedKinds||{}; p.gardenRows=p.gardenRows||4;
   if(!p.mastery) p.mastery={telar:p.counters.encargos||0,pan:Object.values(p.math||{}).reduce((a,v)=>a+(v.ok||0),0),bib:Object.keys(p.sr||{}).length};
-  p.bridge=p.bridge||0;
+  p.bridge=p.bridge||0; p.tlv=p.tlv||{}; p.tlvRun=p.tlvRun||{}; p.newsSeen=p.newsSeen||0;
   p.garden=(p.garden||[]).map(cellObj); while(p.garden.length<8*p.gardenRows) p.garden.push(null);
   return p;
 }
@@ -722,6 +733,7 @@ async function enterGame(i){
     await say({face:'🐑',name:NPCS.rosa.n,text:'Toca el suelo para caminar y toca los edificios para entrar. Empieza por el taller, el edificio del ovillo. Cada encargo que termines hará crecer el pueblo y tu jardín.'});
   } else if(p.days.last===today()) toast(`¡Hola de nuevo, ${p.name}!`);
   await newDayCheck();
+  if(P()===p) await showNews(p);
 }
 
 /* =========================================================
@@ -759,7 +771,7 @@ function resizeVillage(){
 window.addEventListener('resize',()=>{ if(curScreen==='village') resizeVillage(); });
 
 function setupNPCs(){
-  const p=P(); const lv=p.unlocked;
+  const lv=townLv();
   const list=(VISIT?[]:['alcalde']).concat(['rosa','tomas','coco']); if(lv>=2) list.push('bruno','lia'); if(lv>=3) list.push('nube','hilo');
   const homes={alcalde:[700,575],rosa:[420,420],tomas:[700,330],coco:[540,300],bruno:[380,560],lia:[940,430],nube:[700,480],hilo:[560,560]};
   npcs=list.map(k=>{ const old=npcs.find(n=>n.k===k); return old||{k,x:homes[k][0],y:homes[k][1],tx:homes[k][0],ty:homes[k][1],home:homes[k],wait:Math.random()*3}; });
@@ -1048,7 +1060,7 @@ function encOf(p,id){ return ENC.find(e=>e.id===id) || ((p.daily&&p.daily.list.f
 function isToday(p,id){ return !!(p.daily&&p.daily.list.some(x=>x.id===id)); }
 function encCard(e,stars,todayCard){
   const c=el('button','ecard'+(todayCard&&stars?' donecard':''));
-  c.innerHTML=`<div class="who" data-npc="${e.npc}"></div><div class="t">${esc(e.title)}</div><div class="badge">${TYPE_NAMES[e.type]}${e.story?' · 📜':''}</div><div class="st">${todayCard&&stars?'✅ ':''}${starsHTML(stars)}</div><div class="counter">${esc(NPCS[e.npc].n)}</div>`;
+  c.innerHTML=`<div class="who" data-npc="${e.npc}"></div><div class="t">${esc(e.title)}</div><div class="badge">${TYPE_NAMES[e.type]}${e.story?' · 📜':''}${e.L?' · nivel '+e.L:''}</div><div class="st">${todayCard&&stars?'✅ ':''}${starsHTML(stars)}</div><div class="counter">${esc(NPCS[e.npc].n)}</div>`;
   fillWho(c); c.onclick=()=>openPuzzle(e); return c;
 }
 function renderWorkshop(){
@@ -1087,10 +1099,12 @@ function openPuzzle(e,opts={}){
   const features = e.type==='seq'?{rep:false,mot:false}: e.type==='rep'?{rep:true,mot:false}: e.type==='custom'?{rep:true,mot:age>7}: {rep:true,mot:true};
   PZ={e,v,target,features,attempts:0,hints:0,t0:Date.now(),best:v.sol?cardCount(v.sol):target.length,
       prog:{main:[],A:[],B:[],rep:1}, row:'main', running:false, phase:null, predicted:null, fill:null, sel:'r', age};
-  if(e.type==='reglas'){ PZ.fill=target.map((c,i)=>i>=target.length-v.miss?'?':c); PZ.sel=uniqColors(target)[0]; }
+  PZ.maxCards=v.max||null; PZ.L=e.L||null;
+  if(e.type==='reglas'){ PZ.holes=new Set(v.holes||target.map((c,i)=>i).filter(i=>i>=target.length-v.miss)); PZ.fill=target.map((c,i)=>PZ.holes.has(i)?'?':c); PZ.sel=uniqColors(target)[0]; }
+  if(e.type==='falta'){ PZ.prog=Object.assign({main:[],A:[],B:[],rep:1},clone(v.sol)); PZ.blanks=v.blanks; v.blanks.forEach(b=>{ if(b.rep) PZ.prog.rep='?'; else PZ.prog[b.row][b.i]='?'; }); PZ.phase='falta'; PZ.features={rep:true,mot:!!v.sol.A}; PZ.best=0; }
   if(e.type==='cab'){ PZ.target=v.t.split('').map(c=>c==='.'?null:c); PZ.prog=[]; PZ.selPath=[]; PZ.best=v.best; }
   if(e.type==='cua'){ PZ.target=v.sol.split(''); PZ.fill=v.giv.split('').map(c=>c==='.'?null:c); PZ.sel=v.syms[0]; PZ.best=0; }
-  if(e.type==='hilo'){ PZ.prog=Object.assign({main:[],A:[],B:[],rep:1},clone(v.hilo)); PZ.phase='predict'; PZ.features={rep:true,mot:!!(v.sol.A)}; }
+  if(e.type==='hilo'){ PZ.prog=Object.assign({main:[],A:[],B:[],rep:1},clone(v.hilo)); PZ.phase='predict'; PZ.features={rep:true,mot:!!(v.sol.A)}; PZ.locTries=0; PZ.locRight=true; }
   document.querySelector('#scr-puzzle .pz-left .lbl').textContent=e.type==='cua'?'Cuadro':'Pedido';
   $('#pz-title').textContent=e.title; $('#pz-type').textContent=TYPE_NAMES[e.type];
   $('#pz-face').innerHTML=''; $('#pz-face').append(npcIcon(e.npc,64)); $('#pz-ask').textContent=e.ask;
@@ -1113,8 +1127,7 @@ function renderTarget(hl=[]){
     cv.addEventListener('pointerdown',ev=>{
       const r=cv.getBoundingClientRect(), m=cv._meta; const cx=ev.clientX-r.left-m.pad, cy=ev.clientY-r.top-m.pad;
       const col=Math.floor(cx/m.s), row=Math.floor(cy/m.s), i=row*m.w+col;
-      const firstMiss=PZ.target.length-PZ.v.miss;
-      if(col<0||col>=m.w||i<firstMiss||i>=PZ.target.length) return;
+      if(col<0||col>=m.w||!PZ.holes.has(i)) return;
       PZ.fill[i]=PZ.sel; beep(700,0.05); renderTarget(); setMsg('');
     });
     box.append(cv);
@@ -1155,53 +1168,81 @@ function renderPuzzle(){
     return;
   }
   // filas de programa
-  const locked = PZ.phase==='predict' || PZ.running;
-  const rows=[['main', PZ.features.mot?'Programa':'Programa']];
+  const ph=PZ.phase;
+  const locked = ph==='predict' || PZ.running || ph==='falta' || ph==='locate';
+  const rows=[['main', 'Programa']];
   if(PZ.features.mot){ rows.push(['A','Motivo A'],['B','Motivo B']); }
   rows.forEach(([k,label])=>{
-    const r=el('div','prow'+(PZ.row===k&&!locked?' sel':'')+(locked?' locked':''));
+    const r=el('div','prow'+(PZ.row===k&&!locked?' sel':'')+(locked&&ph!=='falta'&&ph!=='locate'?' locked':''));
     const nm=el('div','rname',label); if(k==='A') nm.style.color='var(--purple)'; if(k==='B') nm.style.color='var(--teal)'; r.append(nm);
     const arr=PZ.prog[k];
     if(!arr.length) r.append(el('span','empty',locked?'(vacío)':'Toca los hilos para añadir…'));
-    arr.forEach((tok,i)=>{ const c=tok==='A'||tok==='B'?tokenCard(tok):colorCard(tok); c.dataset.row=k; c.dataset.i=i;
-      c.onclick=(ev)=>{ ev.stopPropagation(); if(locked) return; arr.splice(i,1); beep(300,0.05); renderPuzzle(); }; r.append(c); });
+    arr.forEach((tok,i)=>{
+      const isBlank=ph==='falta'&&blankAt(k,i);
+      const c=tok==='?'?el('div','ccard blank','?'):(tok==='A'||tok==='B'?tokenCard(tok):colorCard(tok)); c.dataset.row=k; c.dataset.i=i;
+      if(isBlank){ c.classList.add('isblank'); if(PZ.bsel&&PZ.bsel.row===k&&PZ.bsel.i===i) c.classList.add('bsel'); }
+      if(ph==='locate') c.classList.add('pick');
+      c.onclick=(ev)=>{ ev.stopPropagation();
+        if(PZ.running) return;
+        if(ph==='locate'){ locateTap({row:k,i}); return; }
+        if(ph==='falta'){ if(!isBlank) return; PZ.bsel={row:k,i}; arr[i]='?'; beep(600,0.04); renderPuzzle(); return; }
+        if(locked) return; arr.splice(i,1); beep(300,0.05); renderPuzzle(); };
+      r.append(c); });
     r.onclick=()=>{ if(locked) return; PZ.row=k; renderPuzzle(); };
     R.append(r);
   });
   if(PZ.features.rep){
-    const rb=el('div','repbox'); rb.append(el('span','','🔁 Repetir ×'));
+    const repBlank=ph==='falta'&&(PZ.blanks||[]).some(b=>b.rep);
+    const rb=el('div','repbox'+(ph==='locate'?' pick':'')+(repBlank&&PZ.prog.rep==='?'?' isblank':'')); rb.append(el('span','','🔁 Repetir ×'));
+    const canEdit=!PZ.running&&(ph==='falta'?repBlank:!locked);
     const minus=el('button','','–'), n=el('span','n',String(PZ.prog.rep)), plus=el('button','','+');
-    minus.onclick=()=>{ if(locked) return; PZ.prog.rep=Math.max(1,PZ.prog.rep-1); beep(400,0.04); renderPuzzle(); };
-    plus.onclick=()=>{ if(locked) return; PZ.prog.rep=Math.min(12,PZ.prog.rep+1); beep(500,0.04); renderPuzzle(); };
-    rb.append(minus,n,plus); R.append(rb);
+    const cur=()=>PZ.prog.rep==='?'?1:PZ.prog.rep;
+    minus.onclick=(ev)=>{ ev.stopPropagation(); if(!canEdit) return; PZ.prog.rep=Math.max(1,cur()-(PZ.prog.rep==='?'?0:1)); beep(400,0.04); renderPuzzle(); };
+    plus.onclick=(ev)=>{ ev.stopPropagation(); if(!canEdit) return; PZ.prog.rep=Math.min(12,PZ.prog.rep==='?'?2:cur()+1); beep(500,0.04); renderPuzzle(); };
+    if(!canEdit){ minus.style.visibility='hidden'; plus.style.visibility='hidden'; }
+    rb.append(minus,n,plus,el('span','vuelta',''));
+    if(ph==='locate') rb.onclick=()=>locateTap({rep:true});
+    R.append(rb);
   }
-  const cnt=cardCount(PZ.prog);
-  R.append(el('div','counter',`Tarjetas usadas: ${cnt}`+(t!=='seq'&&t!=='hilo'&&t!=='custom'?` · reto: ${PZ.best} o menos`:'')));
-  if(PZ.phase==='predict'){
+  const cnt=cardCount(PZ.prog), raw=PZ.prog.main.length+PZ.prog.A.length+PZ.prog.B.length;
+  if(t!=='falta') R.append(el('div','counter',`Tarjetas usadas: ${cnt}`+(PZ.maxCards?` · 📦 caben ${PZ.maxCards} (llevas ${raw})`:'')+(t!=='seq'&&t!=='hilo'&&t!=='custom'?` · reto: ${PZ.best} o menos`:'')));
+  if(ph==='predict'){
     const q=el('div','help'); q.style.background='#fff4d6'; q.style.borderColor='#ecd290';
     q.innerHTML='<div style="font-size:30px">🤖</div><div><b>¿El programa de Hilo teje bien la tela del pedido?</b><br>Piénsalo antes de probarlo.</div>';
     R.append(q);
     const act=el('div','actions'); const no=el('button','btn','❌ Tiene un error'), si=el('button','btn green','✅ Está bien');
     no.onclick=()=>predict(false); si.onclick=()=>predict(true); if(TEST||VISIT){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.prepend(sb); } act.append(no,si); R.append(act); return;
   }
-  R.append(el('div','lbl','Tarjetas'));
+  if(ph==='locate'){
+    const q=el('div','help'); q.style.background='#fff4d6'; q.style.borderColor='#ecd290';
+    q.innerHTML=`<div style="font-size:30px">🔍</div><div><b>¿Dónde está el fallo de Hilo?</b><br>Toca la tarjeta que está mal${PZ.features.rep?' (o el número de Repetir, si el fallo está en las vueltas)':''}.</div>`;
+    R.append(q);
+    if(TEST||VISIT){ const act=el('div','actions'); const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); R.append(act); }
+    return;
+  }
+  R.append(el('div','lbl',ph==='falta'?'Elige la tarjeta que falta':'Tarjetas'));
   const pal=el('div','palette');
   paletteColors().forEach(k=>{ const c=colorCard(k); c.onclick=()=>addCard(k); pal.append(c); });
   if(PZ.features.mot){ ['A','B'].forEach(k=>{ const c=tokenCard(k); c.onclick=()=>addCard(k); pal.append(c); }); }
   R.append(pal);
   const act=el('div','actions');
-  const clr=el('button','btn','↺ Borrar todo'); clr.onclick=()=>{ if(PZ.running) return; PZ.prog={main:[],A:[],B:[],rep:1}; PZ.row='main'; renderPuzzle(); renderResult([]); setMsg(''); };
+  if(ph!=='falta'){ const clr=el('button','btn','↺ Borrar todo'); clr.onclick=()=>{ if(PZ.running) return; PZ.prog={main:[],A:[],B:[],rep:1}; PZ.row='main'; renderPuzzle(); renderResult([]); setMsg(''); }; act.append(clr); }
+  if(PZ.attempts>=3&&t!=='falta'){ const h=el('button','btn blue','💡 Pista'); h.onclick=showHint; act.prepend(h); }
+  if(TEST||VISIT){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.prepend(sb); }
+  const slow=el('button','btn','🐢 Despacio'); slow.onclick=()=>{ PZ.slow=true; knit(); }; slow.disabled=PZ.running;
   const run=el('button','btn primary','▶ Tejer'); run.onclick=knit; run.disabled=PZ.running;
-  if(PZ.attempts>=3){ const h=el('button','btn blue','💡 Pista'); h.onclick=showHint; act.append(h); }
-  if(TEST||VISIT){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); }
-  act.append(clr,run); R.append(act);
+  act.append(slow,run); R.append(act);
 }
 function paletteColors(){ const tc=uniqColors(PZ.target); return PZ.age<=7?COLOR_KEYS.filter(k=>tc.includes(k)||k==='w'):COLOR_KEYS; }
 function colorCard(k){ const c=el('div','ccard'); c.style.background=shade(COLORS[k].c,0.55); c.append(stitchIcon(k,30)); c.title=COLORS[k].n; return c; }
 function tokenCard(k){ const c=el('div','ccard tok'+k,k); return c; }
 function addCard(k){
   if(PZ.running) return;
+  if(PZ.phase==='falta'){ const b=(PZ.bsel&&PZ.prog[PZ.bsel.row][PZ.bsel.i]==='?')?PZ.bsel:nextBlank(); if(!b){ toast('Ya están todas puestas. Toca una tarjeta con borde de puntos para cambiarla.'); return; }
+    if((k==='A'||k==='B')&&b.row!=='main'){ toast('Dentro de un motivo solo van hilos de colores'); return; }
+    PZ.prog[b.row][b.i]=k; PZ.bsel=nextBlank(); beep(640+COLOR_KEYS.indexOf(k)*40,0.05); renderPuzzle(); return; }
   const row=PZ.row;
+  if(PZ.maxCards&&PZ.prog.main.length+PZ.prog.A.length+PZ.prog.B.length>=PZ.maxCards){ toast(`¡Solo caben ${PZ.maxCards} tarjetas! Usa 🔁 Repetir${PZ.features.mot?' y los motivos':''}.`); $('#pz-right').classList.add('shake'); setTimeout(()=>$('#pz-right').classList.remove('shake'),400); return; }
   if((k==='A'||k==='B') && row!=='main'){ toast('Las tarjetas A y B van en el Programa. ¡Toca la fila «Programa»!'); return; }
   if(PZ.prog[row].length>=16){ toast('¡Esta fila está llena!'); return; }
   PZ.prog[row].push(k); beep(640+COLOR_KEYS.indexOf(k)*40,0.05); renderPuzzle();
@@ -1222,6 +1263,7 @@ function showHint(){
 async function knit(){
   if(PZ.e.type==='cab') return knitCab(false);
   if(PZ.running) return;
+  if(PZ.phase==='falta'&&(['main','A','B'].some(r=>PZ.prog[r].includes('?'))||PZ.prog.rep==='?')){ setMsg('Todavía quedan tarjetas «?» por poner.','bad'); PZ.slow=false; return; }
   const out=expand(PZ.prog);
   if(!out.length){ setMsg('Tu programa está vacío. ¡Toca los hilos para añadir puntos!','bad'); $('#pz-right').classList.add('shake'); setTimeout(()=>$('#pz-right').classList.remove('shake'),400); return; }
   if(PZ.prog.main.some(t=>t==='A')&&!PZ.prog.A.length){ setMsg('Usas el motivo A, ¡pero está vacío!','bad'); return; }
@@ -1271,13 +1313,15 @@ async function predict(saysOk){
     success(); return;
   }
   const d=firstDiff(out,PZ.target);
+  if(PZ.predictRight&&PZ.v.locate&&(PZ.v.bugs||[]).length){
+    await say({face:'🤖',name:'Hilo',text:'¡Bien visto! Me había equivocado. Pero… ¿dónde? Toca la tarjeta de mi programa que está mal.'});
+    PZ.phase='locate'; renderPuzzle(); renderResult(out.slice(0,PZ.target.length+PZ.v.w*2)); setMsg('🔍 Compara el pedido con lo que ha tejido Hilo y busca la tarjeta culpable.'); return; }
   await say({face:'🤖',name:'Hilo',text: PZ.predictRight?'¡Bien visto! Me había equivocado. ¿Me ayudas a arreglar el programa?':'¡Ups! Mi programa tenía un error. Fíjate bien en la tela… ¿Me ayudas a arreglarlo?'});
   PZ.attempts=0; renderPuzzle(); evaluate(out);
 }
 
 function checkReglas(){
-  const miss=PZ.fill.slice(PZ.target.length-PZ.v.miss);
-  if(miss.includes('?')){ setMsg('Todavía quedan huecos con «?».','bad'); return; }
+  if(PZ.fill.includes('?')){ setMsg('Todavía quedan huecos con «?».','bad'); return; }
   PZ.attempts++;
   const d=firstDiff(PZ.fill,PZ.target);
   if(d===-1){ success(); return; }
@@ -1293,7 +1337,8 @@ async function success(){
     const cc=cardCount(PZ.prog);
     stars = cc<=PZ.best?3: cc<=PZ.best+3?2:1;
     if(stars<3) note=`¡Funciona! Has usado ${cc} tarjetas. Se puede hacer con ${PZ.best}. ¿Te atreves a intentarlo otra vez?`;
-  } else if(t==='hilo'){ stars=PZ.predictRight?3:2; if(!PZ.predictRight) note='La próxima vez, sigue el programa de Hilo con el dedo antes de decidir.'; }
+  } else if(t==='hilo'){ stars=PZ.predictRight&&PZ.locRight!==false?3:2; if(!PZ.predictRight) note='La próxima vez, sigue el programa de Hilo con el dedo antes de decidir.'; else if(PZ.locRight===false) note='Encontraste que había un error. ¡La próxima vez busca también dónde está a la primera!'; }
+  else if(t==='falta'){ stars=PZ.attempts<=1?3:PZ.attempts===2?2:1; }
   const kind=e.kind||'story';
   if(kind==='catalog'){ fanfare(); await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:24px;font-weight:800">Ejercicio superado</div>${note?`<div style="font-size:17px">${esc(note)}</div>`:''}<div class="counter">Intentos: ${PZ.attempts} · Tarjetas: ${t==='cab'?countNodes(PZ.prog):cardCount(PZ.prog)} · Reto: ${PZ.best}</div></div>`}); openCatalog(); return; }
   recordStats(p,e.id,stars,t); if(kind!=='catalog') logAct(p,'t',1,stars===3?1:0,t);
@@ -1321,6 +1366,8 @@ async function success(){
     p.streak = (PZ.attempts<=1&&stars===3) ? (p.streak||0)+1 : 0;
   }
   p.coins+=coins; p.counters.earned+=coins; addXP(p,xp); addMastery(p,'telar',1);
+  if(e.L&&(first||kind==='practice')&&!VISIT){ const lvUp=tlvUpdate(p,t,PZ.attempts<=1&&stars===3&&!PZ.hints,stars<=1||PZ.attempts>=4||PZ.hints>0);
+    if(lvUp==='up'){ items.push(`📈 ${TYPE_NAMES[t]}: ¡nivel ${tlvOf(p,t)}!`); addNews(p,'📈',`ha subido ${TYPE_NAMES[t]} al nivel ${tlvOf(p,t)}`); } }
   if(coins) items.unshift(`🔘 +${coins} botones`);
   if(xp) items.push(`✨ +${xp} experiencia`);
   if(plant) items.splice(1,0,`${plant.e} ${plant.n}${plant.rar!=='Común'?' · '+plant.rar+'!':''}`);
@@ -1349,7 +1396,7 @@ async function checkLevelUp(){
     const l=p.unlocked; const lvEnc=ENC.filter(e=>e.lvl===l); const nd=lvEnc.filter(e=>p.done[e.id]).length;
     const fast = p.streak>=3 && nd>=3;
     if(nd<lvEnc.length && !fast) break;
-    p.unlocked=l+1; p.streak=0;
+    p.unlocked=l+1; p.streak=0; addNews(p,'🎉',`ha llegado al nivel ${l+1} del taller: ${LEVELS[l+1]}`);
     const sp=SPECIAL['L'+l]; p.inv['L'+l]=(p.inv['L'+l]||0)+1; p.beads.push('c:⭐'); p.coins+=10; p.counters.earned+=10; save('¡Sube al nivel '+(l+1)+'!');
     const news = l===1?'Han llegado Bruno el oso y Lía la nutria, ¡y la plaza tiene fuente y farolas nuevas!':'Han llegado Nube la coneja y Hilo el robot. ¡Y hay un puente nuevo sobre el río!';
     fanfare();
@@ -1814,7 +1861,7 @@ const MEDALS=[
 ];
 function checkMedals(p){
   const out=[];
-  for(const m of MEDALS){ if(!p.medals[m.id] && m.v(p)>=m.goal){ p.medals[m.id]=today(); p.coins+=m.c; out.push(m); } }
+  for(const m of MEDALS){ if(!p.medals[m.id] && m.v(p)>=m.goal){ p.medals[m.id]=today(); p.coins+=m.c; out.push(m); addNews(p,m.e,`ha ganado la medalla «${m.n}»`); } }
   return out;
 }
 async function afterRewards(){
@@ -1865,7 +1912,7 @@ function ensureDaily(p){
   const total=firstDay?4:3, maxStory=firstDay?2:1;
   const list=ENC.filter(e=>e.lvl<=p.unlocked && !p.done[e.id]).slice(0,Math.min(total,maxStory)).map(e=>({id:e.id}));
   const R=rng(t+'|'+p.id+'|tipos');
-  const types=['seq','reglas','cua'].concat(p.unlocked>=2?['rep','cab']:[]).concat(p.unlocked>=3?['mot','hilo']:[]);
+  const types=tlvTypesFor(p);
   const used=new Set(list.map(x=>(ENC.find(e=>e.id===x.id)||{}).type));
   // el concepto más nuevo sale con más frecuencia
   const fresh=p.unlocked>=3?['cab','mot']:p.unlocked>=2?['cab','rep']:['seq','cua'];
@@ -1883,7 +1930,7 @@ async function dailyBonusCheck(p){
   if(!p.daily.list.every(x=>p.daily.done[x.id])) return;
   if(!p.daily.math) return;
   if(cuadernosFor(p).length && !p.daily.read) return;
-  p.daily.bonus=true; p.coins+=3; p.counters.earned+=3; addXP(p,2); save('Terminó los encargos del día');
+  p.daily.bonus=true; addNews(p,'🧶','ha completado la ruta del día'); p.coins+=3; p.counters.earned+=3; addXP(p,2); save('Terminó los encargos del día');
   fanfare();
   await say({center:true,html:`<div class="reward"><div style="font-size:56px">🎉</div><div style="font-size:26px;font-weight:800">¡Ruta del día completada!</div><div class="rw-items"><div class="rw-item">🔘 +3 botones</div><div class="rw-item">✨ +2 experiencia</div></div><div style="font-size:18px">Mañana llegarán más. ¿Has regado tu jardín?</div></div>`,buttons:[{t:'¡Hurra!',cls:'primary'}]});
 }
@@ -2079,6 +2126,7 @@ function renderCabProg(list,path,locked){
 function cabAdd(node){
   if(PZ.running) return;
   if(countNodes(PZ.prog)>=40){ toast('¡Programa demasiado largo! Usa Repetir.'); return; }
+  if(PZ.maxCards&&countNodes(PZ.prog)>=PZ.maxCards){ toast(`¡Solo caben ${PZ.maxCards} tarjetas! Usa 🔁 Repetir, también uno dentro de otro.`); return; }
   const l=cabCurList(); l.push(node);
   if(node.op==='rep') PZ.selPath=PZ.selPath.concat(l.length-1);
   beep(640,0.05); renderPuzzle();
@@ -2087,7 +2135,7 @@ function renderCabRight(R){
   const locked=PZ.running||!!PZ.step;
   R.append(el('div','lbl','Programa del cabezal'));
   R.append(renderCabProg(PZ.prog,[],locked));
-  R.append(el('div','counter',`Tarjetas usadas: ${countNodes(PZ.prog)} · reto: ${PZ.best} o menos`));
+  R.append(el('div','counter',`Tarjetas usadas: ${countNodes(PZ.prog)}`+(PZ.maxCards?` · 📦 caben ${PZ.maxCards}`:'')+` · reto: ${PZ.best} o menos`));
   R.append(el('div','lbl','Tarjetas'));
   const pal=el('div','palette');
   uniqColors(PZ.target).concat(PZ.age>7?COLOR_KEYS.filter(c=>!uniqColors(PZ.target).includes(c)).slice(0,1):[]).forEach(k=>{ const c=opCard({op:'c',v:k}); c.onclick=()=>cabAdd({op:'c',v:k}); pal.append(c); });
@@ -2254,6 +2302,7 @@ function buildReport(){
     const log={}; days.slice(-120).forEach(d=>{ const L=Object.assign({},(p.log||{})[d]||{}); if(p.play&&p.play[d]) L.min=Math.round(p.play[d]/60); if(Object.keys(L).length) log[d]=L; });
     return {nombre:p.name,edad:p.age,botones:p.coins,ganados:p.counters.earned||0,nivelTelar:p.unlocked,
       maestria:{telar:[mLevel(p,'telar'),(p.mastery||{}).telar||0],pan:[mLevel(p,'pan'),(p.mastery||{}).pan||0],bib:[mLevel(p,'bib'),(p.mastery||{}).bib||0]},
+      nivelesReto:Object.fromEntries(TLV_TYPES.map(t=>[t,tlvOf(p,t)])),
       racha:p.days.streak||0,mejorRacha:p.days.best||0,diasJugados:p.days.count||0,medallas:Object.keys(p.medals||{}).length,
       puente:p.bridge||0,tareas:p.counters.tasks||0,retos:p.counters.retos||0,historias:(p.stories||[]).length,
       tiposTelar:ty,mates:p.math||{},cuadernos:cu,dias:log};
@@ -3061,7 +3110,7 @@ function drawBuntingX(c){
 
 /* ---------- vecinos y movimiento ---------- */
 function setupNPCs(){
-  const p=P(); const lv=p.unlocked;
+  const lv=townLv();
   const list=(VISIT?[]:['alcalde']).concat(['rosa','tomas','coco']); if(lv>=2) list.push('bruno','lia'); if(lv>=3) list.push('nube','hilo');
   const homes={alcalde:[1300,660],rosa:[760,880],tomas:[1520,640],coco:[1470,520],bruno:[1000,1390],lia:[1800,960],nube:[1620,1420],hilo:[1640,760]};
   npcs=list.map(k=>{ const old=npcs.find(n=>n.k===k&&n.home===homes[k]); return old||{k,x:homes[k][0],y:homes[k][1],tx:homes[k][0],ty:homes[k][1],home:homes[k],wait:Math.random()*3}; });
@@ -3091,7 +3140,7 @@ function handleWorldTap(x,y){
   const go=(door,fn)=>{ player.tx=door[0]; player.ty=door[1]; player.act=fn; tapFx={x:door[0],y:door[1],t:0}; };
   if(inRect(x,y,B.taller)) return go(B.taller.door,openWorkshop);
   if(inRect(x,y,{x:B.tablon.x-16,y:B.tablon.y-10,w:B.tablon.w+32,h:B.tablon.h+10})) return go(B.tablon.door,openBoard);
-  if(inRect(x,y,B.ayto)) return go(B.ayto.door,openBoard);
+  if(inRect(x,y,B.ayto)) return go(B.ayto.door,openNews);
   if(inRect(x,y,B.panaderia)) return go(B.panaderia.door,()=>openBakery());
   if(inRect(x,y,B.biblio)) return go(B.biblio.door,openLibrary);
   if(inRect(x,y,B.tienda)) return go(B.tienda.door,openShop);
@@ -3242,7 +3291,7 @@ let masteryQueue=[];
 function addMastery(p,a,n=1){
   p.mastery=p.mastery||{telar:0,pan:0,bib:0};
   const before=mLevel(p,a); p.mastery[a]=(p.mastery[a]||0)+n; const after=mLevel(p,a);
-  for(let l=before+1;l<=after;l++){ const c=5*l; p.coins+=c; p.counters.earned+=c; p.beads.push('c:'+MAST[a].e); masteryQueue.push([a,l]); }
+  for(let l=before+1;l<=after;l++){ const c=5*l; p.coins+=c; p.counters.earned+=c; p.beads.push('c:'+MAST[a].e); masteryQueue.push([a,l]); addNews(p,MAST[a].e,`ha llegado a ${MAST[a].n} ${l}: ${MAST[a].t[l-1]}`); }
 }
 async function showRankUps(){
   while(masteryQueue.length){
@@ -3269,7 +3318,7 @@ async function openBridge(){
   if(r===0) return;
   const want=r===1?10:r===2?50:BRIDGE_GOAL-tot; const give=Math.min(want,p.coins,BRIDGE_GOAL-tot);
   if(give<=0){ toast('No tienes botones suficientes. ¡Completa encargos!'); return; }
-  p.coins-=give; p.bridge=(p.bridge||0)+give; save(`Aportó ${give} botones al puente`); [500,650,800].forEach((f,i)=>setTimeout(()=>beep(f,0.08,'triangle',0.05),i*90));
+  p.coins-=give; p.bridge=(p.bridge||0)+give; addNews(p,'🪵',`ha puesto ${give} botones en el puente de Lía`); if(bridgeTotal()>=BRIDGE_GOAL) addNews(p,'🌉','ha terminado el puente. ¡Ya se puede cruzar el río!'); save(`Aportó ${give} botones al puente`); [500,650,800].forEach((f,i)=>setTimeout(()=>beep(f,0.08,'triangle',0.05),i*90));
   if(bridgeDone()){ fanfare(); await say({center:true,html:`<div class="reward"><div style="font-size:60px">🌉</div><div style="font-size:28px;font-weight:800">¡Puente terminado!</div><div style="font-size:18px">Lía: «¡Gracias, ${esc(p.name)}! Ya se puede cruzar al otro lado del río.»</div></div>`}); }
   else toast(`🪵 ¡Gracias! El puente va por ${bridgeTotal()} de ${BRIDGE_GOAL}`);
   updateHUD();
@@ -3433,6 +3482,219 @@ function renderRoomPanel(inv,p){
 $('#hv-garden').onclick=()=>{ houseView='garden'; invSel=null; renderHouse(); sizeGarden(); };
 $('#hv-room').onclick=()=>{ houseView='room'; invSel=null; renderHouse(); sizeGarden(); };
 /* =========================================================
+   NIVELES DE RETO DEL TELAR (dificultad adaptativa)
+   ========================================================= */
+/* p.tlv[tipo] = nivel de reto 1..10. Sube tras 2 encargos seguidos perfectos y baja tras 2 atascos (p.tlvRun). */
+const TLV_TYPES=['seq','reglas','rep','mot','hilo','cab','cua','falta'];
+const TLV_MAX=10;
+TYPE_NAMES.falta='Tarjeta perdida';
+ASK.falta='¡Se me han perdido tarjetas del programa! ¿Sabes cuáles faltan para que salga mi tela?';
+HELP.falta='A este programa le faltan tarjetas (las de «?»). Toca un «?» y luego elige la tarjeta que va ahí. Si falta el número de Repetir, ponlo con – y +. Después pulsa «Tejer».';
+function tlvDefault(p){ const u=p.unlocked||1; const m=(p.mastery?mLevel(p,'telar'):1)||1; return Math.max(1,Math.min(4,u+Math.floor((m-1)/2))); }
+function tlvOf(p,t){ return (p.tlv&&p.tlv[t])||tlvDefault(p); }
+function tlvTypesFor(p){ const lv=p.unlocked||1; return ['seq','reglas','cua'].concat(lv>=2?['rep','cab','falta']:[]).concat(lv>=3?['mot','hilo']:[]); }
+function tlvUpdate(p,t,perfect,stuck){
+  if(!TLV_TYPES.includes(t)) return null;
+  p.tlv=p.tlv||{}; p.tlvRun=p.tlvRun||{};
+  const cur=tlvOf(p,t); let r=p.tlvRun[t]||0, res=null;
+  if(perfect) r=r>0?r+1:1; else if(stuck) r=r<0?r-1:-1; else r=0;
+  const cap=(p.tlvCap&&p.tlvCap[t])||TLV_MAX;
+  if(r>=2&&cur<cap){ p.tlv[t]=cur+1; r=0; res='up'; }
+  else if(r<=-2&&cur>1){ p.tlv[t]=cur-1; r=0; res='down'; }
+  else if(!p.tlv[t]) p.tlv[t]=cur;
+  p.tlvRun[t]=r; return res;
+}
+
+/* ---------- generador por niveles ---------- */
+function genEncargo(p,seed,kind,id,forceType){
+  const R=rng(seed), ri=(a,b)=>a+Math.floor(R()*(b-a+1)), pk=a=>a[Math.floor(R()*a.length)];
+  const small=p.age<=7, lv=p.unlocked||1;
+  const pool=[['seq',lv===1?3:1],['reglas',2],['cua',3]]; if(lv>=2) pool.push(['rep',lv===2?4:2],['cab',4],['falta',3]); if(lv>=3) pool.push(['mot',3],['hilo',2]);
+  let x=R()*pool.reduce((a,b)=>a+b[1],0), type='seq'; for(const [t,w] of pool){ if((x-=w)<0){ type=t; break; } }
+  if(forceType) type=forceType;
+  const L=Math.max(1,Math.min(TLV_MAX,(p.tlvForce)||tlvOf(p,type)));
+  const ncol=small?Math.min(4,2+Math.floor(L/4)):Math.min(6,3+Math.floor(L/3));
+  const cols=shuffle(COLOR_KEYS.slice(),R).slice(0,ncol);
+  const motif=len=>{ let m; do{ m=Array.from({length:len},()=>pk(cols)); }while(new Set(m).size<Math.min(2,cols.length)); return m; };
+  const motAB=(w,mainLen,rep)=>{ const A=motif(w); let B; do{ B=motif(w); }while(B.join('')===A.join(''));
+    let main; do{ main=Array.from({length:mainLen},()=>R()<0.5?'A':'B'); }while(!main.includes('A')||!main.includes('B')); return {A,B,main,rep}; };
+  let v;
+  if(type==='seq'){ const n=small?Math.min(12,4+L):Math.min(16,6+L); const t=Array.from({length:n},()=>pk(cols)); v={w:n<=8?n:Math.ceil(n/2),t:t.join('')}; }
+  else if(type==='reglas'){
+    const diag=small?L>=8:L>=6;
+    if(diag){ const Lm=small?3:ri(3,4), m=motif(Lm), w=Lm*2, h=small?4:5, t=[];
+      for(let r=0;r<h;r++) for(let c=0;c<w;c++) t.push(m[(c+r)%Lm]);
+      const nh=Math.min(w*2,(small?3:4)+Math.floor(L/3)); const cand=shuffle([...Array(t.length).keys()].filter(i=>i>=w*2),R).slice(0,nh).sort((a,b)=>a-b);
+      v={w,t:t.join(''),miss:nh,holes:cand,diag:true};
+    } else {
+      const Lm=small?Math.min(4,2+Math.floor(L/4)):Math.min(6,3+Math.floor(L/3)), m=motif(Lm), w=small?6:8, n=Math.max(w*(small?2:3),Lm*4);
+      const t=[]; while(t.length<n) t.push(...m); t.length=n;
+      const miss=Math.min((small?Lm:Lm+1)+Math.floor(L/3),Math.floor(n/2.5));
+      let holes;
+      if(L<=3) holes=[...Array(miss).keys()].map(k=>n-miss+k);
+      else holes=shuffle([...Array(n).keys()].filter(i=>i>=Lm*2),R).slice(0,miss).sort((a,b)=>a-b);
+      v={w,t:t.join(''),miss,holes};
+    }
+  }
+  else if(type==='rep'){ const Lm=small?Math.min(5,2+Math.floor(L/3)):Math.min(7,3+Math.floor(L/2)), m=motif(Lm), w=small?6:8;
+    v={w,sol:{main:m,rep:Math.max(3,Math.ceil(w*(small?2:3)/Lm))}}; if(L>=3) v.max=Lm+(L>=6?0:2); }
+  else if(type==='cab'){ const tier=L<=3?1:(L<=(small?7:5))?2:3; const d=genCabDesign2(R,small,tier,L); v=makeCabVariant(d.t,d.w,d.h); if(L>=4) v.max=v.best+(L>=7?1:3); }
+  else if(type==='cua'){ v=genCua2(R,small,L); }
+  else if(type==='mot'){ const w=small?4:(L>=5?8:6); const big=!small&&L>=6; const sol=motAB(w,big?ri(3,4):(small?Math.min(6,3+Math.floor(L/3)):Math.min(9,4+Math.floor(L/2))),big?2:1);
+    v={w,sol}; if(L>=3) v.max=cardCount(sol)+(L>=6?0:2); }
+  else if(type==='hilo'){
+    const w=small?4:6; const withRep=L>=4; const sol=motAB(w,withRep?ri(2,3):(small?ri(4,5):ri(5,7)),withRep?ri(2,3):1);
+    const h=clone(sol), bugs=[];
+    if(R()<0.65){
+      const modes=L<=3?['tok','col','pop']:['tok','col','rep','swap'];
+      const nb=L>=7?2:1; const used=new Set();
+      for(let b=0;b<nb;b++){ let mode; do{ mode=pk(modes); }while(used.has(mode)&&used.size<modes.length); used.add(mode);
+        if(mode==='tok'){ const i=ri(0,h.main.length-1); h.main[i]=h.main[i]==='A'?'B':'A'; bugs.push({row:'main',i}); }
+        else if(mode==='col'){ const r=pk(['A','B']), i=ri(0,w-1); const opts=cols.concat(COLOR_KEYS).filter(c=>c!==h[r][i]); h[r][i]=opts[0]; bugs.push({row:r,i}); }
+        else if(mode==='pop'){ h.main.pop(); bugs.push({row:'main',i:h.main.length-1,end:true}); }
+        else if(mode==='rep'){ h.rep=h.rep+(R()<0.5&&h.rep>2?-1:1); bugs.push({rep:true}); }
+        else { const r=pk(['A','B']); let i=-1; for(const k of shuffle([...Array(w-1).keys()],R)){ if(h[r][k]!==h[r][k+1]){ i=k; break; } }
+          if(i<0){ h.rep=h.rep+1; bugs.push({rep:true}); } else { [h[r][i],h[r][i+1]]=[h[r][i+1],h[r][i]]; bugs.push({row:r,i},{row:r,i:i+1,pair:true}); } }
+      }
+      if(expand(h).join('')===expand(sol).join('')){ h.rep=sol.rep+1; bugs.length=0; bugs.push({rep:true}); }
+    }
+    v={w,sol,hilo:h,bugs,locate:L>=4};
+  }
+  else if(type==='falta'){
+    const useMot=small?L>=6:L>=4; const w=small?(useMot?4:6):(useMot?6:8);
+    let sol; if(useMot) sol=motAB(w,small?ri(3,4):ri(4,6),1); else { const Lm=small?Math.min(4,2+Math.floor(L/3)):Math.min(6,3+Math.floor(L/2)); sol={main:motif(Lm),rep:Math.max(3,Math.ceil(w*2/Lm))}; }
+    const slots=[]; ['main','A','B'].forEach(r=>(sol[r]||[]).forEach((_,i)=>slots.push({row:r,i})));
+    const nb=L>=7?3:L>=4?2:1; const blanks=shuffle(slots,R).slice(0,nb);
+    if(L>=5&&R()<0.6){ blanks.pop(); blanks.push({rep:true}); }
+    v={w,sol,blanks};
+  }
+  const npcs=['rosa','tomas','coco'].concat(lv>=2?['bruno','lia']:[]).concat(lv>=3?['nube']:[]);
+  return {id,kind,type,L,lvl:type==='seq'||type==='reglas'||type==='cua'?1:type==='rep'||type==='falta'?2:type==='cab'?(lv>=3?3:2):3,npc:type==='hilo'?'hilo':pk(npcs),
+    title:(kind==='practice'?'Práctica: ':'')+(type==='cua'?pk(['Cuadro mágico','Colcha mágica','Tapiz mágico']):type==='falta'?pk(['Programa roto','Tarjetas perdidas','El programa de','Programa incompleto']).replace('El programa de','Programa de '+pk(['Rosa','Tomás','Coco'])):pk(GARMENTS)+' '+pk(GSTYLE)),story:null,ask:ASK[type],v6:v,v9:v};
+}
+
+/* ---------- cabezal: diseños con bucles dentro de bucles y mejor solución ---------- */
+function genCabDesign2(R,small,tier,L){
+  if(tier<3){ const d=genCabDesign(R,small,tier); return d; }
+  const ri=(a,b)=>a+Math.floor(R()*(b-a+1)), pk=a=>a[Math.floor(R()*a.length)];
+  const cols=shuffle(COLOR_KEYS.slice(),R), A=cols[0],B=cols[1],C=cols[2];
+  const w=small?4:pk([6,8]), h=small?4:pk([4,6]); const t=[];
+  const fam=pk(small?['ajedrez','filas']:['ajedrez','filas','bloques','escalera']);
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+    if(fam==='ajedrez') t.push((x+y)%2?B:A);
+    else if(fam==='filas') t.push(y%2?C:(x%2?B:A));
+    else if(fam==='bloques') t.push((Math.floor(x/2)+Math.floor(y/2))%2?B:A);
+    else t.push(((x+Math.floor(y/2)*2)%4)<2?A:B);
+  }
+  return {w,h,t};
+}
+function cabRowBody(row){
+  const runs=[]; cabRuns(row).forEach(([c,len])=>{ if(c) runs.push({op:'c',v:c}); const op=c?'p':'s'; if(len>=3) runs.push({op:'rep',n:len,body:[{op}]}); else for(let i=0;i<len;i++) runs.push({op}); });
+  let best=runs;
+  for(let P=2;P<=row.length/2;P++){ if(row.length%P) continue; let ok=true; for(let i=P;i<row.length;i++) if(row[i]!==row[i-P]){ ok=false; break; } if(!ok) continue;
+    const blk=[]; cabRuns(row.slice(0,P)).forEach(([c,len])=>{ if(c) blk.push({op:'c',v:c}); for(let i=0;i<len;i++) blk.push({op:c?'p':'s'}); });
+    const cand=[{op:'rep',n:row.length/P,body:blk}]; if(countNodes(cand)<countNodes(best)) best=cand; break; }
+  return best;
+}
+function cabBest(t,w,h){
+  const rows=[]; for(let y=0;y<h;y++) rows.push(t.slice(y*w,(y+1)*w));
+  const key=r=>r.join(',');
+  // filas agrupadas cuando se repiten seguidas
+  const groups=[]; rows.forEach(r=>{ const g=groups[groups.length-1]; if(g&&g.key===key(r)) g.k++; else groups.push({key:key(r),row:r,k:1}); });
+  let prog=[]; groups.forEach((g,gi)=>{ const body=cabRowBody(g.row); if(g.k>=2) prog.push({op:'rep',n:g.k,body:body.concat([{op:'n'}])}); else { prog.push(...body); if(gi<groups.length-1) prog.push({op:'n'}); } });
+  let best=prog;
+  // patrón de filas que se repite (cada 2 o 3 filas)
+  for(let Q=2;Q<=3;Q++){ if(h%Q||h/Q<2) continue; let ok=true; for(let y=Q;y<h;y++) if(key(rows[y])!==key(rows[y-Q])){ ok=false; break; } if(!ok) continue;
+    const body=[]; for(let y=0;y<Q;y++){ body.push(...cabRowBody(rows[y]),{op:'n'}); }
+    const cand=[{op:'rep',n:h/Q,body}]; if(countNodes(cand)<countNodes(best)) best=cand; }
+  const old=cabCanon(t,w,h); return countNodes(old)<countNodes(best)?old:best;
+}
+function makeCabVariant(t,w,h){ const sol=cabBest(t,w,h); return {w,h,t:t.map(c=>c||'.').join(''),sol,best:countNodes(sol)}; }
+
+/* ---------- cuadro mágico por niveles ---------- */
+function genCua2(R,small,L){
+  const n=small?3:4, box=!small, syms=shuffle(COLOR_KEYS.slice(),R).slice(0,n);
+  const g=Array(n*n).fill(null);
+  const fill=i=>{ if(i===n*n) return true; for(const v of shuffle(syms.slice(),R)){ if(cuaOk(g,n,box,i,v)){ g[i]=v; if(fill(i+1)) return true; g[i]=null; } } return false; };
+  fill(0);
+  const sol=g.slice(), giv=g.slice(), maxRemove=small?Math.min(6,3+Math.floor(L/2)):Math.min(12,5+L);
+  let removed=0;
+  for(const i of shuffle([...Array(n*n).keys()],R)){
+    if(removed>=maxRemove) break;
+    const keep=giv[i]; giv[i]=null;
+    if(cuaCount(giv.slice(),n,box,syms)!==1) giv[i]=keep; else removed++;
+  }
+  return {n,box,sol:sol.join(''),giv:giv.map(c=>c||'.').join(''),syms};
+}
+
+/* ---------- traza de ejecución: qué tarjeta teje cada punto ---------- */
+function traceProg(prog){
+  const out=[]; const rep=prog.rep||1;
+  for(let k=0;k<rep;k++) (prog.main||[]).forEach((tk,i)=>{ if(tk==='A'||tk==='B') (prog[tk]||[]).forEach((c,j)=>out.push({c,i,row:tk,j,k})); else out.push({c:tk,i,k}); if(out.length>400) return; });
+  return out;
+}
+function knitHL(s,rep){
+  document.querySelectorAll('#pz-right .ccard.run,#pz-right .ccard.run2').forEach(e=>e.classList.remove('run','run2'));
+  if(!s){ const v=document.querySelector('#pz-right .repbox .vuelta'); if(v) v.textContent=''; return; }
+  const m=document.querySelector(`#pz-right .ccard[data-row="main"][data-i="${s.i}"]`); if(m) m.classList.add('run');
+  if(s.row){ const c=document.querySelector(`#pz-right .ccard[data-row="${s.row}"][data-i="${s.j}"]`); if(c) c.classList.add('run2'); }
+  const v=document.querySelector('#pz-right .repbox .vuelta'); if(v) v.textContent=rep>1?`vuelta ${s.k+1} de ${rep}`:'';
+}
+function animateKnit(out,slow){
+  return new Promise(res=>{
+    const tr=traceProg(PZ.prog), rep=PZ.prog.rep||1;
+    const n=Math.min(out.length, PZ.target.length+PZ.v.w*2); let i=0;
+    const speed = slow||PZ.slow ? 650 : Math.max(110,Math.min(320,4200/Math.max(1,n)));
+    const tick=()=>{ i++; renderResult(out.slice(0,i),[],i-1); knitHL(tr[i-1],rep); beep(500+COLOR_KEYS.indexOf(out[i-1])*60,0.03,'triangle',0.03); if(i<n) setTimeout(tick,speed); else setTimeout(()=>{ knitHL(null); PZ.slow=false; res(); },Math.min(500,speed)); };
+    tick();
+  });
+}
+
+/* ---------- tarjetas perdidas y buscar el fallo de Hilo ---------- */
+function blankAt(row,i){ return (PZ.blanks||[]).some(b=>b.row===row&&b.i===i); }
+function nextBlank(){ const bs=(PZ.blanks||[]).filter(b=>!b.rep); return bs.find(b=>PZ.prog[b.row][b.i]==='?')||null; }
+function locateTap(where){
+  const ok=(PZ.v.bugs||[]).some(b=>where.rep?b.rep:(b.row===where.row&&(b.i===where.i||(b.end&&where.row==='main'&&where.i>=PZ.prog.main.length-1))));
+  if(ok){ PZ.locRight=PZ.locTries===0; PZ.phase=null; beep(880,0.1,'triangle'); renderPuzzle();
+    say({face:'🤖',name:'Hilo',text:where.rep?'¡Ahí está! Me equivoqué en las vueltas de Repetir. ¿Me ayudas a arreglarlo?':'¡Ahí está mi fallo! Ahora, ¿me ayudas a arreglar el programa?'}).then(()=>{ PZ.attempts=0; evaluate(expand(PZ.prog)); });
+    return; }
+  PZ.locTries=(PZ.locTries||0)+1; beep(220,0.15,'sawtooth',0.03);
+  if(PZ.locTries>=2){ PZ.locRight=false; PZ.phase=null; renderPuzzle(); const b=PZ.v.bugs[0];
+    if(b.rep){ const rb=document.querySelector('#pz-right .repbox'); if(rb) rb.classList.add('shake'); }
+    else { const c=document.querySelector(`#pz-right .ccard[data-row="${b.row}"][data-i="${b.i}"]`); if(c) c.classList.add('run'); }
+    setMsg(b.rep?'El fallo estaba en el número de Repetir. ¡Arréglalo y teje!':'El fallo estaba en la tarjeta marcada. ¡Arréglalo y teje!','bad'); speakAuto($('#pz-msg').textContent); return; }
+  setMsg('Ahí no está el fallo. Sigue el programa tarjeta a tarjeta y compara con el pedido.','bad');
+}
+/* =========================================================
+   PUEBLO COMPARTIDO y NOTICIAS DEL PUEBLO
+   ========================================================= */
+/* El pueblo crece con lo que hacen las dos. DB.news guarda los logros para que la otra los vea. */
+function townLv(){ const G=DB.profiles.filter(Boolean); return G.length?Math.max(...G.map(q=>q.unlocked||1)):1; }
+function progressStats(p){
+  const G=DB.profiles.filter(Boolean); if(!G.length) return {done:0,stars:0,lv:1,trees:3};
+  const done=G.reduce((a,q)=>a+(q.counters.encargos||0),0), xp=G.reduce((a,q)=>a+(q.xp||0),0), lv=townLv(), vl=G.reduce((a,q)=>a+villageLevel(q),0);
+  return {done,stars:xp,lv,trees:Math.min(TREE_SPOTS.length,3+Math.floor(done/3)+Math.floor(vl/2)+(lv-1))};
+}
+function addNews(p,e,txt){
+  if(VISIT||!p) return; DB.news=DB.news||[];
+  DB.news.push({t:Date.now(),pid:p.id,name:p.name,e,txt}); if(DB.news.length>60) DB.news.splice(0,DB.news.length-60);
+}
+function newsLine(n){ const d=new Date(n.t); const dd=today()===`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`?'hoy':`${d.getDate()}/${d.getMonth()+1}`;
+  return `<div class="mitem" style="padding:8px 12px;align-items:center"><div class="mi" style="font-size:28px">${n.e}</div><div class="mt"><b>${esc(n.name)}</b> ${esc(n.txt)} <span class="counter">· ${dd}</span></div></div>`; }
+async function showNews(p){
+  const fresh=(DB.news||[]).filter(n=>n.pid!==p.id&&n.t>(p.newsSeen||0)).slice(-5);
+  p.newsSeen=Date.now(); saveQuiet();
+  if(!fresh.length) return;
+  await say({face:'📰',name:'Noticias del pueblo',speak:false,html:`<div style="font-size:18px;margin-bottom:8px">Mientras no estabas, en Villaovillo…</div><div style="display:flex;flex-direction:column;gap:6px">${fresh.map(newsLine).join('')}</div>`,buttons:[{t:'¡Qué bien!',cls:'primary'}]});
+}
+async function openNews(){
+  const all=(DB.news||[]).slice(-10).reverse();
+  const r=await say({face:'🎩',name:'Ayuntamiento · Noticias',speak:false,
+    html:all.length?`<div style="display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto">${all.map(newsLine).join('')}</div>`:'<div style="font-size:18px">Todavía no hay noticias. ¡Cada logro de las dos aparecerá aquí!</div>',
+    buttons:[{t:'Cerrar'},{t:'📌 Tablón de tareas',cls:'primary'}]});
+  if(r===1) openBoard();
+}
+/* =========================================================
    PASEO DEL ALCALDE (supervisión: el pueblo visto por papá)
    ========================================================= */
 const MATH_NAMES={contar:'Contar',sumas:'Sumas',restas:'Restas',dinero:'Dinero',multi:'Multiplicar',suma100:'Sumas grandes',receta:'Recetas (doble y mitad)',reparto:'Repartos',cambio:'Cambio',dospasos:'Problemas de dos pasos',fraccion:'Fracciones'};
@@ -3546,11 +3808,15 @@ function fichaCard(p,i,focus){
   lv+=`<div class="counter">Telar: ${p.unlocked>=3?'todos los tipos de reto abiertos':'nivel '+p.unlocked+' de 3 ('+LEVELS[p.unlocked]+')'} · ${Object.keys(p.medals||{}).length}/${MEDALS.length} medallas · ${(p.stories||[]).length}/${Object.keys(STORIES).length} historias · ${Object.keys(p.bloomedKinds||{}).length}/12 plantas</div>`;
   c.append(el('div','fsec',lv));
   // telar
-  const ty=telarByType(p); let tl=`<h4>🧶 Telar · ${p.counters.encargos||0} encargos</h4>`;
-  const tk=Object.keys(ty).sort((a,b)=>ty[b].n-ty[a].n);
-  if(!tk.length) tl+='<div class="counter">Aún no ha hecho encargos.</div>';
-  else tl+='<div class="frow counter"><span class="fl">Tipo</span><span>Hechos</span><span style="min-width:52px;text-align:center">A la 1ª</span><span style="min-width:52px;text-align:center">3★</span></div>'+tk.map(k=>{ const o=ty[k]; return `<div class="frow"><span class="fl">${esc(TYPE_NAMES[k]||k)}</span><span class="fv">${o.n}</span>${pctTag(o.first,o.n)}${pctTag(o.s3,o.n)}</div>`; }).join('');
-  c.append(el('div','fsec',tl));
+  const ty=telarByType(p); const tsec=el('div','fsec'); tsec.innerHTML=`<h4>🧶 Telar · ${p.counters.encargos||0} encargos</h4><div class="counter" style="margin-bottom:4px">El nivel de reto sube solo tras 2 encargos perfectos seguidos y baja tras 2 atascos. Puedes ajustarlo con – y +.</div>`;
+  const tk=[...new Set(tlvTypesFor(p).concat(Object.keys(ty).filter(k=>k!=='custom'&&k!=='?')))];
+  tsec.append(el('div','frow counter','<span class="fl">Tipo</span><span>Hechos</span><span style="min-width:52px;text-align:center">A la 1ª</span><span style="min-width:52px;text-align:center">3★</span><span style="min-width:112px;text-align:center">Nivel de reto</span>'));
+  tk.forEach(k=>{ const o=ty[k]||{n:0,first:0,s3:0}; const r=el('div','frow',`<span class="fl">${esc(TYPE_NAMES[k]||k)}</span><span class="fv">${o.n}</span>${pctTag(o.first,o.n)}${pctTag(o.s3,o.n)}`);
+    if(TLV_TYPES.includes(k)){ const lvb=el('span','lvctl'); const mi=el('button','','–'), nn=el('b','',String(tlvOf(p,k))), pl=el('button','','+');
+      const setL=d=>{ p.tlv=p.tlv||{}; p.tlv[k]=Math.max(1,Math.min(TLV_MAX,tlvOf(p,k)+d)); (p.tlvRun||{})[k]=0; nn.textContent=p.tlv[k]; saveQuiet(); toast(`${p.name} · ${TYPE_NAMES[k]}: nivel ${p.tlv[k]}`); };
+      mi.onclick=()=>setL(-1); pl.onclick=()=>setL(1); lvb.append(mi,nn,pl); r.append(lvb); }
+    tsec.append(r); });
+  c.append(tsec);
   // panadería
   const mk=Object.keys(p.math||{}); let pn=`<h4>🥐 Panadería · ${mk.reduce((a,k)=>a+p.math[k].total,0)} problemas</h4>`;
   pn+=mk.length?mk.sort((a,b)=>p.math[b].total-p.math[a].total).map(k=>{ const o=p.math[k]; return `<div class="frow"><span class="fl">${esc(MATH_NAMES[k]||k)}</span><span class="fv">${o.ok}/${o.total}</span>${pctTag(o.ok,o.total)}</div>`; }).join(''):'<div class="counter">Aún no ha hecho turnos.</div>';
@@ -3603,7 +3869,7 @@ function openVTaller(){
   const g2=sec(`📜 Encargos con historia (${ENC.filter(e=>p.done[e.id]).length} de ${ENC.length})`);
   ENC.forEach(e=>{ const st=(p.stats||{})[e.id]; g2.append(vtCard(e,p,p.done[e.id]||0,e.lvl>p.unlocked?'🔒 Aún no lo tiene abierto':st?`${st.plays} veces · ${st.tries} intentos`:'')); });
   const g3=sec('🎲 Un reto como los suyos');
-  const types=['seq','reglas','cua'].concat(p.unlocked>=2?['rep','cab']:[]).concat(p.unlocked>=3?['mot','hilo']:[]);
+  const types=tlvTypesFor(p);
   types.forEach(t=>{ const c=el('div','ecard'); c.innerHTML=`<div class="t">${esc(TYPE_NAMES[t])}</div><div class="counter">Uno nuevo, del nivel que le sale a ella</div>`; const b=el('button','btn','▶ Probar'); b.onclick=()=>{ const e=genEncargo(p,'vt'+t+Date.now(),'catalog','vt'+Date.now(),t); e.kind='catalog'; openPuzzle(e,{age:p.age}); }; c.append(b); g3.append(c); });
   const s4=el('div','panel'); s4.append(el('div','wsec',`🧵 Sus telas (${p.fabrics.length})`));
   const fg=el('div','fabgrid'); fg.style.padding='10px 0 0';
@@ -3619,12 +3885,15 @@ function showSolution(){
   const t=PZ.e.type, v=PZ.v;
   if(t==='cab'){ PZ.prog=clone(v.sol); PZ.selPath=[]; renderPuzzle(); setMsg('Solución cargada ('+countNodes(PZ.prog)+' tarjetas). Pulsa ▶ Tejer.','good'); return; }
   if(t==='cua'){ PZ.fill=PZ.target.slice(); renderCua(); setMsg('Solución cargada. Pulsa Comprobar.','good'); return; }
-  if(t==='reglas'){ PZ.fill=PZ.target.slice(); renderTarget(); setMsg('Solución: '+PZ.target.slice(PZ.target.length-v.miss).map(c=>COLORS[c].n).join(', ')+'. Pulsa Comprobar.','good'); return; }
+  if(t==='reglas'){ PZ.fill=PZ.target.slice(); renderTarget(); setMsg('Solución cargada. Pulsa Comprobar.','good'); return; }
+  if(t==='falta'){ PZ.prog=Object.assign({main:[],A:[],B:[],rep:1},clone(v.sol)); renderPuzzle(); setMsg('Solución cargada. Pulsa ▶ Tejer.','good'); return; }
+  if(t==='hilo'&&PZ.phase==='locate'){ const b=v.bugs[0]; toast(b.rep?'El fallo está en el número de Repetir':'El fallo está en la fila '+(b.row==='main'?'Programa':'Motivo '+b.row)+', tarjeta '+(b.i+1),3500); return; }
   if(t==='hilo'){ const ok=firstDiff(expand(PZ.prog),PZ.target)===-1; toast(ok?'✅ Esta vez el programa de Hilo está BIEN':'❌ El programa de Hilo tiene un ERROR',3500); PZ.phase=null; }
   PZ.prog = (t==='seq'||t==='custom'||!v.sol) ? {main:PZ.target.slice(),A:[],B:[],rep:1} : Object.assign({main:[],A:[],B:[],rep:1},clone(v.sol));
   renderPuzzle(); setMsg('Solución cargada ('+cardCount(PZ.prog)+' tarjetas). Pulsa ▶ Tejer.','good');
 }
 function ensureTestProfile(){ if(!P()){ const i=DB.profiles.findIndex(p=>p); if(i>=0) DB.cur=i; else { DB.profiles[0]=newProfile('Papá',9,'#4a8fdc'); DB.profiles[0].met=true; DB.cur=0; } saveQuiet(); } }
+let CAT_L=5;
 function openCatalog(){ if(VISIT){ openVTaller(); return; } ensureTestProfile(); renderCatalog(); show('catalog'); }
 function catCard(e,label,extra){
   const c=el('div','ecard'); c.style.cursor='default';
@@ -3646,9 +3915,11 @@ function renderCatalog(){
   const bkr=el('div','choice'); bkr.style.justifyContent='flex-start'; [[6,'👧 6-7 años'],[9,'👧 8-10 años']].forEach(([a,t])=>{ const b=el('button','',t); b.onclick=()=>openBakery(a); bkr.append(b); }); bk.append(bkr); L.append(bk);
   (window.CUADERNOS||[]).forEach(c=>{ const cc=el('div','ecard'); cc.innerHTML=`<div class="who">${c.emoji||'📘'}</div><div class="t">${esc(c.titulo)}</div><div class="badge">Biblioteca · para ${c.para==='6'?'6-7 años':c.para==='9'?'8-10 años':esc(c.para)}</div><div class="counter">${c.preguntas.length} preguntas</div>`; const b=el('button','btn','Probar'); b.onclick=()=>{ LQ=null; startQuiz(c); LQ.catalog=true; }; cc.append(b); L.append(cc); });
   L.append(el('div','wsec','Encargos generados (cada vez sale uno distinto)'));
-  [['seq',3,''],['reglas',3,''],['rep',3,''],['mot',3,''],['hilo',3,''],['cua',3,' (3×3 / 4×4 con cuadrados)'],['cab',2,' · nivel 1: el hilo como estado'],['cab',3,' · nivel 2: bucles dentro de bucles']].forEach(([t,lv,extra])=>{
+  const lvr=el('div','wnote'); lvr.innerHTML='Nivel de reto de los generados: '; const ch=el('span','choice'); ch.style.display='inline-flex';
+  for(let k=1;k<=TLV_MAX;k++){ const b=el('button',k===CAT_L?'sel':'',String(k)); b.onclick=()=>{ CAT_L=k; renderCatalog(); }; ch.append(b); } lvr.append(ch); L.append(lvr);
+[['seq',3,''],['reglas',3,''],['rep',3,''],['mot',3,''],['hilo',3,''],['cua',3,''],['cab',3,''],['falta',3,'']].forEach(([t,lv,extra])=>{
     const proto={npc:t==='hilo'?'hilo':t==='cab'?'bruno':t==='cua'?'nube':'coco',type:t,title:'Generado: '+TYPE_NAMES[t]+extra};
-    proto.make=a=>{ const g=genEncargo({age:a,unlocked:lv,id:'cat'},'cat'+t+Date.now()+Math.random(),'catalog','cat'+Date.now(),t); g.title=proto.title; return g; };
+    proto.make=a=>{ const g=genEncargo({age:a,unlocked:3,id:'cat',tlvForce:CAT_L},'cat'+t+Date.now()+Math.random(),'catalog','cat'+Date.now(),t); g.title=proto.title; return g; };
     L.append(catCard(proto, proto.title, t==='cab'?'Nuevo · programa el cabezal':t==='cua'?'Nuevo · lógica tipo sudoku':''));
   });
 }
