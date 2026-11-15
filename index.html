@@ -288,6 +288,7 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
 .ptitle{font-size:19px;font-weight:800;line-height:1.2}
 .pacts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}.pacts .btn{min-height:42px;font-size:16px;padding:4px 10px}.pacts .speak{width:34px;height:34px;font-size:16px}
 .pstate{font-size:15px;font-weight:700;color:#8a7660}
+#scr-village.night .vbar{background:#4a5f86}#scr-village.night .vtop{border-bottom-color:#3a4c70}#scr-village.night .vbot{border-top-color:#3a4c70}
 /* ---------- paseo del alcalde ---------- */
 #visitbar{display:none}
 #scr-village.visit .vtop,#scr-village.visit .vbot{display:none}
@@ -2970,8 +2971,9 @@ function buildBG(){
 /* ---------- piezas de dibujo ---------- */
 function smoke(c,x,y){ for(let i=0;i<4;i++){ const ph=(tGlobal*0.45+i/4)%1; c.fillStyle=`rgba(255,255,255,${0.55*(1-ph)})`; c.beginPath(); c.arc(x+Math.sin(ph*6+i)*5,y-ph*55,5+ph*10,0,Math.PI*2); c.fill(); } }
 function winX(c,x,y,w,h,acc){
+  const nt=nightLevel()>0.4; if(nt&&curScreen==='village') NIGHTWINS.push([x,y,w,h]);
   roundRect(c,x,y,w,h,7); c.fillStyle='#fffaf1'; c.fill(); ol(c,2.6);
-  const g=c.createLinearGradient(x,y,x+w,y+h); g.addColorStop(0,'#d8f1ff'); g.addColorStop(1,'#8fc8ea'); roundRect(c,x+5,y+5,w-10,h-10,4); c.fillStyle=g; c.fill();
+  const g=c.createLinearGradient(x,y,x+w,y+h); g.addColorStop(0,nt?'#fff1b8':'#d8f1ff'); g.addColorStop(1,nt?'#f6b94e':'#8fc8ea'); roundRect(c,x+5,y+5,w-10,h-10,4); c.fillStyle=g; c.fill();
   c.strokeStyle='#fffaf1'; c.lineWidth=3; c.beginPath(); c.moveTo(x+w/2,y+5); c.lineTo(x+w/2,y+h-5); c.moveTo(x+5,y+h/2); c.lineTo(x+w-5,y+h/2); c.stroke();
   c.fillStyle=acc; c.beginPath(); c.moveTo(x+5,y+5); c.lineTo(x+w*0.36,y+5); c.quadraticCurveTo(x+w*0.2,y+h*0.45,x+5,y+h*0.6); c.closePath(); c.fill();
   c.beginPath(); c.moveTo(x+w-5,y+5); c.lineTo(x+w*0.64,y+5); c.quadraticCurveTo(x+w*0.8,y+h*0.45,x+w-5,y+h*0.6); c.closePath(); c.fill();
@@ -3100,7 +3102,7 @@ function progressStats(p){ const done=p.counters.encargos||0; return {done,stars
 function vis(x,y,m=180){ return x>cam.x-m&&x<cam.x+viewW+m&&y>cam.y-m&&y<cam.y+viewH+m*1.5; }
 function drawVillage(){
   const c=vctx, p=P(); if(!p) return;
-  const st=progressStats(p);
+  const st=progressStats(p); NIGHTN=nightLevel(); NIGHTWINS.length=0;
   if(!cam.ok){ const t=camTarget(); cam.x=t.x; cam.y=t.y; cam.ok=true; }
   const k=vDpr*vScale;
   c.setTransform(1,0,0,1,0,0); c.fillStyle='#93c973'; c.fillRect(0,0,vcanvas.width,vcanvas.height);
@@ -3144,8 +3146,9 @@ function drawVillage(){
   E.push({y:player.y,d:()=>drawPlayer(c)});
   E.sort((a,b)=>a.y-b.y).forEach(e=>e.d());
   if(st.lv>=3) drawBuntingX(c);
-  c.fillStyle='#000'; butterflies.forEach(b=>{ if(vis(b.x,b.y)){ c.font='22px serif'; c.textAlign='center'; c.fillText('🦋',b.x,b.y); } });
+  c.fillStyle='#000'; if(NIGHTN<0.5) butterflies.forEach(b=>{ if(vis(b.x,b.y)){ c.font='22px serif'; c.textAlign='center'; c.fillText('🦋',b.x,b.y); } });
   if(tapFx){ c.strokeStyle=`rgba(255,255,255,${1-tapFx.t*2})`; c.lineWidth=4; c.beginPath(); c.ellipse(tapFx.x,tapFx.y,10+tapFx.t*40,5+tapFx.t*20,0,0,Math.PI*2); c.stroke(); }
+  drawNight(c,st);
 }
 function drawBuntingX(c){
   const pts=[[1050,700],[1200,660],[1350,700]];
@@ -3461,9 +3464,10 @@ function drawRoom(t){
   roundRect(c,-4,312,RW.W+8,28,4); c.fillStyle='#b97a48'; c.fill(); ol(c,2.6);
   // ventana
   roundRect(c,380,62,140,150,12); c.fillStyle='#fffaf1'; c.fill(); ol(c,3);
-  const sky=c.createLinearGradient(0,72,0,202); sky.addColorStop(0,'#a8dcf7'); sky.addColorStop(1,'#d8f1ff'); roundRect(c,392,74,116,126,6); c.fillStyle=sky; c.fill();
-  c.fillStyle='#8cc46a'; c.fillRect(392,170,116,30); c.fillStyle='#5bb04f'; c.beginPath(); c.arc(430,168,18,0,Math.PI*2); c.arc(476,172,14,0,Math.PI*2); c.fill();
-  c.fillStyle='#fff'; c.beginPath(); c.arc(420+Math.sin(t*0.2)*20,100,10,0,Math.PI*2); c.arc(434+Math.sin(t*0.2)*20,96,13,0,Math.PI*2); c.arc(448+Math.sin(t*0.2)*20,102,9,0,Math.PI*2); c.fill();
+  const nt=nightLevel()>0.5; const sky=c.createLinearGradient(0,72,0,202); sky.addColorStop(0,nt?'#1c2552':'#a8dcf7'); sky.addColorStop(1,nt?'#3a4a8a':'#d8f1ff'); roundRect(c,392,74,116,126,6); c.fillStyle=sky; c.fill();
+  c.fillStyle=nt?'#2f4a3a':'#8cc46a'; c.fillRect(392,170,116,30); c.fillStyle=nt?'#24402f':'#5bb04f'; c.beginPath(); c.arc(430,168,18,0,Math.PI*2); c.arc(476,172,14,0,Math.PI*2); c.fill();
+  if(nt){ c.fillStyle='#fff6cf'; c.beginPath(); c.arc(480,100,13,0,Math.PI*2); c.fill(); c.fillStyle='#1c2552'; c.beginPath(); c.arc(486,96,11,0,Math.PI*2); c.fill(); c.fillStyle='#fff'; [[405,90],[430,118],[455,84],[420,150],[495,140]].forEach(([sx,sy],i)=>{ c.globalAlpha=0.5+0.5*Math.sin(t*2+i); c.fillRect(sx,sy,2.5,2.5); }); c.globalAlpha=1; }
+  else { c.fillStyle='#fff'; c.beginPath(); c.arc(420+Math.sin(t*0.2)*20,100,10,0,Math.PI*2); c.arc(434+Math.sin(t*0.2)*20,96,13,0,Math.PI*2); c.arc(448+Math.sin(t*0.2)*20,102,9,0,Math.PI*2); c.fill(); }
   c.strokeStyle='#fffaf1'; c.lineWidth=5; c.beginPath(); c.moveTo(450,74); c.lineTo(450,200); c.moveTo(392,137); c.lineTo(508,137); c.stroke();
   for(const s of [-1,1]){ c.beginPath(); const cx=450+s*76; c.moveTo(cx,56); c.quadraticCurveTo(cx-s*20,140,cx+s*4,222); c.lineTo(cx+s*24,222); c.quadraticCurveTo(cx+s*10,140,cx+s*20,56); c.closePath(); c.fillStyle=p.color; c.fill(); ol(c,2.4); }
   roundRect(c,360,52,180,9,4); c.fillStyle='#9a6338'; c.fill(); ol(c,2);
@@ -4194,7 +4198,7 @@ function npcVoice(k){ if(!sndCfg().sfx) return; const S=sndInit(); if(!S) return
   [[0,0.09,1,1.25],[0.11,0.16,1.3,0.95]].forEach(([dt,dur,a,b])=>{ const o=AC.createOscillator(); o.type=k==='hilo'?'square':'sawtooth';
     o.frequency.setValueAtTime(base*a,t+dt); o.frequency.exponentialRampToValueAtTime(base*b,t+dt+dur);
     const f=AC.createBiquadFilter(); f.type='bandpass'; f.frequency.value=k==='hilo'?1400:1100; f.Q.value=3;
-    const g=AC.createGain(); g.gain.setValueAtTime(0.0001,t+dt); g.gain.linearRampToValueAtTime(k==='hilo'?0.05:0.13,t+dt+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dt+dur);
+    const g=AC.createGain(); g.gain.setValueAtTime(0.0001,t+dt); g.gain.linearRampToValueAtTime(k==='hilo'?0.07:0.17,t+dt+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dt+dur);
     o.connect(f); f.connect(g); g.connect(S.sfx); o.start(t+dt); o.stop(t+dt+dur+0.02); }); }
 
 /* ---- canciones (obras de dominio público, arreglos sencillos) ---- */
@@ -4243,11 +4247,11 @@ function musicTick(){
   const S=SND; if(!S||!S.on) return;
   const ahead=AC.currentTime+0.5;
   if(!S.cur||S.idx>=S.cur.ev.length&&AC.currentTime>S.t0+S.cur.len+3){
-    S.rep=(S.rep||0)+1; if(!S.cur||S.rep>2){ S.song=(S.song+1)%SONGS.length; S.rep=1; S.cur=buildSong(S.song); }
+    S.rep=(S.rep||0)+1; if(!S.cur||S.rep>2){ const pool=nightLevel()>0.5?[0,2]:SONGS.map((_,i)=>i); S.song=pool[(pool.indexOf(S.song)+1)%pool.length]; S.rep=1; S.cur=buildSong(S.song); }
     S.idx=0; S.t0=AC.currentTime+0.3; }
   while(S.idx<S.cur.ev.length&&S.t0+S.cur.ev[S.idx].t<ahead){ const e=S.cur.ev[S.idx++]; if(e.f) playNote(e,S.t0+e.t); }
 }
-function musicTarget(){ const S=SND; if(!S) return 0; if(!sndCfg().music) return 0; return 0.9*S.duck; }
+function musicTarget(){ const S=SND; if(!S) return 0; if(!sndCfg().music) return 0; return 0.7*S.duck; }
 function musicStart(){
   if(!sndCfg().music) return; const S=sndInit(); if(!S) return;
   try{ if(AC.state==='suspended') AC.resume(); }catch(e){}
@@ -4269,6 +4273,44 @@ function show(id){
 let stepT=0, stepAlt=false;
 function stepSfx(dt){ if(curScreen!=='village'||!player.moving){ stepT=0.12; return; } stepT-=dt; if(stepT<=0){ stepT=0.3; stepAlt=!stepAlt; sfxStep(stepAlt); } }
 $('#hb-music').onclick=cycleSound; $('#hb-music').textContent=soundLabel();
+/* =========================================================
+   MODO NOCHE (el pueblo sigue la hora real)
+   ========================================================= */
+/* nightLevel(): 0 de día, 1 de noche, con atardecer y amanecer suaves según el mes (horas aproximadas de España).
+   Para probar: ?noche o ?dia en la dirección. */
+const SUN={rise:[8.6,8.3,7.7,7.9,7.2,6.9,7.1,7.6,8.0,8.4,8.0,8.5],set:[18.3,18.9,19.5,20.9,21.4,21.8,21.7,21.2,20.4,19.6,18.0,17.9]};
+const NIGHT_FORCE=(()=>{ try{ const q=new URLSearchParams(location.search); return q.has('noche')?1:q.has('dia')?0:null; }catch(e){ return null; } })();
+let NIGHTN=0, NIGHTWINS=[], NOC=null, nightCache={t:0,v:0};
+function nightLevel(){
+  if(NIGHT_FORCE!=null) return NIGHT_FORCE;
+  if(Date.now()-nightCache.t<20000) return nightCache.v;
+  const d=new Date(now()), h=d.getHours()+d.getMinutes()/60, m=d.getMonth(), rise=SUN.rise[m], set=SUN.set[m];
+  let v=0; if(h>=set+0.75||h<rise-0.5) v=1; else if(h>=set) v=(h-set)/0.75; else if(h<rise) v=(rise-h)/0.5;
+  nightCache={t:Date.now(),v}; return v;
+}
+function drawNight(c,st){
+  const n=NIGHTN; $('#scr-village').classList.toggle('night',n>0.5); if(n<=0) return;
+  const W=vcanvas.width, H=vcanvas.height, k=vDpr*vScale;
+  if(!NOC) NOC=document.createElement('canvas'); if(NOC.width!==W||NOC.height!==H){ NOC.width=W; NOC.height=H; }
+  const o=NOC.getContext('2d');
+  o.setTransform(1,0,0,1,0,0); o.globalCompositeOperation='source-over'; o.clearRect(0,0,W,H);
+  o.fillStyle=`rgba(16,22,62,${0.6*n})`; o.fillRect(0,0,W,H);
+  o.setTransform(k,0,0,k,-cam.x*k,-cam.y*k); o.globalCompositeOperation='destination-out';
+  const L=[];
+  if(st.lv>=2) LAMPS.forEach(([x,y])=>L.push([x,y-62,120,0.95,1]));
+  NIGHTWINS.forEach(([x,y,w,h])=>L.push([x+w/2,y+h/2,Math.max(w,h)*1.5,0.95,0.8]));
+  ['taller','tienda','ayto','panaderia','biblio','houseA','houseB'].forEach(kk=>{ const b=B[kk]; if(b&&b.door) L.push([b.door[0],b.door[1]-30,70,0.7,0.6]); });
+  L.push([player.x,player.y-40,95,0.6,0]); L.push([B.plaza.x,B.plaza.y,80,0.45,0.3]); L.push([POND.x,POND.y,140,0.3,0]);
+  npcs.forEach(q=>L.push([q.x,q.y-30,45,0.35,0]));
+  L.forEach(([x,y,r,a])=>{ if(!vis(x,y,r)) return; const g=o.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,`rgba(0,0,0,${a})`); g.addColorStop(1,'rgba(0,0,0,0)'); o.fillStyle=g; o.fillRect(x-r,y-r,r*2,r*2); });
+  c.save(); c.setTransform(1,0,0,1,0,0); c.drawImage(NOC,0,0); c.restore();
+  c.save(); c.globalCompositeOperation='lighter';
+  L.forEach(([x,y,r,a,warm])=>{ if(!warm||!vis(x,y,r)) return; const g=c.createRadialGradient(x,y,0,x,y,r*0.8); g.addColorStop(0,`rgba(255,190,90,${0.22*warm*n})`); g.addColorStop(1,'rgba(255,190,90,0)'); c.fillStyle=g; c.fillRect(x-r,y-r,r*2,r*2); });
+  // luciérnagas
+  for(let i=0;i<26;i++){ const bx=BUSHES[i%BUSHES.length], x=bx[0]+Math.sin(tGlobal*0.5+i*1.7)*60, y=bx[1]-30+Math.cos(tGlobal*0.7+i)*30, a=(Math.sin(tGlobal*2.3+i*2.1)+1)/2*n;
+    if(!vis(x,y)) continue; const g=c.createRadialGradient(x,y,0,x,y,10); g.addColorStop(0,`rgba(255,240,140,${0.9*a})`); g.addColorStop(1,'rgba(255,240,140,0)'); c.fillStyle=g; c.fillRect(x-10,y-10,20,20); }
+  c.restore();
+}
 /* =========================================================
    PASEO DEL ALCALDE (supervisión: el pueblo visto por papá)
    ========================================================= */
