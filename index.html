@@ -29,7 +29,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none}
 .scroll{overflow:auto;-webkit-overflow-scrolling:touch}
 
 /* ---------- perfiles ---------- */
-#scr-profiles{align-items:center;justify-content:center;gap:18px;padding:20px;background:linear-gradient(#bfe3f2,#e9f5d8 60%,#cfe8a9)}
+#scr-profiles{align-items:center;justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;gap:18px;padding:20px 16px 140px;background:linear-gradient(#bfe3f2,#e9f5d8 60%,#cfe8a9)}
 #scr-profiles h1{margin:0;font-size:46px;font-weight:800;color:#5a3d22;text-shadow:0 3px 0 #fff}
 #scr-profiles .sub{font-size:20px;margin-top:-10px;color:#6b5236}
 .slots{display:flex;gap:22px;flex-wrap:wrap;justify-content:center}
@@ -254,7 +254,7 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
   <h1>🧶 Villaovillo</h1>
   <div class="sub">El Taller del Telar</div>
   <div class="slots" id="slots"></div>
-  <div class="toolsrow" id="ptools"></div>
+  <div class="toolsrow" id="ptools" style="max-width:900px"></div>
 </section>
 
 <!-- PUEBLO -->
@@ -302,7 +302,7 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
 <section id="scr-house" class="screen">
   <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl" id="house-title">🏡 Mi casa</div><div class="chip" id="house-coins"></div></div>
   <div class="house-body">
-    <div class="garden" id="garden"></div>
+    <div id="gwrap" style="flex:2 1 560px;max-width:920px;align-self:flex-start"><canvas id="gcv" style="width:100%;display:block;border-radius:20px;border:4px solid var(--line);touch-action:manipulation;cursor:pointer"></canvas></div>
     <div class="inv panel" id="inv"></div>
   </div>
 </section>
@@ -864,7 +864,7 @@ function drawPlot(c,b,p){
   c.fillStyle='#8b5e3c'; roundRect(c,b.x,b.y,b.w,b.h,10); c.fill();
   c.strokeStyle='#d7b98c'; c.lineWidth=5; c.stroke();
   const rows=p?p.gardenRows:4, cw=(b.w-10)/8, ch=(b.h-10)/rows, fs=Math.min(cw,ch);
-  c.fillStyle='#a8d58a';
+  c.fillStyle='#a8754e';
   for(let i=0;i<8*rows;i++){ const x=b.x+5+(i%8)*cw, y=b.y+5+Math.floor(i/8)*ch; roundRect(c,x+1,y+1,cw-2,ch-2,4); c.fill(); }
   if(!p) return;
   c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#000';
@@ -1325,30 +1325,12 @@ async function checkLevelUp(){
    CASA Y JARDÍN
    ========================================================= */
 let houseIdx=0, invSel=null;
-function openHouse(i){ houseIdx=i; invSel=null; renderHouse(); show('house'); }
+function openHouse(i){ houseIdx=i; invSel=null; show('house'); renderHouse(); sizeGarden(); }
 function renderHouse(){
   const p=DB.profiles[houseIdx]; const mine=houseIdx===DB.cur;
   $('#house-title').textContent=mine?'🏡 Mi casa y mi jardín':'🏡 Casa de '+p.name;
   $('#house-coins').textContent='🔘 '+P().coins;
-  const g=$('#garden'); g.innerHTML='';
-  p.garden.forEach((cell,i)=>{
-    const c=el('div','gcell'+(!cell&&invSel&&mine?' drop':''));
-    if(cell){ const [em,fr]=cellEmoji(cell); c.textContent=em; if(fr) c.append(el('span','fr',fr)); if(cell.g<cell.need) c.title='Creciendo'; }
-    c.onclick=()=>{
-      if(!mine) return;
-      if(cell){
-        if(cell.g<cell.need){ toast('🌱 Está creciendo. ¡Riégala cada día hasta que florezca!'); return; }
-        const key=cell.need>0?'gw:'+cell.k:cell.k; p.garden[i]=null; p.inv[key]=(p.inv[key]||0)+1; beep(350,0.05);
-      }
-      else if(invSel && p.inv[invSel]>0){
-        const k=invSel.startsWith('gw:')?invSel.slice(3):invSel, need=needFor(k);
-        p.garden[i]={k,g:invSel.startsWith('gw:')?need:0,need}; p.inv[invSel]--; if(!p.inv[invSel]){ delete p.inv[invSel]; invSel=null; } beep(760,0.07,'triangle');
-      }
-      else { toast('Elige una planta de tu cesta y toca un hueco'); return; }
-      save(); renderHouse();
-    };
-    g.append(c);
-  });
+  setupGardenCanvas(p,mine);
   const inv=$('#inv'); inv.innerHTML='';
   if(mine){
     const growing=p.garden.some(c=>c&&c.g<c.need);
@@ -1541,6 +1523,12 @@ function b64e(s){ return btoa(unescape(encodeURIComponent(s))); }
 function b64d(s){ return decodeURIComponent(escape(atob(s))); }
 function renderProfileTools(){
   const t=$('#ptools'); if(!t) return; t.innerHTML='';
+  if(TEST){ const tb=el('div','wnote'); tb.style.maxWidth='720px'; tb.innerHTML='🧪 <b>Modo prueba:</b> aquí las partidas son aparte y no tocan las de tus hijas. Puedes crear jugadoras de prueba o copiar las reales.'; const r1=el('div','toolsrow'); r1.style.marginTop='8px';
+    const cp=el('button','btn','📋 Copiar partidas reales'); cp.onclick=()=>{ try{ const d=JSON.parse(localStorage.getItem('villaovillo.v1')); if(!d) throw 0; DB.profiles=d.profiles.map(migrate); saveQuiet(); renderProfiles(); toast('Copiadas: los cambios aquí no les afectan'); }catch(e){ toast('No hay partidas reales en este navegador'); } };
+    const q6=el('button','btn','➕ Prueba 6-7 años'); q6.onclick=()=>{ const i=DB.profiles[0]?1:0; DB.profiles[i]=newProfile('Prueba 6',6,'#e4574f'); DB.profiles[i].met=true; saveQuiet(); renderProfiles(); };
+    const q9=el('button','btn','➕ Prueba 8-10 años'); q9.onclick=()=>{ const i=DB.profiles[0]?1:0; DB.profiles[i]=newProfile('Prueba 9',9,'#a678d6'); DB.profiles[i].met=true; saveQuiet(); renderProfiles(); };
+    const ct=el('button','btn','📚 Catálogo'); ct.onclick=openCatalog;
+    r1.append(cp,q6,q9,ct); tb.append(r1); t.append(tb); }
   const chip=el('div','chip cloudchip'); chip.id='cloudchip'; chip.innerHTML=cloudLabel(); t.append(chip);
   if(!TEST){ const cb=el('button','btn','⚙️ Nube'); cb.onclick=configCloud; t.append(cb); }
   const al=el('button','btn','🎩 Alcalde'); al.onclick=()=>openAlcalde(); t.append(al);
@@ -1673,7 +1661,7 @@ function refreshScreen(){
   $('#tb-day').textContent=DB.dayOffset?`(día +${DB.dayOffset})`:'';
 }
 function initTestBar(){
-  $('#testflag').style.display='block'; $('#testbar').classList.add('on');
+  $('#testflag').style.display='block'; $('#testbar').classList.add('on','min');
   $('#tb-min').onclick=()=>$('#testbar').classList.toggle('min');
   const need=fn=>()=>{ const p=P(); if(!p||curScreen==='profiles'){ toast('Entra con una jugadora primero'); return; } fn(p); saveQuiet(); refreshScreen(); };
   const fakeMsg=(tipo,texto,extra)=>need(p=>{ DB.msgs.push({id:'t'+Date.now(),para:p.id,tipo,texto,premio:10,estado:'nuevo',extra}); toast('📬 Mensaje de prueba en el buzón'); });
@@ -1893,6 +1881,7 @@ async function waterGarden(){
   const bloomed=[];
   p.garden.forEach(c=>{ if(c&&c.g<c.need){ c.g++; if(c.g>=c.need){ bloomed.push(c.k); p.counters.bloomed++; p.bloomedKinds[itemInfo(c.k).e]=1; } } });
   const coins=1+bloomed.length; p.coins+=coins; p.counters.earned+=coins; addXP(p,1);
+  GD.rain=1.8;
   save('Regó el jardín'+(bloomed.length?` · ${bloomed.length} planta(s) florecida(s)`:''));
   [700,800,900].forEach((f,i)=>setTimeout(()=>beep(f,0.08,'sine',0.04),i*90));
   renderHouse();
@@ -2236,6 +2225,12 @@ function renderAlcalde(){
     row.querySelector('select').onchange=ev=>{ p.mathFocus=ev.target.value; p.updatedAt=Date.now(); saveQuiet(); toast('Guardado'); };
     b5.append(row);
   });
+  const b7=box('🧹 Empezar de cero');
+  b7.append(el('div','counter','Borra las partidas de esta tablet (jugadoras, progreso y tareas). Úsalo antes de que tus hijas empiecen a jugar.'));
+  const rz=el('button','btn','🧹 Reiniciar todo el juego'); rz.style.marginTop='8px'; rz.onclick=async()=>{ const a=await say({center:true,face:'⚠️',name:'¿Reiniciar todo?',text:'Se borrarán las dos partidas, las tareas y los mensajes de esta tablet. No se puede deshacer.',buttons:[{t:'No'},{t:'Sí, borrar todo',cls:'primary'}],speak:false}); if(a!==1) return;
+    const b=await say({center:true,face:'⚠️',name:'Última confirmación',text:'¿Seguro de verdad?',buttons:[{t:'Cancelar'},{t:'Borrar',cls:'primary'}],speak:false}); if(b!==1) return;
+    try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); };
+  b7.append(rz);
   const b6=box('🔐 Seguridad');
   const cp=el('button','btn','Cambiar PIN'); cp.onclick=()=>{ try{ localStorage.removeItem('villaovillo.pinLocal'); }catch(e){} toast('Ahora crea un PIN nuevo'); openAlcalde(); }; b6.append(cp);
 }
@@ -3015,6 +3010,94 @@ function openMap(){
 
 $('#hb-map').onclick=()=>openMap();
 $('#map-close').onclick=()=>$('#mapov').classList.remove('on');
+/* =========================================================
+   JARDÍN DE CASA (escena grande animada)
+   ========================================================= */
+let GD={p:null,mine:false,raf:null,rain:0,spark:[],last:0,k:1};
+function gardenDims(p){ const rows=p.gardenRows||4, cs=92; return {W:900,H:262+rows*cs,rows,cs,gx:(900-8*cs)/2,gy:232}; }
+function setupGardenCanvas(p,mine){
+  GD.p=p; GD.mine=mine; const cv=$('#gcv');
+  cv.onclick=ev=>{ const r=cv.getBoundingClientRect(), d=gardenDims(GD.p); const x=(ev.clientX-r.left)*d.W/r.width, y=(ev.clientY-r.top)*d.H/r.height;
+    const col=Math.floor((x-d.gx)/d.cs), row=Math.floor((y-d.gy)/d.cs); if(col<0||col>7||row<0||row>=d.rows) return; gardenCellClick(row*8+col); };
+  sizeGarden(); if(!GD.raf){ GD.last=performance.now(); GD.raf=requestAnimationFrame(gardenLoop); }
+}
+function sizeGarden(){ const cv=$('#gcv'); if(!cv||!GD.p) return; const d=gardenDims(GD.p); const w=Math.max(280,cv.parentElement.clientWidth||600); const dpr=window.devicePixelRatio||1; cv.width=Math.round(w*dpr); cv.height=Math.round(w*d.H/d.W*dpr); cv.style.height=(w*d.H/d.W)+'px'; GD.k=w*dpr/d.W; }
+window.addEventListener('resize',()=>{ if(curScreen==='house') sizeGarden(); });
+function gardenLoop(t){ if(curScreen!=='house'){ GD.raf=null; return; } const dt=Math.min(0.05,(t-GD.last)/1000); GD.last=t; if(GD.rain>0) GD.rain-=dt; GD.spark.forEach(s=>s.t+=dt); GD.spark=GD.spark.filter(s=>s.t<1.2); drawGarden(t/1000); GD.raf=requestAnimationFrame(gardenLoop); }
+function gardenCellClick(i){
+  const p=GD.p, cell=p.garden[i]; if(!GD.mine){ toast('Este jardín no es tuyo 😊'); return; }
+  if(cell){
+    if(cell.g<cell.need){ toast('🌱 Está creciendo. ¡Riégala cada día hasta que florezca!'); return; }
+    const key=cell.need>0?'gw:'+cell.k:cell.k; p.garden[i]=null; p.inv[key]=(p.inv[key]||0)+1; beep(350,0.05);
+  } else if(invSel && p.inv[invSel]>0){
+    const k=invSel.startsWith('gw:')?invSel.slice(3):invSel, need=needFor(k);
+    p.garden[i]={k,g:invSel.startsWith('gw:')?need:0,need}; p.inv[invSel]--; if(!p.inv[invSel]){ delete p.inv[invSel]; invSel=null; }
+    beep(760,0.07,'triangle'); GD.spark.push({i,t:0});
+  } else { toast('Elige algo de tu cesta y toca un hueco del jardín'); return; }
+  save(); renderHouse();
+}
+function sproutX(c,x,y,big){
+  c.fillStyle='#7a4f2e'; c.beginPath(); c.ellipse(x,y,big?18:14,6,0,0,Math.PI*2); c.fill(); ol(c,2);
+  const h=big?26:14; c.strokeStyle=OUT; c.lineWidth=4.5; c.beginPath(); c.moveTo(x,y-2); c.lineTo(x,y-h); c.stroke(); c.strokeStyle='#4f9e45'; c.lineWidth=2.6; c.stroke();
+  const leaf=(dx,dy,rot,s)=>{ c.save(); c.translate(x+dx,y+dy); c.rotate(rot); c.beginPath(); c.ellipse(0,0,9*s,4.5*s,0,0,Math.PI*2); c.fillStyle='#6cc25a'; c.fill(); ol(c,2); c.restore(); };
+  leaf(-7,-h+4,-0.5,big?1:0.8); leaf(7,-h+2,0.5,big?1:0.8); if(big){ leaf(-6,-h+16,-0.3,0.8); c.beginPath(); c.arc(x,-h+y-5,5,0,Math.PI*2); c.fillStyle='#f6b8c8'; c.fill(); ol(c,1.8); }
+}
+function drawGarden(t){
+  const cv=$('#gcv'); if(!cv) return; const c=cv.getContext('2d'), p=GD.p, d=gardenDims(p);
+  c.setTransform(GD.k,0,0,GD.k,0,0);
+  const sky=c.createLinearGradient(0,0,0,200); sky.addColorStop(0,'#bfe6fb'); sky.addColorStop(1,'#e7f6ff'); c.fillStyle=sky; c.fillRect(0,0,d.W,200);
+  const gr=c.createLinearGradient(0,170,0,d.H); gr.addColorStop(0,'#a6d884'); gr.addColorStop(1,'#8cc46a'); c.fillStyle=gr; c.fillRect(0,170,d.W,d.H-170);
+  for(let i=0;i<60;i++){ c.strokeStyle='rgba(60,120,40,.35)'; c.lineWidth=2; const x=seeded(i+90)*d.W, y=190+seeded(i+190)*(d.H-200); c.beginPath(); c.moveTo(x-3,y); c.lineTo(x-1,y-6); c.moveTo(x+3,y); c.lineTo(x+1,y-6); c.stroke(); }
+  // casa
+  const wall=shade(p.color,0.72), roof=shade(p.color,-0.05);
+  roundRect(c,40,26,820,166,14); c.fillStyle=wall; c.fill(); ol(c,3);
+  c.save(); roundRect(c,40,26,820,166,14); c.clip(); c.fillStyle=shade(wall,-0.2); c.fillRect(40,176,820,16); c.restore();
+  c.beginPath(); c.moveTo(20,44); c.lineTo(880,44); c.lineTo(880,8); c.lineTo(20,8); c.closePath(); c.fillStyle=roof; c.fill();
+  c.save(); c.beginPath(); c.rect(20,0,860,44); c.clip(); c.strokeStyle=shade(roof,-0.25); c.lineWidth=2; for(let ry=10,row=0;ry<52;ry+=14,row++) for(let rx=20+(row%2?8:0);rx<890;rx+=16){ c.beginPath(); c.arc(rx,ry,8,0.1,Math.PI-0.1); c.stroke(); } c.restore();
+  c.beginPath(); c.moveTo(20,44); c.quadraticCurveTo(450,58,880,44); c.lineTo(880,8); c.lineTo(20,8); c.closePath(); ol(c,3);
+  winX(c,120,80,96,72,p.color); winX(c,684,80,96,72,p.color); winX(c,250,80,70,72,p.color); winX(c,580,80,70,72,p.color);
+  doorX(c,450,190,70,116,shade(p.color,-0.25));
+  signX(c,450,66,'🏡 '+p.name);
+  bushX(c,80,196,true); bushX(c,820,196,true);
+  // camino
+  for(let i=0;i<3;i++){ c.beginPath(); c.ellipse(450+(i%2?10:-10),204+i*9,22,6,0,0,Math.PI*2); c.fillStyle='#d9cbb2'; c.fill(); ol(c,1.6); }
+  // valla
+  const fx=d.gx-22, fy=d.gy-22, fw=8*d.cs+44, fh=d.rows*d.cs+44;
+  c.fillStyle='rgba(40,70,20,.15)'; roundRect(c,fx+6,fy+8,fw,fh,18); c.fill();
+  roundRect(c,fx,fy,fw,fh,18); c.fillStyle='#8cc46a'; c.fill();
+  const picket=(x,y)=>{ c.beginPath(); c.moveTo(x-6,y+14); c.lineTo(x-6,y-14); c.lineTo(x,y-22); c.lineTo(x+6,y-14); c.lineTo(x+6,y+14); c.closePath(); c.fillStyle='#fffaf1'; c.fill(); ol(c,2); };
+  c.strokeStyle=OUT; c.lineWidth=7; c.beginPath(); c.moveTo(fx,fy+fh-6); c.lineTo(fx+fw,fy+fh-6); c.moveTo(fx+6,fy); c.lineTo(fx+6,fy+fh); c.moveTo(fx+fw-6,fy); c.lineTo(fx+fw-6,fy+fh); c.moveTo(fx,fy+6); c.lineTo(fx+fw/2-50,fy+6); c.moveTo(fx+fw/2+50,fy+6); c.lineTo(fx+fw,fy+6); c.stroke();
+  c.strokeStyle='#f1e6cf'; c.lineWidth=4; c.stroke();
+  for(let x=fx+6;x<=fx+fw;x+=34){ picket(x,fy+fh-6); if(x<fx+fw/2-50||x>fx+fw/2+50) picket(x,fy+6); }
+  for(let y=fy+40;y<fy+fh-20;y+=34){ picket(fx+6,y); picket(fx+fw-6,y); }
+  // parcelas
+  const drop=GD.mine&&invSel;
+  for(let i=0;i<8*d.rows;i++){
+    const col=i%8,row=Math.floor(i/8), x=d.gx+col*d.cs, y=d.gy+row*d.cs, cell=p.garden[i];
+    const sg=c.createLinearGradient(0,y+8,0,y+d.cs-8); sg.addColorStop(0,'#a8754e'); sg.addColorStop(1,'#7e5232');
+    roundRect(c,x+7,y+7,d.cs-14,d.cs-14,18); c.fillStyle=sg; c.fill(); ol(c,2.2);
+    c.strokeStyle='rgba(60,35,20,.35)'; c.lineWidth=2; for(let k=0;k<3;k++){ c.beginPath(); c.moveTo(x+18,y+26+k*18); c.quadraticCurveTo(x+d.cs/2,y+22+k*18,x+d.cs-18,y+26+k*18); c.stroke(); }
+    if(!cell&&drop){ c.strokeStyle=`rgba(255,255,255,${0.6+Math.sin(t*5)*0.3})`; c.lineWidth=4; c.setLineDash([8,6]); roundRect(c,x+11,y+11,d.cs-22,d.cs-22,14); c.stroke(); c.setLineDash([]); }
+    if(!cell) continue;
+    const cx=x+d.cs/2, by=y+d.cs-20;
+    if(cell.g>=cell.need){
+      const info=itemInfo(cell.k); const sway=cell.need>0?Math.sin(t*1.6+i)*0.06:0;
+      c.fillStyle='rgba(40,25,10,.25)'; c.beginPath(); c.ellipse(cx,by+4,24,7,0,0,Math.PI*2); c.fill();
+      c.save(); c.translate(cx,by+6); c.rotate(sway); c.font='60px serif'; c.textAlign='center'; c.textBaseline='bottom'; c.fillStyle='#000'; c.fillText(info.e,0,0); if(info.f){ c.font='28px serif'; c.fillText(info.f,18,-14); } c.restore();
+    } else {
+      sproutX(c,cx,by,cell.g>0);
+      for(let k=0;k<cell.need;k++){ c.font='13px serif'; c.textAlign='center'; c.textBaseline='middle'; c.globalAlpha=k<cell.g?1:0.3; c.fillStyle='#000'; c.fillText('💧',x+d.cs/2-(cell.need-1)*8+k*16,y+16); c.globalAlpha=1; }
+    }
+  }
+  // chispas al plantar
+  GD.spark.forEach(s=>{ const col=s.i%8,row=Math.floor(s.i/8), x=d.gx+col*d.cs+d.cs/2, y=d.gy+row*d.cs+d.cs/2; for(let k=0;k<8;k++){ const a=k/8*Math.PI*2, r=10+s.t*50; c.fillStyle=`rgba(255,230,120,${1-s.t/1.2})`; c.beginPath(); c.arc(x+Math.cos(a)*r,y+Math.sin(a)*r,4,0,Math.PI*2); c.fill(); } });
+  // lluvia al regar
+  if(GD.rain>0){ c.strokeStyle='rgba(120,190,255,.8)'; c.lineWidth=3; for(let k=0;k<70;k++){ const x=d.gx+seeded(k)*8*d.cs, y=d.gy-30+((seeded(k+40)*d.rows*d.cs+t*600)%(d.rows*d.cs+40)); c.beginPath(); c.moveTo(x,y); c.lineTo(x-3,y+12); c.stroke(); } }
+  // mariposas y abejas
+  const blooms=p.garden.filter(x=>x&&x.g>=x.need&&x.need>0).length;
+  for(let k=0;k<Math.min(5,1+Math.floor(blooms/3));k++){ const x=d.gx+((Math.sin(t*0.4+k*2)+1)/2)*8*d.cs, y=d.gy+20+((Math.cos(t*0.55+k)+1)/2)*(d.rows*d.cs-40); c.font='24px serif'; c.textAlign='center'; c.fillStyle='#000'; c.fillText(k%2?'🐝':'🦋',x,y+Math.sin(t*6+k)*4); }
+}
+
 /* =========================================================
    CATÁLOGO DE EJERCICIOS (puerta trasera, solo modo prueba)
    ========================================================= */
