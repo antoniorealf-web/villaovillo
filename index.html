@@ -1461,7 +1461,7 @@ function startPlayClock(){
     const d=today(); p.play[d]=(p.play[d]||0)+15; p.updatedAt=Date.now(); saveQuiet();
     if(++playTicks%20===0) scheduleCloud();
   },15000);
-  setInterval(()=>{ if(P()&&curScreen!=='profiles') cloudPull(false); },90000);
+  setInterval(()=>{ if(P()&&curScreen!=='profiles') cloudPull('others'); },60000);
 }
 
 /* =========================================================
@@ -1496,7 +1496,7 @@ async function cloudPull(mergeProfiles=true){
     const j=await api('load');
     if(mergeProfiles){
       for(const cp of (j.profiles||[])){
-        const st=migrate(cp.state); const i=DB.profiles.findIndex(p=>p&&p.id===st.id);
+        const st=migrate(cp.state); if(mergeProfiles==='others'&&P()&&st.id===P().id) continue; const i=DB.profiles.findIndex(p=>p&&p.id===st.id);
         if(i>=0){ if((st.updatedAt||0)>(DB.profiles[i].updatedAt||0)) DB.profiles[i]=st; }
         else { const free=DB.profiles.findIndex(p=>!p); if(free>=0) DB.profiles[free]=st; }
       }
@@ -2431,8 +2431,10 @@ function drawHero(c,x,y,o){
   c.fillStyle='rgba(60,40,20,.18)'; c.beginPath(); c.ellipse(0,1,14*sh,4.5*sh,0,0,Math.PI*2); c.fill();
   c.translate(0,-bob-hop);
   c.scale(o.dir||1,1);
-  const legA = mv ? Math.sin(w)*0.55 : 0;
-  const armA = mv ? -Math.sin(w)*0.7 : Math.sin(t*2.2)*0.05;
+  if(mv) c.rotate(0.06);
+  const sw1=Math.sin(w), liftL=mv?Math.max(0,sw1)*4.5:0, liftR=mv?Math.max(0,-sw1)*4.5:0;
+  const armL = mv ? 0.15+0.4*Math.max(0,-sw1) : 0.22+Math.sin(t*2.2)*0.04;
+  const armR = mv ? 0.15+0.4*Math.max(0,sw1) : 0.22+Math.sin(t*2.2)*0.04;
   const skin=L.skin, dress=L.dress, dressD=shade(dress,-0.22), hair=L.hair, hairD=shade(hair,-0.25);
   // ---- pelo de atrás
   c.fillStyle=hair;
@@ -2446,16 +2448,16 @@ function drawHero(c,x,y,o){
     c.fillStyle=front?skin:shade(skin,-0.08); c.beginPath(); c.arc(0,13,3.3,0,Math.PI*2); c.fill(); ol(c,1.8);
     c.restore();
   };
-  arm(-9, 0.25+armA, false);
+  arm(-9, armL, false);
   // ---- piernas y zapatos
-  const leg=(sx,ang)=>{
-    c.save(); c.translate(sx,-15); c.rotate(ang);
+  const leg=(sx,lift)=>{
+    c.save(); c.translate(sx,-15-lift);
     c.strokeStyle=OUT; c.lineWidth=8; c.lineCap='round'; c.beginPath(); c.moveTo(0,0); c.lineTo(0,11); c.stroke();
     c.strokeStyle='#ffffff'; c.lineWidth=5; c.beginPath(); c.moveTo(0,0); c.lineTo(0,11); c.stroke();
     c.fillStyle=shade(dress,-0.35); c.beginPath(); c.ellipse(1.5,13,5,3.3,0,0,Math.PI*2); c.fill(); ol(c,1.8);
     c.restore();
   };
-  leg(-4.5,legA); leg(4.5,-legA);
+  leg(-4.5,liftL); leg(4.5,liftR);
   // ---- vestido
   const g=c.createLinearGradient(0,-36,0,-12); g.addColorStop(0,shade(dress,0.12)); g.addColorStop(1,dressD);
   c.fillStyle=g; c.beginPath();
@@ -2467,7 +2469,7 @@ function drawHero(c,x,y,o){
   c.fillStyle='#fff'; c.beginPath(); c.moveTo(-6,-35); c.quadraticCurveTo(-3,-29,0,-32); c.quadraticCurveTo(3,-29,6,-35); c.quadraticCurveTo(0,-37,-6,-35); c.fill(); ol(c,1.6);
   c.fillStyle='#fff'; c.globalAlpha=.85; c.beginPath(); const hx=0,hy=-23; c.moveTo(hx,hy+3); c.bezierCurveTo(hx-5,hy-1,hx-2,hy-5,hx,hy-2); c.bezierCurveTo(hx+2,hy-5,hx+5,hy-1,hx,hy+3); c.fill(); c.globalAlpha=1;
   // ---- brazo de delante (saluda a veces)
-  arm(9, o.wave ? -2.15+Math.sin(t*14)*0.3 : -0.25-armA, true);
+  arm(9, o.wave ? -2.15+Math.sin(t*14)*0.3 : -armR, true);
   // ---- coletas / moño (detrás de la cabeza en parte)
   const sw=mv?Math.sin(w)*2.2:Math.sin(t*2)*0.6;
   if(L.style==='coletas'){ for(const s of [-1,1]){ c.fillStyle=hair; c.beginPath(); c.ellipse(s*18+sw*0.3,-44+Math.abs(sw)*0.4,6,8,s*0.35,0,Math.PI*2); c.fill(); ol(c); c.fillStyle=dress; c.beginPath(); c.arc(s*14.5,-50,2.6,0,Math.PI*2); c.fill(); ol(c,1.5); } }
