@@ -1,6 +1,6 @@
 # Villaovillo · guía para Claude
 
-Juego educativo para las dos hijas de Antonio (6 y 9 años). Enseña habilidades para la era de la IA (lógica y programación, matemáticas, comprensión lectora, revisar el trabajo de una IA) dentro de un pueblo que crece, al estilo de Animal Crossing. Sesiones de 15-20 minutos en una tablet, cada niña con su perfil y su nivel. Papá es «el alcalde»: escribe cartas, pone tareas y sube el temario del cole.
+Juego educativo para las dos hijas de Antonio: Berta (9 años, grupo «9») y Cintia (6 años, grupo «6»). Enseña habilidades para la era de la IA (lógica y programación, matemáticas, comprensión lectora, revisar el trabajo de una IA) dentro de un pueblo que crece, al estilo de Animal Crossing. Sesiones de 15-20 minutos en una tablet, cada niña con su perfil y su nivel. Papá es «el alcalde»: escribe cartas, pone tareas y sube el temario del cole.
 
 ## Direcciones
 
@@ -44,7 +44,7 @@ Lo que cambia a menudo (temas del cole, economía, hoja de ruta, decisiones) viv
 - En el modo alcalde, «Informe para Claude» copia un texto que empieza por `VILLAOVILLO-INFORME v1 <fecha>` seguido de un JSON (`buildReport()`).
 - Cuando Antonio pegue un informe:
   1. Lee la hoja Registro (pestaña Diario) y añade solo los días que falten, una fila por niña y día. Columnas: Fecha, Niña (el nombre del perfil), Minutos (`min`), Telar hechos y 3★ (`t`), Panadería hechos y bien (`p`), Biblioteca hechas y bien (`b`), Tareas (`ta`), Botones ganados (diferencia de `e` con el día anterior registrado), Maestrías (`m`, acumuladas), Notas, Semana (lunes de esa semana).
-  2. Si los nombres de la fila 5 de la pestaña Resumen siguen siendo «Mayor» y «Pequeña», sustitúyelos por los nombres reales.
+  2. La fila 5 de la pestaña Resumen tiene los nombres (Berta y Cintia): las fórmulas buscan esos nombres en la columna Niña. Si los perfiles del juego se llaman distinto, usa los nombres de la fila 5 al escribir en Diario.
   3. Actualiza la pestaña Cuadernos con `sabidas` y con las preguntas que se le resisten (`flojas`).
   4. Resume la semana en 4-6 líneas: tiempo, áreas fuertes y flojas, lo que se le atasca y una sugerencia (tipo de reto, cuaderno nuevo, ajuste de economía).
 - Las semanas de la pestaña Semanal llegan hasta mayo de 2027: amplíalas copiando la última fila cuando haga falta.
