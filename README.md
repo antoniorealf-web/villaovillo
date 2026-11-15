@@ -64,3 +64,8 @@ Cada día salen tipos distintos, con más probabilidad para el concepto más nue
 - **🦉 Biblioteca de Sabina:** repaso de lo que dan en clase, con preguntas de opción, verdadero/falso y ordenar. Usa repaso espaciado: lo que se falla vuelve a salir al día siguiente y lo que se sabe, cada vez más tarde. El contenido está en `cuadernos.js`.
 - **Cabezal:** se ilumina la tarjeta que se ejecuta y cada «Repetir» muestra en qué vuelta va. También hay modo **👣 Paso a paso**.
 - **Ruta del día:** telar + panadería + biblioteca (si hay cuadernos) = bonus diario.
+
+## Registro e informe (v0.6)
+- El juego guarda un registro diario de cada niña: minutos, ejercicios por área, aciertos, tareas, botones y maestría.
+- En el **modo alcalde**, **📊 Informe para Claude → Copiar** (o **Enviar**) saca ese registro como texto. Se pega en el proyecto de Claude para actualizar la hoja de registro y las estadísticas.
+- `CLAUDE.md` explica la estructura del juego a cualquier sesión nueva de Claude.

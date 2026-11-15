@@ -1261,7 +1261,7 @@ async function success(){
   } else if(t==='hilo'){ stars=PZ.predictRight?3:2; if(!PZ.predictRight) note='La próxima vez, sigue el programa de Hilo con el dedo antes de decidir.'; }
   const kind=e.kind||'story';
   if(kind==='catalog'){ fanfare(); await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:24px;font-weight:800">Ejercicio superado</div>${note?`<div style="font-size:17px">${esc(note)}</div>`:''}<div class="counter">Intentos: ${PZ.attempts} · Tarjetas: ${t==='cab'?countNodes(PZ.prog):cardCount(PZ.prog)} · Reto: ${PZ.best}</div></div>`}); openCatalog(); return; }
-  recordStats(p,e.id,stars,t);
+  recordStats(p,e.id,stars,t); if(kind!=='catalog') logAct(p,'t',1,stars===3?1:0,t);
   if(t==='hilo'&&PZ.predictRight) p.counters.hiloRight++;
   const perfect = PZ.attempts<=1 && stars===3 && !PZ.hints;
   const items=[]; let coins=0, xp=0, plant=null, story=null, first=false;
@@ -1468,6 +1468,18 @@ $('#draw-save').onclick=async()=>{
 /* =========================================================
    ESTADÍSTICAS Y TIEMPO DE JUEGO
    ========================================================= */
+/* Registro diario: p.log[fecha] = {t,p,b:[hechos,bien], ta, ty:{tipo:n}, cu:[cuadernos], e:botones ganados acumulados, m:[maestrías acumuladas]} */
+function touchLog(p){
+  p.log=p.log||{}; const d=today(); const L=p.log[d]=p.log[d]||{};
+  L.e=p.counters.earned||0; const M=p.mastery||{}; L.m=[M.telar||0,M.pan||0,M.bib||0]; return L;
+}
+function logAct(p,area,n,ok,extra){
+  const L=touchLog(p);
+  if(area==='ta'){ L.ta=(L.ta||0)+n; return; }
+  const a=L[area]=L[area]||[0,0]; a[0]+=n; a[1]+=ok;
+  if(area==='t'&&extra){ L.ty=L.ty||{}; L.ty[extra]=(L.ty[extra]||0)+1; }
+  if(area==='b'&&extra){ L.cu=L.cu||[]; if(!L.cu.includes(extra)) L.cu.push(extra); }
+}
 function recordStats(p,id,stars,type){
   const st=p.stats[id]||{tries:0,hints:0,plays:0,best:0,secs:0}; st.type=type||st.type;
   st.tries+=PZ.attempts; st.hints+=PZ.hints||0; st.plays++; st.best=Math.max(st.best,stars);
@@ -1479,7 +1491,7 @@ function startPlayClock(){
   setInterval(()=>{
     const p=P(); if(!p||curScreen==='profiles'||document.hidden) return;
     if(p.days.last!==today() && curScreen==='village' && !$('#dlg').classList.contains('on')) newDayCheck();
-    const d=today(); p.play[d]=(p.play[d]||0)+15; p.updatedAt=Date.now(); saveQuiet();
+    const d=today(); p.play[d]=(p.play[d]||0)+15; touchLog(p); p.updatedAt=Date.now(); saveQuiet();
     if(++playTicks%20===0) scheduleCloud();
   },15000);
   setInterval(()=>{ if(P()&&curScreen!=='profiles') cloudPull('others'); },60000);
@@ -1645,7 +1657,7 @@ async function doneTask(m){
 async function collectTask(m){
   const p=P(); if(p.rewarded[m.id]) return;
   p.rewarded[m.id]=1; p.coins+=m.premio||10; p.counters.earned+=m.premio||10; p.beads.push(m.tipo==='deberes'?'#4a8fdc':'#f29b38');
-  const pl=rollPlant(p), pe=pl.e, pn=pl.n; p.inv[pl.k]=(p.inv[pl.k]||0)+1; p.counters.tasks++; addXP(p,3);
+  const pl=rollPlant(p), pe=pl.e, pn=pl.n; p.inv[pl.k]=(p.inv[pl.k]||0)+1; p.counters.tasks++; addXP(p,3); logAct(p,'ta',1,1);
   setMsgState(m,'cobrada'); save('Premio: '+(MAIL_NAME[m.tipo]||'')); fanfare();
   await say({center:true,html:`<div class="reward"><div style="font-size:56px">🎁</div><div style="font-size:26px;font-weight:800">¡Papá lo ha comprobado!</div><div class="rw-items"><div class="rw-item">🔘 +${m.premio||10} botones</div><div class="rw-item">${pe} ${esc(pn)}</div><div class="rw-item">📿 cuenta nueva</div><div class="rw-item">✨ +3 experiencia</div></div></div>`});
   await afterRewards();
@@ -1664,7 +1676,7 @@ async function successCustom(){
     p.beads.push(mostCommon(PZ.target)); items.push('📿 cuenta nueva');
     p.fabrics.push({cells:PZ.target.slice(),w:PZ.v.w,name:'Reto del alcalde',by:'alcalde'});
   }
-  recordStats(p,e.id,stars,'custom'); addMastery(p,'telar',1);
+  recordStats(p,e.id,stars,'custom'); logAct(p,'t',1,stars===3?1:0,'custom'); addMastery(p,'telar',1);
   if(first){ p.counters.retos++; addXP(p,3); items.push('✨ +3 experiencia'); }
   setMsgState(m,'completado'); save('Superó un reto del alcalde '+'★'.repeat(stars)); fanfare();
   await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:26px;font-weight:800">¡Reto superado!</div><div class="rw-items">${items.map(i=>`<div class="rw-item">${i}</div>`).join('')}</div><div style="font-size:18px">🧔 «¡Sabía que lo conseguirías!»</div></div>`});
@@ -2198,6 +2210,26 @@ async function askPin(){
   if(pinHash(v)!==stored){ toast('PIN incorrecto'); return false; }
   return true;
 }
+/* Informe para Claude: resumen compacto que papá copia y pega en el proyecto */
+function buildReport(){
+  const days=Object.keys(Object.assign({},...DB.profiles.filter(Boolean).map(p=>Object.assign({},p.play||{},p.log||{})))).sort();
+  const perf=DB.profiles.filter(Boolean).map(p=>{
+    const ty={}; Object.values(p.stats||{}).forEach(st=>{ const k=st.type||'?'; const o=ty[k]=ty[k]||{v:0,a1:0,i:0,s3:0,seg:0}; o.v+=st.plays||0; o.a1+=st.firstTry?1:0; o.i+=st.tries||0; o.s3+=st.best===3?1:0; o.seg+=st.secs||0; });
+    const cu={}; cuadernosFor(p).forEach(c=>{ let sab=0,vis=0; const flojas=[]; c.preguntas.forEach((q,i)=>{ const s=(p.sr||{})[c.id+':'+i]; if(s){ vis++; if(s.b>=2) sab++; if(s.f&&s.b<2) flojas.push(q.q); } }); cu[c.id]={titulo:c.titulo,preguntas:c.preguntas.length,vistas:vis,sabidas:sab,flojas}; });
+    const log={}; days.slice(-120).forEach(d=>{ const L=Object.assign({},(p.log||{})[d]||{}); if(p.play&&p.play[d]) L.min=Math.round(p.play[d]/60); if(Object.keys(L).length) log[d]=L; });
+    return {nombre:p.name,edad:p.age,botones:p.coins,ganados:p.counters.earned||0,nivelTelar:p.unlocked,
+      maestria:{telar:[mLevel(p,'telar'),(p.mastery||{}).telar||0],pan:[mLevel(p,'pan'),(p.mastery||{}).pan||0],bib:[mLevel(p,'bib'),(p.mastery||{}).bib||0]},
+      racha:p.days.streak||0,mejorRacha:p.days.best||0,diasJugados:p.days.count||0,medallas:Object.keys(p.medals||{}).length,
+      puente:p.bridge||0,tareas:p.counters.tasks||0,retos:p.counters.retos||0,historias:(p.stories||[]).length,
+      tiposTelar:ty,mates:p.math||{},cuadernos:cu,dias:log};
+  });
+  const data={v:1,fecha:today(),puente:[bridgeTotal(),BRIDGE_GOAL],perfiles:perf};
+  return 'VILLAOVILLO-INFORME v1 '+today()+'\n'+JSON.stringify(data);
+}
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); return true; }catch(e){}
+  try{ const ta=document.createElement('textarea'); ta.value=t; document.body.append(ta); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return ok; }catch(e){ return false; }
+}
 async function openAlcalde(){ if(!(await askPin())) return; renderAlcalde(); show('alcalde'); }
 function profileOptions(withAll=true){ return DB.profiles.filter(Boolean).map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')+(withAll&&DB.profiles.filter(Boolean).length>1?'<option value="todas">Las dos</option>':''); }
 function renderAlcalde(){
@@ -2231,6 +2263,14 @@ function renderAlcalde(){
   (DB.recTasks||[]).forEach((r,i)=>{ const pr=DB.profiles.find(p=>p&&p.id===r.para); const row=el('div','mitem'); row.innerHTML=`<div class="mi">${r.tipo==='deberes'?'📚':'🧹'}</div><div class="mt"><b>${r.para==='todas'?'Las dos':esc(pr?pr.name:'?')} · 🔘 ${r.premio}</b>${esc(r.texto)}</div>`;
     const a=el('div','ma'); const d=el('button','btn','🗑️ Quitar'); d.onclick=()=>{ DB.recTasks.splice(i,1); saveQuiet(); renderAlcalde(); }; a.append(d); row.append(a); b3.append(row); });
   if(!(DB.recTasks||[]).length) b3.append(el('div','counter','Ninguna. Marca «Repetir cada día» al crear una tarea.'));
+  // informe
+  const bi=box('📊 Informe para Claude');
+  bi.append(el('div','counter','Copia el informe y pégalo en el proyecto de Villaovillo. Claude lo usa para actualizar el registro y las estadísticas.'));
+  const rowI=el('div'); rowI.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-top:8px';
+  const bc=el('button','btn primary','📋 Copiar informe'); bc.onclick=async()=>{ const ok=await copyText(buildReport()); toast(ok?'📋 Informe copiado':'No se pudo copiar'); };
+  rowI.append(bc);
+  if(navigator.share){ const bs=el('button','btn','📤 Enviar'); bs.onclick=()=>{ navigator.share({title:'Informe Villaovillo '+today(),text:buildReport()}).catch(()=>{}); }; rowI.append(bs); }
+  bi.append(rowI);
   // carta
   const b4=box('✉️ Escribir una carta');
   const fc=el('div'); fc.innerHTML=`<select class="inputline" id="c-para">${profileOptions()}</select><input class="inputline" id="c-texto" placeholder="¡Estoy muy orgulloso de ti!"><div class="lbl">Regalo (botones, opcional)</div><input class="inputline" id="c-premio" type="number" value="0" min="0" max="50">`;
@@ -2349,7 +2389,7 @@ async function nextMath(){
   let coins, xp;
   if(first){ coins=ok*2; xp=ok+1; if(p.daily) p.daily.math=true; }
   else { const pc=(p.mathPractice&&p.mathPractice.date===today())?p.mathPractice.coins:0; coins=Math.min(Math.max(0,10-pc),ok); p.mathPractice={date:today(),coins:pc+coins}; xp=0; }
-  p.coins+=coins; p.counters.earned+=coins; p.counters.math=(p.counters.math||0)+1; addXP(p,xp);
+  p.coins+=coins; p.counters.earned+=coins; p.counters.math=(p.counters.math||0)+1; addXP(p,xp); logAct(p,'p',n,ok);
   save(`Panadería: ${ok}/${n} bien`); fanfare();
   await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:26px;font-weight:800">¡Turno terminado! ${ok} de ${n} a la primera</div><div class="rw-items">${coins?`<div class="rw-item">🔘 +${coins} botones</div>`:''}${xp?`<div class="rw-item">✨ +${xp} experiencia</div>`:''}</div><div style="font-size:18px">🐻 «¡Gracias por ayudarme con las cuentas!»</div>${first?'':'<div class="counter">Los turnos extra dan menos premio. ¡Mañana hay turno nuevo!</div>'}</div>`});
   await dailyBonusCheck(p); await afterRewards();
@@ -2413,7 +2453,7 @@ async function answerQuiz(v){
   } else {
     LQ.tries++; LQ.order=[];
     if(LQ.tries===1&&q.t!=='vf'){ beep(220,0.2,'sawtooth',0.03); $('#qz-msg').textContent='Mmm, no es esa. ¡Piensa otra vez!'; $('#qz-msg').className='bad'; if(q.t==='ordenar') renderQuiz(); return; }
-    p.sr[x.key]={b:0,n:dayNum(today())+1}; x.good=false;
+    p.sr[x.key]={b:0,n:dayNum(today())+1,f:((p.sr[x.key]||{}).f||0)+1}; x.good=false;
     const sol=q.t==='ordenar'?q.items.join(' → '):q.t==='vf'?(q.a?'Verdadero':'Falso'):q.a;
     await say({face:'🦉',name:'Sabina',text:`La respuesta es: ${sol}. ${q.exp||''} Mañana la repasamos otra vez.`}); nextQuiz();
   }
@@ -2426,7 +2466,7 @@ async function nextQuiz(){
   const first=!(p.daily&&p.daily.read);
   const coins=first?ok*2:Math.min(ok,3), xp=first?ok+1:0;
   if(first&&p.daily) p.daily.read=true;
-  p.coins+=coins; p.counters.earned+=coins; p.counters.reads=(p.counters.reads||0)+1; addXP(p,xp);
+  p.coins+=coins; p.counters.earned+=coins; p.counters.reads=(p.counters.reads||0)+1; addXP(p,xp); logAct(p,'b',n,ok,LQ.c.id);
   save(`Biblioteca: ${LQ.c.titulo} ${ok}/${n}`); fanfare();
   await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:26px;font-weight:800">¡Repaso terminado! ${ok} de ${n}</div><div class="rw-items">${coins?`<div class="rw-item">🔘 +${coins} botones</div>`:''}${xp?`<div class="rw-item">✨ +${xp} experiencia</div>`:''}</div><div style="font-size:18px">🦉 «Lo que te ha costado lo volveremos a ver otro día.»</div></div>`});
   await dailyBonusCheck(p); await afterRewards();
