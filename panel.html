@@ -133,7 +133,8 @@ function vResumen(V){
     c.innerHTML=`<h2 style="margin:0">${esc(p.name)} <span class="note">(${p.age<=7?'6-7':'8-10'} años)</span></h2>
       <div class="note">Última actividad: ${p.updatedAt?new Date(p.updatedAt).toLocaleString('es-ES'):'—'}</div>
       <div class="grid2" style="margin-top:8px">
-        <div class="kpi"><b>${RANKS[p.rank||0]}</b><span>Rango · ${p.xp||0} XP</span></div>
+        ${[['telar','🧶 Telar',[0,5,15,30,50,80,120,170,230,300]],['pan','🥐 Panadería',[0,10,30,60,100,160,240,340,460,600]],['bib','🦉 Biblioteca',[0,8,24,48,80,130,190,260,340,440]]].map(([k,n,th])=>{ const v=(p.mastery||{})[k]||0; let l=0; while(l<th.length&&v>=th[l]) l++; return `<div class="kpi"><b>Nivel ${l}</b><span>${n} · ${v} resueltos${l<th.length?' / '+th[l]:''}</span></div>`; }).join('')}
+        <div class="kpi"><b>🌉 ${p.bridge||0}</b><span>Botones aportados al puente</span></div>
         <div class="kpi"><b>${p.unlocked}</b><span>Nivel · ${LEVELS[p.unlocked]||''}</span></div>
         <div class="kpi"><b>${done}/12</b><span>Encargos con historia</span></div>
         <div class="kpi"><b>${cnt.encargos||0}</b><span>Encargos en total</span></div>
