@@ -46,6 +46,7 @@ Lo que cambia a menudo (temas del cole, economía, hoja de ruta, decisiones) viv
 - Pizarra (`fu_pizarra`, pared): `p.board = {img, notes}`. La dueña dibuja; la otra niña y papá dejan notas (`openBoardView`). Al entrar, `boardNotice` avisa de mensajes nuevos.
 - Pecera (`fu_pecera`, suelo, 300 botones y 14 días jugados): `p.aqua = {fish, deco, fed}`, vista grande en `openAqua`, con peces (`FISH`) y decoración (`AQDECO`) que se desbloquean con maestrías y medallas. Dar de comer una vez al día da 1 botón.
 - Tablón de corcho (`renderBoard`, última definición en «TABLÓN DE CORCHO»): tareas del alcalde, notas de las niñas o de papá (`DB.boardMsgs`), noticias reales (`DB.news`) y noticias inventadas del día (`fakeNews`) en los huecos. En el paseo del alcalde se ven las tareas de las dos, se validan y se ponen tareas nuevas (`corkNewTask`).
+- Música y sonidos (módulo «MÚSICA Y SONIDOS»): música de fondo sintetizada con obras clásicas de dominio público (`SONGS`, cada una suena 2 veces y cambia), más baja en los ejercicios (`DUCK_SCREENS`). Pasos al andar (`stepSfx`), voz de cada vecino (`npcVoice`), compras (`sfxBuy`), logros (`sfxLevel`) y `fanfare`. `DB.sound` se cambia con el botón 🎵 del pueblo: música y sonidos, solo sonidos o silencio. `show()` tiene su última definición en este módulo.
 
 ## Registro y estadísticas
 
