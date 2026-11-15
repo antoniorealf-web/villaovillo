@@ -302,7 +302,7 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
 
 <!-- CASA -->
 <section id="scr-house" class="screen">
-  <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl" id="house-title">🏡 Mi casa</div><div class="chip" id="house-coins"></div></div>
+  <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl" id="house-title">🏡 Mi casa</div><div class="tabs" style="padding:0"><button class="tab" id="hv-garden">🌼 Jardín</button><button class="tab" id="hv-room">🛋️ Dentro de casa</button></div><div class="chip" id="house-coins"></div></div>
   <div class="house-body">
     <div id="gwrap" style="flex:2 1 560px;max-width:920px;align-self:flex-start"><canvas id="gcv" style="width:100%;display:block;border-radius:20px;border:4px solid var(--line);touch-action:manipulation;cursor:pointer"></canvas></div>
     <div class="inv panel" id="inv"></div>
@@ -485,6 +485,7 @@ const SHOP = [
 // catálogo de objetos para jardín: key -> {e, f?, n}
 function itemInfo(k){
   if (k.startsWith('gw:')) return itemInfo(k.slice(3));
+  if (k.startsWith('fu_')){ const f=FURN.find(f=>'fu_'+f.k===k); return {e:f?(f.e||'🛋️'):'❓',n:f?f.n:'?'}; }
   if (SPECIAL[k]) return SPECIAL[k];
   for (const l in PLANTS) for (const [e,n] of PLANTS[l]) if (k==='pl_'+e) return {e,n};
   const s = SHOP.find(s=>'sh_'+s.k===k); if (s) return {e:s.e,n:s.n};
@@ -1333,17 +1334,19 @@ let houseIdx=0, invSel=null;
 function openHouse(i){ houseIdx=i; invSel=null; show('house'); renderHouse(); sizeGarden(); }
 function renderHouse(){
   const p=DB.profiles[houseIdx]; const mine=houseIdx===DB.cur;
-  $('#house-title').textContent=mine?'🏡 Mi casa y mi jardín':'🏡 Casa de '+p.name;
+  $('#house-title').textContent=mine?'🏡 Mi casa':'🏡 Casa de '+p.name;
   $('#house-coins').textContent='🔘 '+P().coins;
-  setupGardenCanvas(p,mine);
+  $('#hv-garden').classList.toggle('sel',houseView==='garden'); $('#hv-room').classList.toggle('sel',houseView==='room');
+  GD.mode=houseView; setupGardenCanvas(p,mine);
   const inv=$('#inv'); inv.innerHTML='';
+  if(houseView==='room'){ if(mine){ renderRoomPanel(inv,p); const sb=el('button','btn blue','🏪 Ir a la tienda'); sb.onclick=()=>{ shopTab='casa'; openShop(); }; inv.append(sb); } else inv.append(el('div','help',`<div>Esta es la casa de ${esc(p.name)}. ¡Qué bonita!</div>`)); return; }
   if(mine){
     const growing=p.garden.some(c=>c&&c.g<c.need);
     const wb=el('button','btn '+(needsWater(p)?'blue':'')+' waterbtn', p.lastWater===today()?'💧 Regado hoy ✓':'💧 Regar el jardín');
     wb.disabled=p.lastWater===today(); wb.onclick=waterGarden; inv.append(wb);
     if(!growing && p.lastWater!==today()) inv.append(el('div','counter','Planta semillas para que tenga sentido regar. ¡También ganas botones regando!'));
     inv.append(el('div','lbl','Mi cesta'));
-    const ig=el('div','invgrid'); const keys=Object.keys(p.inv).filter(k=>p.inv[k]>0);
+    const ig=el('div','invgrid'); const keys=Object.keys(p.inv).filter(k=>p.inv[k]>0&&!k.startsWith('fu_'));
     if(!keys.length) ig.append(el('div','counter','Tu cesta está vacía. ¡Completa encargos para ganar plantas o compra en la tienda!'));
     keys.forEach(k=>{ const info=itemInfo(k); const b=el('button','invitem'+(invSel===k?' sel':'')); b.innerHTML=`${info.e}${info.f?`<span class="fr">${info.f}</span>`:''}<small>×${p.inv[k]}</small>`; b.title=info.n;
       b.onclick=()=>{ invSel=invSel===k?null:k; beep(600,0.04); renderHouse(); if(invSel) toast(info.n+': toca un hueco del jardín',1600); }; ig.append(b); });
@@ -1359,10 +1362,22 @@ function renderHouse(){
 /* =========================================================
    TIENDA
    ========================================================= */
-function openShop(){ renderShop(); show('shop'); const p=P(); if(!p._shopHi){ p._shopHi=true; say({face:'🐔',name:NPCS.coco.n,text:'¡Bienvenida a mi tienda! Aquí puedes cambiar tus botones por cosas bonitas para tu jardín.'}); } }
+function openShop(){ renderShop(); show('shop'); const p=P(); if(!p._shopHi){ p._shopHi=true; say({face:'🐔',name:NPCS.coco.n,text:'¡Bienvenida a mi tienda! Aquí puedes cambiar tus botones por cosas bonitas para tu jardín y para tu casa.'}); } }
+let shopTab='jardin';
 function renderShop(){
   const p=P(); $('#shop-coins').textContent='🔘 '+p.coins;
   const g=$('#shopgrid'); g.innerHTML='';
+  const tb=el('div','tabs'); tb.style.gridColumn='1/-1'; tb.style.padding='0';
+  [['jardin','🌼 Para tu jardín'],['casa','🛋️ Para tu casa']].forEach(([k,t])=>{ const b=el('button','tab'+(shopTab===k?' sel':''),t); b.onclick=()=>{ shopTab=k; renderShop(); }; tb.append(b); }); g.append(tb);
+  if(shopTab==='casa'){
+    FURN.forEach(f=>{ const c=el('div','sitem'); const ic=document.createElement('canvas'); const dpr=window.devicePixelRatio||1; ic.width=90*dpr; ic.height=80*dpr; ic.style.width='90px'; ic.style.height='80px'; const cx=ic.getContext('2d'); cx.scale(dpr,dpr);
+      if(f.z==='wall') drawWallItem(cx,f,45,40,0); else drawFurn(cx,f,45,f.draw==='shelf'?80:74,f.draw==='shelf'?0.8:0.95,0);
+      c.append(ic); c.append(el('div','n',esc(f.n))); c.append(el('div','counter',f.z==='wall'?'Para la pared':'Para el suelo'));
+      if(f.m&&mLevel(p,f.m[0])<f.m[1]){ c.style.opacity=.6; c.append(el('div','counter',`🔒 ${MAST[f.m[0]].e} ${MAST[f.m[0]].n} nivel ${f.m[1]}`)); g.append(c); return; }
+      const b=el('button','btn green',`🔘 ${f.p}`); b.disabled=p.coins<f.p; b.onclick=()=>{ if(p.coins<f.p) return; p.coins-=f.p; const k='fu_'+f.k; p.inv[k]=(p.inv[k]||0)+1; save('Compró: '+f.n); fanfare(); toast(`🛋️ ¡${f.n} para tu casa!`); renderShop(); };
+      c.append(b); g.append(c); });
+    return;
+  }
   if(p.gardenRows<6){
     const price=p.gardenRows===4?150:300, rr=p.gardenRows===4?7:20;
     const c=el('div','sitem'); c.style.background='#eaf7e4'; c.innerHTML=`<div class="e">🪴</div><div class="n">Ampliar el jardín</div><div class="counter">+1 fila de huecos</div>`;
@@ -1747,6 +1762,7 @@ const MEDALS=[
   {id:'casa20',e:'🏠',n:'Superayudante',d:'20 tareas o deberes comprobados por papá',goal:20,v:p=>p.counters.tasks,c:25},
   {id:'retos5',e:'🎩',n:'Retos del alcalde',d:'Supera 5 retos del alcalde',goal:5,v:p=>p.counters.retos,c:15},
   {id:'artista',e:'🎨',n:'Artista',d:'Guarda 5 diseños libres',goal:5,v:p=>p.counters.designs,c:8},
+  {id:'deco10',e:'🛋️',n:'Decoradora',d:'Coloca 10 cosas dentro de tu casa',goal:10,v:p=>p.room?(p.room.fl.filter(Boolean).length+p.room.wl.filter(Boolean).length):0,c:15},
   {id:'ahorro',e:'💰',n:'Hucha llena',d:'Gana 500 botones en total',goal:500,v:p=>p.counters.earned,c:15}
 ];
 function checkMedals(p){
@@ -3034,16 +3050,17 @@ $('#map-close').onclick=()=>$('#mapov').classList.remove('on');
    JARDÍN DE CASA (escena grande animada)
    ========================================================= */
 let GD={p:null,mine:false,raf:null,rain:0,spark:[],last:0,k:1};
-function gardenDims(p){ const rows=p.gardenRows||4, cs=92; return {W:900,H:262+rows*cs,rows,cs,gx:(900-8*cs)/2,gy:232}; }
+function gardenDims(p){ if(GD.mode==='room') return {W:RW.W,H:RW.H,rows:3,cs:90,gx:0,gy:0}; const rows=p.gardenRows||4, cs=92; return {W:900,H:262+rows*cs,rows,cs,gx:(900-8*cs)/2,gy:232}; }
 function setupGardenCanvas(p,mine){
   GD.p=p; GD.mine=mine; const cv=$('#gcv');
   cv.onclick=ev=>{ const r=cv.getBoundingClientRect(), d=gardenDims(GD.p); const x=(ev.clientX-r.left)*d.W/r.width, y=(ev.clientY-r.top)*d.H/r.height;
+    if(GD.mode==='room'){ roomClick(x,y); return; }
     const col=Math.floor((x-d.gx)/d.cs), row=Math.floor((y-d.gy)/d.cs); if(col<0||col>7||row<0||row>=d.rows) return; gardenCellClick(row*8+col); };
   sizeGarden(); if(!GD.raf){ GD.last=performance.now(); GD.raf=requestAnimationFrame(gardenLoop); }
 }
 function sizeGarden(){ const cv=$('#gcv'); if(!cv||!GD.p) return; const d=gardenDims(GD.p); const w=Math.max(280,cv.parentElement.clientWidth||600); const dpr=window.devicePixelRatio||1; cv.width=Math.round(w*dpr); cv.height=Math.round(w*d.H/d.W*dpr); cv.style.height=(w*d.H/d.W)+'px'; GD.k=w*dpr/d.W; }
 window.addEventListener('resize',()=>{ if(curScreen==='house') sizeGarden(); });
-function gardenLoop(t){ if(curScreen!=='house'){ GD.raf=null; return; } const dt=Math.min(0.05,(t-GD.last)/1000); GD.last=t; if(GD.rain>0) GD.rain-=dt; GD.spark.forEach(s=>s.t+=dt); GD.spark=GD.spark.filter(s=>s.t<1.2); drawGarden(t/1000); GD.raf=requestAnimationFrame(gardenLoop); }
+function gardenLoop(t){ if(curScreen!=='house'){ GD.raf=null; return; } const dt=Math.min(0.05,(t-GD.last)/1000); GD.last=t; if(GD.rain>0) GD.rain-=dt; GD.spark.forEach(s=>s.t+=dt); GD.spark=GD.spark.filter(s=>s.t<1.2); if(GD.mode==='room') drawRoom(t/1000); else drawGarden(t/1000); GD.raf=requestAnimationFrame(gardenLoop); }
 function gardenCellClick(i){
   const p=GD.p, cell=p.garden[i]; if(!GD.mine){ toast('Este jardín no es tuyo 😊'); return; }
   if(cell){
@@ -3204,6 +3221,133 @@ function renderMasteryTab(body,p){
 
 function zoneReqText(z){ const [a,l]=ZONE_REQ[z], p=P(); if(!bridgeDone()) return '🌉 Falta terminar el puente'; return mLevel(p,a)>=l?'¡Muy pronto!':`${MAST[a].e} ${MAST[a].n} nivel ${l}`; }
 $('#hud-name').style.cursor='pointer'; $('#hud-name').onclick=()=>openBook('maestrias');
+/* =========================================================
+   INTERIOR DE LA CASA (decoración)
+   ========================================================= */
+const FURN=[
+  {k:'silla',e:'🪑',n:'Silla',p:15,z:'floor'},{k:'mesa',n:'Mesa',p:30,z:'floor',draw:'table'},
+  {k:'cama',e:'🛏️',n:'Cama',p:45,z:'floor'},{k:'sofa',e:'🛋️',n:'Sofá',p:60,z:'floor'},
+  {k:'alf_r',n:'Alfombra roja',p:20,z:'floor',draw:'rug',col:'#e4574f'},{k:'alf_b',n:'Alfombra azul',p:20,z:'floor',draw:'rug',col:'#4a8fdc'},
+  {k:'alf_m',n:'Alfombra lila',p:25,z:'floor',draw:'rug',col:'#a678d6',m:['telar',2]},
+  {k:'planta',e:'🪴',n:'Planta',p:20,z:'floor'},{k:'osito',e:'🧸',n:'Osito',p:15,z:'floor'},
+  {k:'lanas',e:'🧶',n:'Cesto de lanas',p:25,z:'floor',m:['telar',2]},{k:'muneca',e:'🪆',n:'Muñecas rusas',p:30,z:'floor',m:['pan',2]},
+  {k:'estante',n:'Estantería con libros',p:50,z:'floor',draw:'shelf',m:['bib',2]},{k:'caballete',e:'🎨',n:'Caballete de pintura',p:50,z:'floor',m:['telar',3]},
+  {k:'pecera',n:'Pecera',p:80,z:'floor',draw:'fishbowl',m:['bib',3]},{k:'piano',e:'🎹',n:'Piano',p:120,z:'floor',m:['pan',4]},
+  {k:'cuadro',e:'🖼️',n:'Cuadro',p:20,z:'wall'},{k:'guirnalda',n:'Guirnalda',p:15,z:'wall',draw:'garland'},
+  {k:'espejo',e:'🪞',n:'Espejo',p:25,z:'wall'},{k:'mapa',e:'🗺️',n:'Mapa del mundo',p:30,z:'wall',m:['bib',2]},
+  {k:'reloj',e:'🕰️',n:'Reloj de pared',p:35,z:'wall',m:['pan',3]},{k:'estrella',e:'⭐',n:'Estrella brillante',p:40,z:'wall',m:['bib',4]}
+];
+const WALLPATS=[{k:'liso',n:'Lisa',p:0},{k:'rayas',n:'Rayas',p:30},{k:'lunares',n:'Lunares',p:40},{k:'flores',n:'Flores',p:60,m:['telar',3]},{k:'estrellas',n:'Estrellas',p:80,m:['bib',3]}];
+const FLOORS=[{k:'madera',n:'Madera',p:0},{k:'baldosas',n:'Baldosas',p:40},{k:'moqueta',n:'Moqueta',p:50},{k:'ajedrez',n:'Ajedrez',p:70,m:['telar',4]}];
+const WALLCOLS=['#fbe9d0','#fde2e4','#e2ecfb','#e4f5df','#efe4fb','#fff6c9'];
+const WALL_SLOTS=[[95,165],[205,135],[305,180],[595,180],[700,135],[810,165]];
+const RW={W:900,H:600,gx:40,cw:90,rows:[[352,432,405,0.9],[432,505,478,1],[505,590,560,1.12]]};
+function furn(k){ return FURN.find(f=>'fu_'+f.k===k); }
+function roomOf(p){ p.room=p.room||{wall:'#fbe9d0',pat:'liso',floor:'madera',owned:{liso:1,madera:1},fl:Array(24).fill(null),wl:Array(6).fill(null)}; return p.room; }
+let houseView='garden';
+function drawFurn(c,f,x,y,s,t){
+  if(f.draw==='rug'){ c.save(); c.translate(x,y-8); c.scale(s,s*0.42); c.beginPath(); c.ellipse(0,0,52,52,0,0,Math.PI*2); c.fillStyle=f.col; c.fill(); ol(c,4); c.beginPath(); c.ellipse(0,0,38,38,0,0,Math.PI*2); c.strokeStyle='rgba(255,255,255,.7)'; c.lineWidth=5; c.setLineDash([10,8]); c.stroke(); c.setLineDash([]); c.restore(); return; }
+  c.save(); c.translate(x,y); c.scale(s,s);
+  c.fillStyle='rgba(60,40,20,.2)'; c.beginPath(); c.ellipse(0,2,34,8,0,0,Math.PI*2); c.fill();
+  if(f.draw==='table'){ for(const lx of [-26,22]){ roundRect(c,lx,-34,6,34,2); c.fillStyle='#9a6338'; c.fill(); ol(c,2); } roundRect(c,-36,-44,72,12,5); c.fillStyle='#c98f5a'; c.fill(); ol(c,2.6); c.font='22px serif'; c.textAlign='center'; c.textBaseline='bottom'; c.fillStyle='#000'; c.fillText('🌷',14,-42); }
+  else if(f.draw==='shelf'){ roundRect(c,-30,-92,60,92,6); c.fillStyle='#b97a48'; c.fill(); ol(c,2.6); for(let r=0;r<3;r++){ roundRect(c,-24,-86+r*29,48,24,2); c.fillStyle='#8a5a36'; c.fill(); ['#e4574f','#4a8fdc','#f4c430','#55b05a','#a678d6'].forEach((col,i)=>{ if((i+r)%4===3) return; roundRect(c,-22+i*9,-82+r*29+(i%2)*3,7,20-(i%2)*3,1); c.fillStyle=col; c.fill(); ol(c,1); }); } }
+  else if(f.draw==='fishbowl'){ roundRect(c,-26,-14,52,14,4); c.fillStyle='#9a6338'; c.fill(); ol(c,2); c.beginPath(); c.arc(0,-46,32,0,Math.PI*2); c.fillStyle='rgba(190,235,255,.55)'; c.fill(); ol(c,2.6);
+    c.save(); c.beginPath(); c.arc(0,-46,30,0,Math.PI*2); c.clip(); c.fillStyle='#6ab7e6'; c.fillRect(-32,-58,64,44); c.fillStyle='#e8d5a6'; c.fillRect(-32,-24,64,10);
+    for(let i=0;i<3;i++){ const fx=Math.sin(t*0.9+i*2)*18, fy=-40+i*7+Math.sin(t*2+i)*2, d=Math.cos(t*0.9+i*2)>0?1:-1; c.save(); c.translate(fx,fy); c.scale(d,1); c.fillStyle=['#f29b38','#e4574f','#f4c430'][i]; c.beginPath(); c.ellipse(0,0,6,4,0,0,Math.PI*2); c.fill(); c.beginPath(); c.moveTo(-5,0); c.lineTo(-10,-4); c.lineTo(-10,4); c.closePath(); c.fill(); c.restore(); }
+    c.strokeStyle='#55b05a'; c.lineWidth=3; c.beginPath(); c.moveTo(-14,-16); c.quadraticCurveTo(-18+Math.sin(t)*3,-28,-12,-38); c.stroke(); c.restore();
+    c.strokeStyle='rgba(255,255,255,.8)'; c.lineWidth=3; c.beginPath(); c.arc(-8,-56,14,Math.PI*1.1,Math.PI*1.5); c.stroke(); }
+  else { c.font='58px serif'; c.textAlign='center'; c.textBaseline='bottom'; c.fillStyle='#000'; c.fillText(f.e,0,4); }
+  c.restore();
+}
+function drawWallItem(c,f,x,y,t){
+  if(f.draw==='garland'){ c.strokeStyle='#8a5a36'; c.lineWidth=2; c.beginPath(); c.moveTo(x-50,y-20); c.quadraticCurveTo(x,y+4,x+50,y-20); c.stroke(); for(let i=0;i<7;i++){ const tt=(i+0.5)/7, px=x-50+100*tt, py=y-20+24*4*tt*(1-tt); c.fillStyle=Object.values(COLORS)[i%6].c; c.beginPath(); c.moveTo(px-6,py); c.lineTo(px+6,py); c.lineTo(px,py+14); c.closePath(); c.fill(); ol(c,1.2); } return; }
+  c.fillStyle='rgba(60,40,20,.12)'; c.beginPath(); c.ellipse(x+4,y+30,22,5,0,0,Math.PI*2); c.fill();
+  c.font='56px serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#000';
+  if(f.k==='estrella'){ c.save(); c.translate(x,y); c.rotate(Math.sin(t*1.5)*0.1); c.globalAlpha=0.85+Math.sin(t*3)*0.15; c.fillText(f.e,0,0); c.restore(); } else c.fillText(f.e,x,y);
+}
+function drawRoom(t){
+  const cv=$('#gcv'); if(!cv) return; const c=cv.getContext('2d'), p=GD.p, R=roomOf(p);
+  c.setTransform(GD.k,0,0,GD.k,0,0);
+  // pared
+  c.fillStyle=R.wall; c.fillRect(0,0,RW.W,340);
+  c.save(); c.beginPath(); c.rect(0,0,RW.W,330); c.clip();
+  const dk=shade(R.wall,-0.08), lt=shade(R.wall,0.5);
+  if(R.pat==='rayas'){ c.fillStyle=dk; for(let x=0;x<RW.W;x+=44) c.fillRect(x,0,20,330); }
+  if(R.pat==='lunares'){ c.fillStyle=lt; for(let y=20,r=0;y<330;y+=40,r++) for(let x=20+(r%2)*20;x<RW.W;x+=40){ c.beginPath(); c.arc(x,y,6,0,Math.PI*2); c.fill(); } }
+  if(R.pat==='flores'){ for(let y=30,r=0;y<330;y+=60,r++) for(let x=30+(r%2)*40;x<RW.W;x+=80) drawFlower(c,x,y,['#e46fa8','#ffffff','#f4c430'][(x+y)%3]); }
+  if(R.pat==='estrellas'){ c.font='16px serif'; c.textAlign='center'; c.fillStyle='#000'; c.globalAlpha=0.5; for(let y=26,r=0;y<330;y+=48,r++) for(let x=24+(r%2)*30;x<RW.W;x+=60) c.fillText('✦',x,y); c.globalAlpha=1; }
+  c.restore();
+  roundRect(c,-4,312,RW.W+8,28,4); c.fillStyle='#b97a48'; c.fill(); ol(c,2.6);
+  // ventana
+  roundRect(c,380,62,140,150,12); c.fillStyle='#fffaf1'; c.fill(); ol(c,3);
+  const sky=c.createLinearGradient(0,72,0,202); sky.addColorStop(0,'#a8dcf7'); sky.addColorStop(1,'#d8f1ff'); roundRect(c,392,74,116,126,6); c.fillStyle=sky; c.fill();
+  c.fillStyle='#8cc46a'; c.fillRect(392,170,116,30); c.fillStyle='#5bb04f'; c.beginPath(); c.arc(430,168,18,0,Math.PI*2); c.arc(476,172,14,0,Math.PI*2); c.fill();
+  c.fillStyle='#fff'; c.beginPath(); c.arc(420+Math.sin(t*0.2)*20,100,10,0,Math.PI*2); c.arc(434+Math.sin(t*0.2)*20,96,13,0,Math.PI*2); c.arc(448+Math.sin(t*0.2)*20,102,9,0,Math.PI*2); c.fill();
+  c.strokeStyle='#fffaf1'; c.lineWidth=5; c.beginPath(); c.moveTo(450,74); c.lineTo(450,200); c.moveTo(392,137); c.lineTo(508,137); c.stroke();
+  for(const s of [-1,1]){ c.beginPath(); const cx=450+s*76; c.moveTo(cx,56); c.quadraticCurveTo(cx-s*20,140,cx+s*4,222); c.lineTo(cx+s*24,222); c.quadraticCurveTo(cx+s*10,140,cx+s*20,56); c.closePath(); c.fillStyle=p.color; c.fill(); ol(c,2.4); }
+  roundRect(c,360,52,180,9,4); c.fillStyle='#9a6338'; c.fill(); ol(c,2);
+  // suelo
+  const fy=340;
+  if(R.floor==='madera'){ c.fillStyle='#d9a873'; c.fillRect(0,fy,RW.W,RW.H-fy); c.strokeStyle='#b8865a'; c.lineWidth=2; for(let y=fy,r=0;y<RW.H;y+=30,r++){ c.beginPath(); c.moveTo(0,y); c.lineTo(RW.W,y); c.stroke(); for(let x=(r%2)*70;x<RW.W;x+=140){ c.beginPath(); c.moveTo(x,y); c.lineTo(x,y+30); c.stroke(); } } }
+  else if(R.floor==='baldosas'){ c.fillStyle='#f3efe6'; c.fillRect(0,fy,RW.W,RW.H-fy); c.strokeStyle='#cfc6b4'; c.lineWidth=2; for(let y=fy;y<RW.H;y+=52){ c.beginPath(); c.moveTo(0,y); c.lineTo(RW.W,y); c.stroke(); } for(let x=0;x<RW.W;x+=52){ c.beginPath(); c.moveTo(x,fy); c.lineTo(x,RW.H); c.stroke(); } }
+  else if(R.floor==='moqueta'){ c.fillStyle=shade(p.color,0.55); c.fillRect(0,fy,RW.W,RW.H-fy); for(let i=0;i<500;i++){ c.fillStyle='rgba(255,255,255,.12)'; c.fillRect(seeded(i)*RW.W,fy+seeded(i+9)*(RW.H-fy),2,2); } }
+  else { for(let y=fy,r=0;y<RW.H;y+=46,r++) for(let x=0,k=0;x<RW.W;x+=46,k++){ c.fillStyle=(r+k)%2?'#3e3a44':'#f3efe6'; c.fillRect(x,y,46,46); } }
+  c.fillStyle='rgba(60,40,20,.12)'; c.fillRect(0,fy,RW.W,10);
+  // huecos de la pared
+  const sel=GD.mine&&invSel&&invSel.startsWith('fu_')?furn(invSel):null;
+  WALL_SLOTS.forEach(([x,y],i)=>{ const it=R.wl[i];
+    if(!it&&sel&&sel.z==='wall'){ c.strokeStyle=`rgba(255,255,255,${0.6+Math.sin(t*5)*0.3})`; c.lineWidth=4; c.setLineDash([8,6]); roundRect(c,x-40,y-40,80,80,14); c.stroke(); c.setLineDash([]); }
+    if(it){ const f=furn(it); if(f) drawWallItem(c,f,x,y,t); } });
+  // suelo: rejilla
+  const items=[];
+  for(let i=0;i<24;i++){ const col=i%8,row=Math.floor(i/8), [y0,y1,by,s]=RW.rows[row], x=RW.gx+col*RW.cw+RW.cw/2, it=R.fl[i];
+    if(!it&&sel&&sel.z==='floor'){ c.strokeStyle=`rgba(255,255,255,${0.55+Math.sin(t*5)*0.3})`; c.lineWidth=3; c.setLineDash([8,6]); roundRect(c,RW.gx+col*RW.cw+6,y0+4,RW.cw-12,y1-y0-8,12); c.stroke(); c.setLineDash([]); }
+    if(it){ const f=furn(it); if(f) items.push({f,x,by,s,rug:f.draw==='rug'}); } }
+  items.filter(o=>o.rug).forEach(o=>drawFurn(c,o.f,o.x,o.by,o.s,t));
+  items.filter(o=>!o.rug).sort((a,b)=>a.by-b.by).forEach(o=>drawFurn(c,o.f,o.x,o.by,o.s,t));
+  // la dueña de la casa
+  drawHero(c,845,585,{look:lookOf(p),t,sc:1.9,dir:-1,blink:(t%3.4)>3.25,wave:(t%7)>5.8});
+}
+function roomClick(x,y){
+  const p=GD.p, R=roomOf(p); if(!GD.mine){ toast('Esta casa no es tuya 😊'); return; }
+  const sel=invSel&&invSel.startsWith('fu_')?furn(invSel):null;
+  for(let i=0;i<WALL_SLOTS.length;i++){ const [sx,sy]=WALL_SLOTS[i]; if(Math.abs(x-sx)<46&&Math.abs(y-sy)<46){
+    if(R.wl[i]){ p.inv[R.wl[i]]=(p.inv[R.wl[i]]||0)+1; R.wl[i]=null; beep(350,0.05); }
+    else if(sel&&sel.z==='wall'){ R.wl[i]=invSel; if(!--p.inv[invSel]){ delete p.inv[invSel]; invSel=null; } beep(760,0.07,'triangle'); }
+    else { toast(sel?'Eso va en el suelo':'Elige algo para la pared en tu cesta'); return; }
+    save(); renderHouse(); return; } }
+  if(y<RW.rows[0][0]||x<RW.gx||x>=RW.gx+8*RW.cw) return;
+  const row=RW.rows.findIndex(r=>y>=r[0]&&y<r[1]); if(row<0) return; const i=row*8+Math.floor((x-RW.gx)/RW.cw);
+  if(R.fl[i]){ p.inv[R.fl[i]]=(p.inv[R.fl[i]]||0)+1; R.fl[i]=null; beep(350,0.05); }
+  else if(sel&&sel.z==='floor'){ R.fl[i]=invSel; if(!--p.inv[invSel]){ delete p.inv[invSel]; invSel=null; } beep(760,0.07,'triangle'); }
+  else { toast(sel?'Eso va en la pared':'Elige un mueble de tu cesta y toca el suelo'); return; }
+  save(); renderHouse();
+}
+function renderRoomPanel(inv,p){
+  const R=roomOf(p);
+  inv.append(el('div','lbl','Mis muebles'));
+  const ig=el('div','invgrid'); const keys=Object.keys(p.inv).filter(k=>k.startsWith('fu_')&&p.inv[k]>0);
+  if(!keys.length) ig.append(el('div','counter','No tienes muebles. ¡Cómpralos en la tienda, en la sección «Para tu casa»!'));
+  keys.forEach(k=>{ const f=furn(k); const b=el('button','invitem'+(invSel===k?' sel':'')); b.innerHTML=`${f.e||({rug:'🟠',table:'🟫',shelf:'📚',fishbowl:'🐠',garland:'🎏'}[f.draw])}<small>×${p.inv[k]}</small>`; b.title=f.n;
+    b.onclick=()=>{ invSel=invSel===k?null:k; beep(600,0.04); renderHouse(); if(invSel) toast(`${f.n}: toca ${f.z==='wall'?'un hueco de la pared':'el suelo'}`,1800); }; ig.append(b); });
+  inv.append(ig);
+  inv.append(el('div','lbl','🖌️ Color de la pared'));
+  const wc=el('div','choice'); WALLCOLS.forEach(col=>{ const d=el('button','dot'+(R.wall===col?' sel':'')); d.style.background=col; d.onclick=()=>{ R.wall=col; save(); renderHouse(); }; wc.append(d); }); inv.append(wc);
+  const opts=(list,cur,set,label)=>{ inv.append(el('div','lbl',label)); const row=el('div','choice');
+    list.forEach(o=>{ const owned=R.owned[o.k], lock=o.m&&mLevel(p,o.m[0])<o.m[1];
+      const b=el('button',cur===o.k?'sel':'',owned?o.n:lock?`🔒 ${o.n}`:`${o.n} · 🔘${o.p}`);
+      b.onclick=async()=>{ if(owned){ set(o.k); save(); renderHouse(); return; } if(lock){ toast(`Necesitas ${MAST[o.m[0]].n} nivel ${o.m[1]}`); return; }
+        if(p.coins<o.p){ toast('No tienes botones suficientes'); return; }
+        const r=await say({face:'🖌️',name:'Reforma',text:`¿Comprar «${o.n}» por ${o.p} botones?`,buttons:[{t:'No'},{t:'¡Sí!',cls:'primary'}],speak:false}); if(r!==1) return;
+        p.coins-=o.p; R.owned[o.k]=1; set(o.k); save('Reforma: '+o.n); fanfare(); renderHouse(); };
+      row.append(b); }); inv.append(row); };
+  opts(WALLPATS,R.pat,v=>R.pat=v,'🧱 Papel de la pared');
+  opts(FLOORS,R.floor,v=>R.floor=v,'🪵 Suelo');
+  inv.append(el('div','help','<div>💡 Elige un mueble de tu cesta y toca el suelo o un hueco de la pared. Si tocas algo ya colocado, vuelve a tu cesta.</div>'));
+}
+
+$('#hv-garden').onclick=()=>{ houseView='garden'; invSel=null; renderHouse(); sizeGarden(); };
+$('#hv-room').onclick=()=>{ houseView='room'; invSel=null; renderHouse(); sizeGarden(); };
 /* =========================================================
    CATÁLOGO DE EJERCICIOS (puerta trasera, solo modo prueba)
    ========================================================= */
