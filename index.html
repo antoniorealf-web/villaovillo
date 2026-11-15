@@ -267,6 +267,27 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
 .bnote .speak{position:absolute;right:6px;top:6px;width:30px;height:30px;font-size:16px}.bdel{position:absolute;right:8px;bottom:6px;background:none;border:none;font-size:16px;color:#a73a34}
 .aqwrap{display:flex;gap:14px;padding:14px;flex-wrap:wrap;max-width:1400px;margin:0 auto}.aqleft{flex:3 1 520px}#aq-cv{border-radius:18px;display:block;touch-action:manipulation}.aqside{flex:1 1 280px;display:flex;flex-direction:column;gap:10px}
 .aqshop{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.corkscroll{background:#b9844f}
+.cork{max-width:1200px;margin:0 auto;padding:26px 22px 40px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:26px 20px;align-items:start;
+  background-color:#c8955f;background-image:radial-gradient(rgba(90,55,25,.35) 1.2px,transparent 1.6px),radial-gradient(rgba(255,230,190,.35) 1px,transparent 1.5px);background-size:13px 11px,17px 19px;background-position:0 0,6px 8px;
+  border:16px solid #8a5a36;border-radius:16px;box-shadow:inset 0 0 30px rgba(60,30,10,.45);min-height:100%}
+.paper{position:relative;padding:22px 16px 12px;box-shadow:0 6px 10px rgba(50,25,5,.35);transition:transform .15s}
+.paper:active{transform:scale(1.02)!important}
+.paper .pin{position:absolute;top:-8px;left:50%;margin-left:-11px;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ff8a80,#d62828 60%,#8b1414);box-shadow:2px 4px 4px rgba(0,0,0,.35)}
+.ptask{background:#fffdf7;background-image:repeating-linear-gradient(#fffdf7 0 27px,#cfe3f5 27px 28px);border-left:4px solid #f2a2a2}
+.ptask .pin{background:radial-gradient(circle at 35% 35%,#8fc3ff,#2f6fc0 60%,#183c70)}
+.pnew{animation:pnewb 1.6s ease-in-out infinite}@keyframes pnewb{50%{box-shadow:0 0 0 5px #f2b632,0 6px 10px rgba(50,25,5,.35)}}
+.pnote{border-radius:2px}.pnote .pin{background:radial-gradient(circle at 35% 35%,#b6f0a8,#3c9a4a 60%,#1e5a27)}
+.pnews{background:#f4efe3;font-family:Georgia,'Times New Roman',serif;border:1px solid #d8ceb8}
+.pnews .pin{background:radial-gradient(circle at 35% 35%,#ffe28a,#e0a400 60%,#7a5a00)}
+.pblank{background:#fffdf7;border:3px dashed #d8b48a;cursor:pointer;text-align:center}
+.phead{font-weight:800;font-size:18px;color:#a73a34}.pwho{font-weight:800;font-size:15px}
+.ptext{font-size:19px;line-height:1.35;margin:6px 0;word-wrap:break-word}.ptext.hand{font-size:21px}
+.pprize{font-weight:800;font-size:18px}.pfrom{font-weight:800;font-size:14px;color:#6b5640}
+.pmast{font-size:12px;letter-spacing:1px;border-bottom:2px solid #4a3b2c;padding-bottom:3px;margin-bottom:6px;font-weight:700}
+.ptitle{font-size:19px;font-weight:800;line-height:1.2}
+.pacts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}.pacts .btn{min-height:42px;font-size:16px;padding:4px 10px}.pacts .speak{width:34px;height:34px;font-size:16px}
+.pstate{font-size:15px;font-weight:700;color:#8a7660}
 /* ---------- paseo del alcalde ---------- */
 #visitbar{display:none}
 #scr-village.visit .vtop,#scr-village.visit .vbot{display:none}
@@ -391,8 +412,8 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
 
 <!-- TABLÓN -->
 <section id="scr-board" class="screen">
-  <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl">📌 Tablón de tareas</div><button class="btn" id="board-alc">🔐 Alcalde</button><div class="chip" id="board-coins"></div></div>
-  <div class="scroll" style="flex:1"><div class="mlist" id="blist"></div></div>
+  <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl">📌 Tablón del pueblo</div><button class="btn" id="board-alc">🔐 Alcalde</button><div class="chip" id="board-coins"></div></div>
+  <div class="scroll corkscroll" style="flex:1"><div class="cork" id="blist"></div></div>
 </section>
 <section id="scr-alcalde" class="screen">
   <div class="topbar"><button class="btn" id="alc-back">← Salir</button><div class="ttl">🎩 Modo alcalde</div></div>
@@ -2280,7 +2301,7 @@ function ensureRecurring(p){
   });
   saveQuiet();
 }
-function openBoard(){ const p=P(); ensureRecurring(p); renderBoard(); show('board'); if(!TEST) cloudPull(false); }
+function openBoard(){ const p=P(); if(VISIT) DB.profiles.filter(Boolean).forEach(ensureRecurring); else ensureRecurring(p); renderBoard(); show('board'); if(!TEST&&!VISIT) cloudPull(false); }
 function renderBoard(){
   const p=P(); $('#board-coins').textContent='🔘 '+p.coins;
   const L=$('#blist'); L.innerHTML='';
@@ -4014,6 +4035,118 @@ function roomHitKey(x,y,R){
   const row=RW.rows.findIndex(r=>y>=r[0]&&y<r[1]); if(row<0) return null; return R.fl[row*8+Math.floor((x-RW.gx)/RW.cw)];
 }
 /* =========================================================
+   TABLÓN DE CORCHO (tareas, notas de las niñas y noticias)
+   ========================================================= */
+/* DB.boardMsgs = notas pinchadas por las niñas o papá, visibles para todos. Las noticias inventadas cambian cada día. */
+const PAPER_COLS=['#fff3a8','#ffd1dc','#d6ecff','#dff5d8','#ffe2c2'];
+function corkMsgs(){ DB.boardMsgs=DB.boardMsgs||[]; return DB.boardMsgs; }
+function fakeNews(n){
+  const d=new Date(now()), mes=d.getMonth(), dia=d.getDay(), R=rng(today()+'|corcho');
+  const pr=Math.round(Math.min(1,bridgeTotal()/BRIDGE_GOAL)*100), st=progressStats(P()||{});
+  const tiempo=[mes>=11||mes<=1?'Hace frío: Rosa recomienda bufanda doble y chocolate caliente.':mes<=4?'Llega la primavera: las flores del pueblo están a punto de abrirse.':mes<=8?'¡Calor! Lía avisa de que el río está perfecto para chapotear.':'Otoño en Villaovillo: las hojas cubren los caminos de colores.'];
+  const pool=[
+    ['🐑','Récord de lana','Rosa la oveja ha tejido una bufanda tan larga que da tres vueltas a la fuente de la plaza.'],
+    ['🦔','Se busca','Tomás el erizo ha perdido una bellota dorada. Si la encuentras, devuélvela a su casa. Habrá recompensa: ¡un abrazo sin pinchos!'],
+    ['🐔','Oferta en la tienda','Coco dice que esta semana sus farolillos brillan más que nunca. ¿Será verdad?'],
+    ['🐻','La receta de Bruno','Pan de miel: harina, miel, agua y mucha paciencia. Bruno dice que el secreto es contar bien los minutos.'],
+    ['🦦','Noticias del río','Lía ha visto un pez que salta haciendo piruetas. Dice que se llama Chispa.'],
+    ['🐰','Nube cuenta saltos','Nube ha saltado 100 veces seguidas. «Es como un bucle», explica, «salto y repito».'],
+    ['🤖','Chiste de Hilo','¿Qué le dice un robot a otro? «Bip». Y el otro contesta: «Bip bip». Hilo se ha reído durante 3 minutos.'],
+    ['🦉','Sabina recomienda','Leer un ratito antes de dormir ayuda a recordar lo aprendido. ¡Palabra de lechuza!'],
+    ['🌦️','El tiempo',tiempo[0]],
+    ['🌉','Obras del puente',pr>=100?'¡El puente ya está terminado! Lía da las gracias a las vecinas que pusieron botones.':`El puente de Lía va por el ${pr}%. Cada botón cuenta.`],
+    ['🌳','El pueblo crece',`Ya hay ${st.trees} árboles en Villaovillo. Dicen que cada encargo terminado hace brotar uno nuevo.`],
+    ['🧶','Dato curioso','Un buen jersey puede llevar más de 50.000 puntos. ¡Menos mal que existen los bucles!'],
+    ['🐝','Dato curioso','Las abejas bailan para contarse dónde hay flores. Es su forma de mandar mensajes.'],
+    ['🐙','Dato curioso','Los pulpos tienen tres corazones y la sangre azul. ¿Habrá alguno en tu pecera?'],
+    ['🔤','Adivinanza','Tengo agujas y no sé coser, tengo números y no sé leer. ¿Qué soy? (Respuesta: el reloj)'],
+    ['🔢','Adivinanza','Si Bruno hornea 3 bandejas de 4 bollos, ¿cuántos bollos hay? Piensa… ¡12!'],
+    ['🎨','Concurso','El ayuntamiento busca la tela más bonita del pueblo. ¡Cuelga tus diseños en el tendedero!'],
+    ['📮','Correo','El cartero dice que el buzón del alcalde está lleno de cartas bonitas. ¿Has mirado el tuyo?'],
+    ['🎵','Música en la plaza','Esta tarde, Tomás tocará la flauta junto a la fuente. Se aceptan aplausos.'],
+    ['🐞','Visita inesperada','Una mariquita se ha paseado por el tablón. Contó 7 puntos en su espalda.'],
+    ['🗓️','Hoy es '+['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][dia],dia===0||dia===6?'¡Fin de semana! Buen día para regar el jardín y decorar la casa.':'Día de cole. Después de los deberes, el telar te espera.']
+  ];
+  return shuffle(pool,R).slice(0,n);
+}
+function pinEl(cls,rot){ const d=el('div','paper '+cls); d.style.transform=`rotate(${rot}deg)`; d.append(el('span','pin')); return d; }
+function renderBoard(){
+  const alc=!!VISIT, p=P(); $('#board-coins').textContent=alc?'🎩 Alcalde':'🔘 '+p.coins; $('#board-coins').style.display='';
+  $('#board-alc').style.display=alc?'none':'';
+  const L=$('#blist'); L.innerHTML=''; L.className='cork';
+  const R=rng(today()+'|rot'); const rot=()=>Math.round((R()*6-3)*10)/10;
+  const all=(DB.msgs||[]).concat(localMsgs()).filter(m=>isTask(m)&&!['borrada','caducada'].includes(m.estado));
+  const tasks=alc?all.filter(m=>!(m.estado==='validada'&&(DB.profiles.find(q=>q&&q.id===m.para)||{rewarded:{}}).rewarded[m.id])):myTasks().filter(m=>!(m.estado==='validada'&&p.rewarded[m.id]));
+  const items=[];
+  // tareas
+  tasks.slice().reverse().forEach(m=>{
+    const d=pinEl('ptask',rot()); const who=DB.profiles.find(q=>q&&q.id===m.para);
+    d.innerHTML+=`<div class="phead">${m.tipo==='deberes'?'📚 Deberes':'🧹 Tarea de casa'}${m.rid?' · 📅 hoy':''}</div>${alc&&who?`<div class="pwho" style="color:${who.color}">Para ${esc(who.name)}</div>`:''}<div class="ptext">${esc(m.texto||'')}</div><div class="pprize">🔘 ${m.premio||10}</div>`;
+    const a=el('div','pacts'); const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(m.texto||''); a.append(sp);
+    const B=(t,cls,fn)=>{ const b=el('button','btn '+(cls||''),t); b.onclick=fn; a.append(b); };
+    if(alc){
+      if(m.estado==='hecha') B('✅ Validar','green',()=>{ validateMsg(m); renderBoard(); });
+      else a.append(el('span','pstate',m.estado==='nuevo'?'Sin empezar':m.estado==='aceptada'?'Aceptada':m.estado==='validada'?'Validada · falta recoger':''));
+      if(String(m.id).startsWith('L')) B('🗑️','',()=>{ m.estado='borrada'; saveQuiet(); renderBoard(); });
+    } else {
+      if(m.estado==='nuevo') B('✋ Aceptar','primary',()=>{ setMsgState(m,'aceptada'); beep(700,0.08,'triangle'); toast('📌 ¡Tarea aceptada! Cuando la termines, márcala.'); renderBoard(); });
+      else if(m.estado==='aceptada') B('✅ ¡Ya la hice!','green',()=>doneTask(m).then(renderBoard));
+      else if(m.estado==='hecha') a.append(el('span','pstate','⏳ Papá lo comprobará'));
+      else if(m.estado==='validada') B('🎁 Recoger premio','primary',()=>collectTask(m).then(renderBoard));
+    }
+    d.append(a); if(m.estado==='nuevo'&&!alc) d.classList.add('pnew'); items.push(d);
+  });
+  // notas de las niñas y de papá
+  corkMsgs().slice(-12).reverse().forEach((n,i)=>{
+    const d=pinEl('pnote',rot()); d.style.background=n.col||PAPER_COLS[i%PAPER_COLS.length];
+    const dt=new Date(n.t); d.innerHTML+=`<div class="pfrom">✏️ ${esc(n.from)} · ${dt.getDate()}/${dt.getMonth()+1}</div><div class="ptext hand">${esc(n.text)}</div>`;
+    const a=el('div','pacts'); const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(n.from+' dice: '+n.text); a.append(sp);
+    const me=alc?'alcalde':p.id; if(alc||n.fromId===me){ const x=el('button','btn','🗑️'); x.onclick=()=>{ const k=corkMsgs().indexOf(n); if(k>=0) corkMsgs().splice(k,1); saveQuiet(); renderBoard(); }; a.append(x); }
+    d.append(a); items.push(d);
+  });
+  // noticias reales del pueblo
+  (DB.news||[]).slice(-3).reverse().forEach(n=>{ const d=pinEl('pnews',rot()); d.innerHTML+=`<div class="pmast">📰 EL OVILLO · Última hora</div><div class="ptitle">${n.e} ¡Bien por ${esc(n.name)}!</div><div class="ptext">${esc(n.name)} ${esc(n.txt)}.</div>`; d.append(speakBtn(`¡Bien por ${n.name}! ${n.name} ${n.txt}.`)); items.push(d); });
+  // noticias inventadas en los huecos libres
+  fakeNews(Math.max(3,10-items.length)).forEach(([e,t,x])=>{ const d=pinEl('pnews',rot()); d.innerHTML+=`<div class="pmast">📰 EL OVILLO</div><div class="ptitle">${e} ${esc(t)}</div><div class="ptext">${esc(x)}</div>`; d.append(speakBtn(t+'. '+x)); items.push(d); });
+  // mezclar: tareas primero, luego el resto intercalado
+  const nT=tasks.length, rest=shuffle(items.slice(nT),rng(today()+'|mix'));
+  // papel en blanco para escribir
+  const blank=pinEl('pblank',rot()); blank.innerHTML+=`<div class="ptitle">${alc?'➕ Poner una tarea':'✏️ Dejar una nota'}</div><div class="ptext">${alc?'Para una de las niñas o para las dos':'Escribe algo para todo el pueblo'}</div>`;
+  blank.onclick=()=>alc?corkNewTask():corkNewNote();
+  const final=items.slice(0,nT).concat([blank]).concat(rest);
+  if(alc){ const nb=pinEl('pblank',rot()); nb.innerHTML+='<div class="ptitle">✏️ Nota del alcalde</div><div class="ptext">Un mensaje para las dos</div>'; nb.onclick=corkNewNote; final.splice(nT+1,0,nb); }
+  final.forEach(x=>L.append(x));
+}
+function speakBtn(t){ const a=el('div','pacts'); const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(t); a.append(sp); return a; }
+async function corkNewNote(){
+  const alc=!!VISIT, p=P();
+  const r=await say({face:'✏️',name:alc?'Nota del alcalde':'Nota para el tablón',speak:false,
+    html:`<textarea class="inputline" id="ck-t" maxlength="120" rows="3" style="width:100%;resize:none;font-family:inherit" placeholder="${alc?'¡Mañana vamos al parque!':'¡Hola! …'}"></textarea><div class="choice" id="ck-st">${BOARD_STICKERS.map(s=>`<button style="font-size:24px">${s}</button>`).join('')}</div><div class="choice" id="ck-col" style="margin-top:6px">${PAPER_COLS.map((c,i)=>`<button class="dot${i===0?' sel':''}" data-c="${c}" style="background:${c}"></button>`).join('')}</div>`,
+    buttons:[{t:'Cancelar'},{t:'📌 Pinchar',cls:'primary'}]});
+  if(r!==1) return;
+  const t=(document.getElementById('ck-t').value||'').trim(); if(!t) return;
+  const col=(document.querySelector('#ck-col .sel')||{dataset:{c:PAPER_COLS[0]}}).dataset.c;
+  corkMsgs().push({id:'k'+Date.now().toString(36),from:alc?'Papá, el alcalde':p.name,fromId:alc?'alcalde':p.id,text:t,t:Date.now(),col});
+  if(corkMsgs().length>30) corkMsgs().splice(0,corkMsgs().length-30);
+  saveQuiet(); fanfare(); toast('📌 ¡Nota pinchada en el tablón!'); renderBoard();
+}
+document.addEventListener('click',ev=>{ const s=ev.target.closest('#ck-st button'); if(s){ const ta=document.getElementById('ck-t'); if(ta) ta.value=(ta.value+' '+s.textContent).trim(); }
+  const c=ev.target.closest('#ck-col .dot'); if(c){ document.querySelectorAll('#ck-col .dot').forEach(x=>x.classList.remove('sel')); c.classList.add('sel'); } });
+async function corkNewTask(){
+  const r=await say({face:'📌',name:'Nueva tarea',speak:false,html:`<div class="lbl">Para</div><select class="inputline" id="ct-para">${profileOptions()}</select>
+    <div class="lbl">Tipo</div><select class="inputline" id="ct-tipo"><option value="casa">🧹 Tarea de casa</option><option value="deberes">📚 Deberes del cole</option></select>
+    <div class="lbl">Qué hay que hacer</div><input class="inputline" id="ct-texto" placeholder="Ej.: Recoger la habitación">
+    <div class="lbl">Premio (botones)</div><input class="inputline" id="ct-premio" type="number" value="10" min="1" max="100">
+    <label style="display:flex;gap:8px;align-items:center;font-size:18px;margin:6px 0"><input type="checkbox" id="ct-rec" style="width:24px;height:24px"> 📅 Repetir cada día</label>`,
+    buttons:[{t:'Cancelar'},{t:'📌 Pinchar en el tablón',cls:'primary'}]});
+  if(r!==1) return;
+  const para=$('#ct-para').value, tipo=$('#ct-tipo').value, texto=$('#ct-texto').value.trim(), premio=Math.max(1,+$('#ct-premio').value||10), rec=$('#ct-rec').checked;
+  if(!texto){ toast('Escribe la tarea'); return; }
+  if(rec){ DB.recTasks=DB.recTasks||[]; DB.recTasks.push({rid:'r'+Date.now().toString(36),para,tipo,texto,premio}); DB.profiles.filter(Boolean).forEach(ensureRecurring); }
+  else { const targets=para==='todas'?DB.profiles.filter(Boolean).map(q=>q.id):[para]; targets.forEach(pid=>localMsgs().push({id:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),para:pid,tipo,texto,premio,estado:'nuevo'})); }
+  saveQuiet(); toast('📌 ¡Tarea puesta en el tablón!'); renderBoard();
+}
+/* =========================================================
    PASEO DEL ALCALDE (supervisión: el pueblo visto por papá)
    ========================================================= */
 const MATH_NAMES={contar:'Contar',sumas:'Sumas',restas:'Restas',dinero:'Dinero',multi:'Multiplicar',suma100:'Sumas grandes',receta:'Recetas (doble y mitad)',reparto:'Repartos',cambio:'Cambio',dospasos:'Problemas de dos pasos',fraccion:'Fracciones'};
@@ -4037,7 +4170,7 @@ function renderVisitBar(){
 }
 $('#vb-map').onclick=()=>openMap();
 $('#vb-ficha').onclick=()=>openFicha();
-$('#vb-tablon').onclick=()=>{ renderAlcalde(); show('alcalde'); };
+$('#vb-tablon').onclick=()=>openBoard();
 $('#vb-exit').onclick=()=>endVisit();
 $('#ficha-back').onclick=()=>{ if(VISIT) show('village'); else { renderAlcalde(); show('alcalde'); } };
 function drawMayorPlayer(c){
@@ -4053,7 +4186,7 @@ function visitTap(x,y){
   for(const n of npcs){ if(Math.hypot(n.x-x,n.y-38-y)<44){ const info=NPCS[n.k]; say({face:info.e,name:info.n,text:`¡Hola, señor alcalde! ${pick(info.hi)}`,speak:false}); return; } }
   const go=(door,fn)=>{ player.tx=door[0]; player.ty=door[1]; player.path=[]; player.act=fn; tapFx={x:door[0],y:door[1],t:0}; };
   if(inRect(x,y,B.taller)) return go(B.taller.door,openVTaller);
-  if(inRect(x,y,{x:B.tablon.x-16,y:B.tablon.y-10,w:B.tablon.w+32,h:B.tablon.h+10})) return go(B.tablon.door,()=>{ renderAlcalde(); show('alcalde'); });
+  if(inRect(x,y,{x:B.tablon.x-16,y:B.tablon.y-10,w:B.tablon.w+32,h:B.tablon.h+10})) return go(B.tablon.door,openBoard);
   if(inRect(x,y,B.ayto)) return go(B.ayto.door,openFicha);
   if(inRect(x,y,B.panaderia)) return go(B.panaderia.door,()=>openFicha('pan'));
   if(inRect(x,y,B.biblio)) return go(B.biblio.door,()=>openFicha('bib'));

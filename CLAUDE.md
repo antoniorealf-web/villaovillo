@@ -45,6 +45,7 @@ Lo que cambia a menudo (temas del cole, economía, hoja de ruta, decisiones) viv
 - Códigos de entrada: cada niña entra con `p.code` (4 números, lo elige ella la primera vez con `askGirlCode`); papá los ve y cambia en el modo alcalde (`renderCodesBox`). El código del alcalde (`askPin`, teclado `askKeypad`) protege además borrar partidas, la nube y las copias de seguridad.
 - Pizarra (`fu_pizarra`, pared): `p.board = {img, notes}`. La dueña dibuja; la otra niña y papá dejan notas (`openBoardView`). Al entrar, `boardNotice` avisa de mensajes nuevos.
 - Pecera (`fu_pecera`, suelo, 300 botones y 14 días jugados): `p.aqua = {fish, deco, fed}`, vista grande en `openAqua`, con peces (`FISH`) y decoración (`AQDECO`) que se desbloquean con maestrías y medallas. Dar de comer una vez al día da 1 botón.
+- Tablón de corcho (`renderBoard`, última definición en «TABLÓN DE CORCHO»): tareas del alcalde, notas de las niñas o de papá (`DB.boardMsgs`), noticias reales (`DB.news`) y noticias inventadas del día (`fakeNews`) en los huecos. En el paseo del alcalde se ven las tareas de las dos, se validan y se ponen tareas nuevas (`corkNewTask`).
 
 ## Registro y estadísticas
 
