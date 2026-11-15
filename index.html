@@ -340,7 +340,7 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
       <button class="hbtn" id="hb-perfil" title="Cambiar de jugadora">👥</button>
     </div>
   </div>
-  <div id="visitbar"><div class="vt">🎩 Paseo del alcalde</div><div class="seg" id="vb-who"></div><div class="seg"><button id="vb-map">🗺️</button><button id="vb-ficha">📊 Fichas</button><button id="vb-tablon">📌 Tablón</button><button id="vb-exit">🚪 Salir</button></div></div>
+  <div id="visitbar"><div class="vt">🎩 Paseo del alcalde</div><div class="seg" id="vb-who"></div><div class="seg"><button id="vb-map">🗺️</button><button id="vb-ficha">📊 Fichas</button><button id="vb-tablon">📌 Tablón</button><button id="vb-night">🌙</button><button id="vb-exit">🚪 Salir</button></div></div>
   <div id="vwrap"><canvas id="vcanvas"></canvas></div>
   <div class="vbar vbot"><div class="chip bracelet" id="hud-bracelet"></div><div class="chip" id="hud-daily"></div></div>
 </section>
@@ -2375,6 +2375,11 @@ function renderAlcalde(){
   const bf=el('button','btn blue','📊 Fichas de las niñas'); bf.onclick=()=>openFicha(); r0.append(bf);
   b0.append(r0);
   renderCodesBox(V,box);
+  const bn=box('🌙 Día y noche');
+  bn.append(el('div','counter','Normalmente el pueblo sigue la hora real. Aquí puedes dejarlo fijo de día o de noche.'));
+  const rn=el('div','choice'); rn.style.cssText='justify-content:flex-start;margin-top:8px';
+  [['auto','🕐 Según la hora'],['dia','☀️ Siempre de día'],['noche','🌙 Siempre de noche']].forEach(([k,t])=>{ const b=el('button',(DB.dayMode||'auto')===k?'sel':'',t); b.onclick=()=>setDayMode(k); rn.append(b); });
+  bn.append(rn);
   // pendientes de validar
   const all=(DB.msgs||[]).concat(localMsgs());
   const pend=all.filter(m=>isTask(m)&&['hecha','aceptada'].includes(m.estado));
@@ -4283,11 +4288,13 @@ const NIGHT_FORCE=(()=>{ try{ const q=new URLSearchParams(location.search); retu
 let NIGHTN=0, NIGHTWINS=[], NOC=null, nightCache={t:0,v:0};
 function nightLevel(){
   if(NIGHT_FORCE!=null) return NIGHT_FORCE;
+  if(DB.dayMode==='dia') return 0; if(DB.dayMode==='noche') return 1;
   if(Date.now()-nightCache.t<20000) return nightCache.v;
   const d=new Date(now()), h=d.getHours()+d.getMinutes()/60, m=d.getMonth(), rise=SUN.rise[m], set=SUN.set[m];
   let v=0; if(h>=set+0.75||h<rise-0.5) v=1; else if(h>=set) v=(h-set)/0.75; else if(h<rise) v=(rise-h)/0.5;
   nightCache={t:Date.now(),v}; return v;
 }
+function setDayMode(k){ DB.dayMode=k; nightCache.t=0; saveQuiet(); toast(k==='dia'?'☀️ El pueblo se queda de día':k==='noche'?'🌙 El pueblo se queda de noche':'🕐 El pueblo sigue la hora real'); const b=$('#vb-night'); if(b) b.textContent=nightLevel()>0.5?'☀️':'🌙'; if(curScreen==='alcalde') renderAlcalde(); }
 function drawNight(c,st){
   const n=NIGHTN; $('#scr-village').classList.toggle('night',n>0.5); if(n<=0) return;
   const W=vcanvas.width, H=vcanvas.height, k=vDpr*vScale;
@@ -4330,6 +4337,7 @@ function endVisit(){
   $('#scr-village').classList.remove('visit'); saveQuiet(); renderAlcalde(); show('alcalde');
 }
 function renderVisitBar(){
+  const nb=$('#vb-night'); if(nb) nb.textContent=nightLevel()>0.5?'☀️':'🌙';
   const w=$('#vb-who'); w.innerHTML='';
   girlsIdx().forEach(i=>{ const p=DB.profiles[i]; const b=el('button',i===DB.cur?'sel':'',`<span class="dot" style="width:18px;height:18px;background:${p.color}"></span>${esc(p.name)}`); b.onclick=()=>switchVisit(i); w.append(b); });
 }
@@ -4337,6 +4345,7 @@ $('#vb-map').onclick=()=>openMap();
 $('#vb-ficha').onclick=()=>openFicha();
 $('#vb-tablon').onclick=()=>openBoard();
 $('#vb-exit').onclick=()=>endVisit();
+$('#vb-night').onclick=()=>setDayMode(nightLevel()>0.5?'dia':'noche');
 $('#ficha-back').onclick=()=>{ if(VISIT) show('village'); else { renderAlcalde(); show('alcalde'); } };
 function drawMayorPlayer(c){
   drawDust(c);
