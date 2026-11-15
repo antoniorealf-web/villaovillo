@@ -247,6 +247,29 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
 #testbar button:active{background:#6b6b8a}
 #testbar.min .tb{display:none}
 #testflag{position:fixed;left:50%;top:0;transform:translateX(-50%);background:#2c2c3a;color:#ffd75e;font-weight:800;font-size:14px;padding:2px 14px;border-radius:0 0 12px 12px;z-index:59;display:none;pointer-events:none}
+/* ---------- paseo del alcalde ---------- */
+#visitbar{display:none}
+#scr-village.visit .vtop,#scr-village.visit .vbot{display:none}
+#scr-village.visit #visitbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;background:#4a6fa5;border-bottom:3px solid #3a5a8a;position:relative;z-index:2;flex-shrink:0}
+#visitbar .vt{color:#fff;font-weight:800;font-size:20px;display:flex;align-items:center;gap:8px}
+#visitbar .seg{display:flex;gap:6px}
+#visitbar .seg button{border:3px solid #3a5a8a;background:#e4efff;border-radius:16px;padding:6px 12px;font-size:17px;font-weight:800;min-height:48px;display:flex;align-items:center;gap:6px}
+#visitbar .seg button.sel{background:#fff6e6;border-color:#f2b632;box-shadow:0 0 0 2px #f2b632}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;padding:16px;max-width:1200px;margin:0 auto}
+.fcard{background:var(--card);border:3px solid var(--line);border-radius:24px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 4px 0 var(--line)}
+.fhead{display:flex;gap:12px;align-items:center}
+.fhead .fn{font-size:28px;font-weight:800;line-height:1}
+.fchips{display:flex;flex-wrap:wrap;gap:6px}
+.fchips span{background:#fff;border:2px solid var(--line);border-radius:14px;padding:3px 10px;font-weight:700;font-size:16px}
+.fsec{background:#fff;border:2px solid var(--line);border-radius:18px;padding:10px 12px}
+.fsec h4{margin:0 0 6px;font-size:18px}
+.frow{display:flex;align-items:center;gap:8px;font-size:16px;padding:3px 0}
+.frow .fl{flex:1}
+.frow .fv{font-weight:800}
+.pct{display:inline-block;min-width:52px;text-align:center;border-radius:10px;padding:1px 6px;font-weight:800;font-size:15px}
+.pct.g{background:#dff3e0;color:#2e6b35}.pct.a{background:#fff1cc;color:#8a6200}.pct.r{background:#fde2e0;color:#a73a34}.pct.n{background:#f1ebe0;color:#8a7660}
+.fnote{font-size:16px;line-height:1.35}
+.vtgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
 </style>
 </head>
 <body>
@@ -273,6 +296,7 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
       <button class="hbtn" id="hb-perfil" title="Cambiar de jugadora">👥</button>
     </div>
   </div>
+  <div id="visitbar"><div class="vt">🎩 Paseo del alcalde</div><div class="seg" id="vb-who"></div><div class="seg"><button id="vb-map">🗺️</button><button id="vb-ficha">📊 Fichas</button><button id="vb-tablon">📌 Tablón</button><button id="vb-exit">🚪 Salir</button></div></div>
   <div id="vwrap"><canvas id="vcanvas"></canvas></div>
   <div class="vbar vbot"><div class="chip bracelet" id="hud-bracelet"></div><div class="chip" id="hud-daily"></div></div>
 </section>
@@ -352,6 +376,14 @@ textarea.code{width:100%;height:120px;font-family:monospace;font-size:12px;borde
 <section id="scr-alcalde" class="screen">
   <div class="topbar"><button class="btn" id="alc-back">← Salir</button><div class="ttl">🎩 Modo alcalde</div></div>
   <div class="scroll" style="flex:1"><div style="max-width:820px;margin:0 auto;padding:16px" id="alc-body"></div></div>
+</section>
+<section id="scr-ficha" class="screen">
+  <div class="topbar"><button class="btn" id="ficha-back">← Volver</button><div class="ttl">📊 Fichas de las niñas</div></div>
+  <div class="scroll" style="flex:1"><div class="fgrid" id="ficha-body"></div></div>
+</section>
+<section id="scr-vtaller" class="screen">
+  <div class="topbar"><button class="btn" data-go="village">← Pueblo</button><div class="ttl" id="vt-title">🧶 Taller</div></div>
+  <div class="scroll" style="flex:1"><div style="max-width:1100px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px" id="vt-body"></div></div>
 </section>
 <!-- PANADERÍA -->
 <section id="scr-bakery" class="screen">
@@ -499,6 +531,7 @@ const TEST = (()=>{ try{ return new URLSearchParams(location.search).has('prueba
 const KEY = TEST ? 'villaovillo.prueba' : 'villaovillo.v1';
 const CFG = window.VILLA_CONFIG || {scriptUrl:''};
 let DB = {profiles:[null,null], cur:0, dayOffset:0, msgs:[]};
+let VISIT=null; // paseo del alcalde: {from: índice de la niña activa antes de entrar}
 function uid(){ return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 function migrate(p){
   if(!p) return p;
@@ -514,6 +547,7 @@ function migrate(p){
 function load(){ try{ const s=localStorage.getItem(KEY); if(s){ const d=JSON.parse(s); if(d&&d.profiles){ DB=Object.assign({dayOffset:0,msgs:[]},d); } } }catch(e){} DB.profiles=DB.profiles.map(migrate); }
 let lastEvent='';
 function save(evento){
+  if(VISIT){ saveQuiet(); return; }
   const p=P(); if(p){ p.updatedAt=Date.now(); if(evento) lastEvent = lastEvent? lastEvent+' · '+evento : evento; }
   try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){}
   if(p) scheduleCloud();
@@ -726,7 +760,7 @@ window.addEventListener('resize',()=>{ if(curScreen==='village') resizeVillage()
 
 function setupNPCs(){
   const p=P(); const lv=p.unlocked;
-  const list=['alcalde','rosa','tomas','coco']; if(lv>=2) list.push('bruno','lia'); if(lv>=3) list.push('nube','hilo');
+  const list=(VISIT?[]:['alcalde']).concat(['rosa','tomas','coco']); if(lv>=2) list.push('bruno','lia'); if(lv>=3) list.push('nube','hilo');
   const homes={alcalde:[700,575],rosa:[420,420],tomas:[700,330],coco:[540,300],bruno:[380,560],lia:[940,430],nube:[700,480],hilo:[560,560]};
   npcs=list.map(k=>{ const old=npcs.find(n=>n.k===k); return old||{k,x:homes[k][0],y:homes[k][1],tx:homes[k][0],ty:homes[k][1],home:homes[k],wait:Math.random()*3}; });
   butterflies=[]; const nb=lv>=2?lv*2:0; for(let i=0;i<nb;i++) butterflies.push({x:100+Math.random()*850,y:100+Math.random()*550,a:Math.random()*6,sp:0.5+Math.random()});
@@ -940,6 +974,7 @@ function drawGirl(c,x,y,color,walk,sc=1){
   c.restore();
 }
 function drawPlayer(c){
+  if(VISIT) return drawMayorPlayer(c);
   const p=P();
   const hopY = player.hop>0 ? Math.sin((0.32-player.hop)/0.32*Math.PI)*7 : 0;
   drawDust(c);
@@ -1116,7 +1151,7 @@ function renderPuzzle(){
     const pal=el('div','palette');
     paletteColors().forEach(k=>{ const c=colorCard(k); if(PZ.sel===k) c.style.outline='4px solid #2f5f96'; c.onclick=()=>{ PZ.sel=k; beep(600,0.04); renderPuzzle(); }; pal.append(c); });
     R.append(pal);
-    const act=el('div','actions'); if(TEST){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); } const b=el('button','btn green','✔ Comprobar'); b.onclick=checkReglas; act.append(b); R.append(act);
+    const act=el('div','actions'); if(TEST||VISIT){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); } const b=el('button','btn green','✔ Comprobar'); b.onclick=checkReglas; act.append(b); R.append(act);
     return;
   }
   // filas de programa
@@ -1147,7 +1182,7 @@ function renderPuzzle(){
     q.innerHTML='<div style="font-size:30px">🤖</div><div><b>¿El programa de Hilo teje bien la tela del pedido?</b><br>Piénsalo antes de probarlo.</div>';
     R.append(q);
     const act=el('div','actions'); const no=el('button','btn','❌ Tiene un error'), si=el('button','btn green','✅ Está bien');
-    no.onclick=()=>predict(false); si.onclick=()=>predict(true); if(TEST){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.prepend(sb); } act.append(no,si); R.append(act); return;
+    no.onclick=()=>predict(false); si.onclick=()=>predict(true); if(TEST||VISIT){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.prepend(sb); } act.append(no,si); R.append(act); return;
   }
   R.append(el('div','lbl','Tarjetas'));
   const pal=el('div','palette');
@@ -1158,7 +1193,7 @@ function renderPuzzle(){
   const clr=el('button','btn','↺ Borrar todo'); clr.onclick=()=>{ if(PZ.running) return; PZ.prog={main:[],A:[],B:[],rep:1}; PZ.row='main'; renderPuzzle(); renderResult([]); setMsg(''); };
   const run=el('button','btn primary','▶ Tejer'); run.onclick=knit; run.disabled=PZ.running;
   if(PZ.attempts>=3){ const h=el('button','btn blue','💡 Pista'); h.onclick=showHint; act.append(h); }
-  if(TEST){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); }
+  if(TEST||VISIT){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); }
   act.append(clr,run); R.append(act);
 }
 function paletteColors(){ const tc=uniqColors(PZ.target); return PZ.age<=7?COLOR_KEYS.filter(k=>tc.includes(k)||k==='w'):COLOR_KEYS; }
@@ -1333,7 +1368,7 @@ async function checkLevelUp(){
 let houseIdx=0, invSel=null;
 function openHouse(i){ houseIdx=i; invSel=null; show('house'); renderHouse(); sizeGarden(); }
 function renderHouse(){
-  const p=DB.profiles[houseIdx]; const mine=houseIdx===DB.cur;
+  const p=DB.profiles[houseIdx]; const mine=houseIdx===DB.cur&&!VISIT;
   $('#house-title').textContent=mine?'🏡 Mi casa':'🏡 Casa de '+p.name;
   $('#house-coins').textContent='🔘 '+P().coins;
   $('#hv-garden').classList.toggle('sel',houseView==='garden'); $('#hv-room').classList.toggle('sel',houseView==='room');
@@ -1489,7 +1524,7 @@ function recordStats(p,id,stars,type){
 let playTicks=0;
 function startPlayClock(){
   setInterval(()=>{
-    const p=P(); if(!p||curScreen==='profiles'||document.hidden) return;
+    const p=P(); if(!p||VISIT||['profiles','alcalde','ficha','catalog'].includes(curScreen)||document.hidden) return;
     if(p.days.last!==today() && curScreen==='village' && !$('#dlg').classList.contains('on')) newDayCheck();
     const d=today(); p.play[d]=(p.play[d]||0)+15; touchLog(p); p.updatedAt=Date.now(); saveQuiet();
     if(++playTicks%20===0) scheduleCloud();
@@ -2061,7 +2096,7 @@ function renderCabRight(R){
   R.append(pal);
   const act=el('div','actions');
   if(PZ.attempts>=3){ const h=el('button','btn blue','💡 Pista'); h.onclick=showHint; act.append(h); }
-  if(TEST){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); }
+  if(TEST||VISIT){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); }
   if(PZ.step){
     const stop=el('button','btn','⏹ Parar'); stop.onclick=()=>{ PZ.step=null; renderPuzzle(); renderResult([]); setMsg(''); };
     const nx=el('button','btn primary','👣 Siguiente paso'); nx.onclick=cabStepNext;
@@ -2142,7 +2177,7 @@ function renderCuaRight(R){
   R.append(pal);
   const act=el('div','actions');
   if(PZ.attempts>=3){ const h=el('button','btn blue','💡 Pista'); h.onclick=showHint; act.append(h); }
-  if(TEST){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); }
+  if(TEST||VISIT){ const sb=el('button','btn','👁️ Solución'); sb.onclick=showSolution; act.append(sb); }
   const b=el('button','btn green','✔ Comprobar'); b.onclick=checkCua; act.append(b); R.append(act);
 }
 function checkCua(){
@@ -2235,6 +2270,14 @@ function profileOptions(withAll=true){ return DB.profiles.filter(Boolean).map(p=
 function renderAlcalde(){
   const V=$('#alc-body'); V.innerHTML='';
   const box=(title)=>{ const d=el('div','panel'); d.style.marginBottom='14px'; d.append(el('div','wsec',title)); V.append(d); return d; };
+  // supervisión
+  const b0=box(VISIT?'🚶 Estás paseando por el pueblo':'👀 Ver el juego por dentro');
+  b0.append(el('div','counter',VISIT?'Vuelve al pueblo cuando quieras o sal del paseo.':'Entra al pueblo como alcalde: mira sus casas, sus encargos y cómo crece el pueblo de cada una, sin tocar su partida.'));
+  const r0=el('div'); r0.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-top:8px';
+  if(VISIT){ const bv=el('button','btn primary','🚶 Volver al pueblo'); bv.onclick=()=>show('village'); r0.append(bv); const bx=el('button','btn','🚪 Terminar el paseo'); bx.onclick=endVisit; r0.append(bx); }
+  else girlsIdx().forEach(i=>{ const q=DB.profiles[i]; const bv=el('button','btn primary','🚶 Pueblo de '+esc(q.name)); bv.onclick=()=>startVisit(i); r0.append(bv); });
+  const bf=el('button','btn blue','📊 Fichas de las niñas'); bf.onclick=()=>openFicha(); r0.append(bf);
+  b0.append(r0);
   // pendientes de validar
   const all=(DB.msgs||[]).concat(localMsgs());
   const pend=all.filter(m=>isTask(m)&&['hecha','aceptada'].includes(m.estado));
@@ -2475,7 +2518,7 @@ async function nextQuiz(){
 $('#bk-back').onclick=()=>{ if(MZ&&MZ.catalog) openCatalog(); else show('village'); };
 $('#qz-back').onclick=()=>{ if(LQ&&LQ.catalog) openCatalog(); else openLibrary(); };
 $('#board-alc').onclick=()=>openAlcalde();
-$('#alc-back').onclick=()=>{ if(P()) openBoard(); else { renderProfiles(); show('profiles'); } };
+$('#alc-back').onclick=()=>{ if(VISIT){ show('village'); return; } if(P()) openBoard(); else { renderProfiles(); show('profiles'); } };
 
 /* =========================================================
    PERSONAJE PRINCIPAL (estilo redondeado, animado)
@@ -3019,7 +3062,7 @@ function drawBuntingX(c){
 /* ---------- vecinos y movimiento ---------- */
 function setupNPCs(){
   const p=P(); const lv=p.unlocked;
-  const list=['alcalde','rosa','tomas','coco']; if(lv>=2) list.push('bruno','lia'); if(lv>=3) list.push('nube','hilo');
+  const list=(VISIT?[]:['alcalde']).concat(['rosa','tomas','coco']); if(lv>=2) list.push('bruno','lia'); if(lv>=3) list.push('nube','hilo');
   const homes={alcalde:[1300,660],rosa:[760,880],tomas:[1520,640],coco:[1470,520],bruno:[1000,1390],lia:[1800,960],nube:[1620,1420],hilo:[1640,760]};
   npcs=list.map(k=>{ const old=npcs.find(n=>n.k===k&&n.home===homes[k]); return old||{k,x:homes[k][0],y:homes[k][1],tx:homes[k][0],ty:homes[k][1],home:homes[k],wait:Math.random()*3}; });
   butterflies=[]; const nb=lv>=2?lv*3:2; for(let i=0;i<nb;i++) butterflies.push({x:400+Math.random()*1400,y:300+Math.random()*1200,a:Math.random()*6,sp:0.5+Math.random()});
@@ -3042,6 +3085,7 @@ function update(dt){
 }
 function handleWorldTap(x,y){
   beep(520,0.04);
+  if(VISIT) return visitTap(x,y);
   for(const n of npcs){ if(Math.hypot(n.x-x,n.y-38-y)<44){ talkNPC(n); return; } }
   const mine=DB.cur===0?'A':'B', other=mine==='A'?'B':'A';
   const go=(door,fn)=>{ player.tx=door[0]; player.ty=door[1]; player.act=fn; tapFx={x:door[0],y:door[1],t:0}; };
@@ -3389,6 +3433,186 @@ function renderRoomPanel(inv,p){
 $('#hv-garden').onclick=()=>{ houseView='garden'; invSel=null; renderHouse(); sizeGarden(); };
 $('#hv-room').onclick=()=>{ houseView='room'; invSel=null; renderHouse(); sizeGarden(); };
 /* =========================================================
+   PASEO DEL ALCALDE (supervisión: el pueblo visto por papá)
+   ========================================================= */
+const MATH_NAMES={contar:'Contar',sumas:'Sumas',restas:'Restas',dinero:'Dinero',multi:'Multiplicar',suma100:'Sumas grandes',receta:'Recetas (doble y mitad)',reparto:'Repartos',cambio:'Cambio',dospasos:'Problemas de dos pasos',fraccion:'Fracciones'};
+function girlsIdx(){ return DB.profiles.map((p,i)=>p?i:-1).filter(i=>i>=0); }
+function startVisit(i){
+  const g=girlsIdx(); if(!g.length){ toast('Todavía no hay jugadoras'); return; }
+  if(!VISIT) VISIT={from:DB.cur};
+  DB.cur=g.includes(i)?i:g[0];
+  player.placed=false; cam.ok=false; setupNPCs();
+  $('#scr-village').classList.add('visit'); renderVisitBar(); show('village');
+  toast('🎩 Pueblo de '+P().name+': toca los edificios para curiosear',2200);
+}
+function switchVisit(i){ DB.cur=i; setupNPCs(); renderVisitBar(); updateHUD(); toast('Pueblo de '+P().name); }
+function endVisit(){
+  if(!VISIT) return; DB.cur=VISIT.from; VISIT=null; player.placed=false; cam.ok=false;
+  $('#scr-village').classList.remove('visit'); saveQuiet(); renderAlcalde(); show('alcalde');
+}
+function renderVisitBar(){
+  const w=$('#vb-who'); w.innerHTML='';
+  girlsIdx().forEach(i=>{ const p=DB.profiles[i]; const b=el('button',i===DB.cur?'sel':'',`<span class="dot" style="width:18px;height:18px;background:${p.color}"></span>${esc(p.name)}`); b.onclick=()=>switchVisit(i); w.append(b); });
+}
+$('#vb-map').onclick=()=>openMap();
+$('#vb-ficha').onclick=()=>openFicha();
+$('#vb-tablon').onclick=()=>{ renderAlcalde(); show('alcalde'); };
+$('#vb-exit').onclick=()=>endVisit();
+$('#ficha-back').onclick=()=>{ if(VISIT) show('village'); else { renderAlcalde(); show('alcalde'); } };
+function drawMayorPlayer(c){
+  drawDust(c);
+  const hopY=player.hop>0?Math.sin((0.32-player.hop)/0.32*Math.PI)*7:0;
+  drawNPCFig(c,'alcalde',player.x,player.y-hopY,{t:tGlobal,moving:player.moving,dir:player.dir||1,sc:1.45});
+  c.font="800 16px 'Baloo 2',sans-serif"; c.textAlign='center'; c.textBaseline='middle';
+  const label='Papá, el alcalde', tw=c.measureText(label).width+14; c.fillStyle='rgba(255,250,241,.9)'; roundRect(c,player.x-tw/2,player.y-170,tw,22,8); c.fill();
+  c.fillStyle='#5a3d22'; c.fillText(label,player.x,player.y-159);
+}
+function visitTap(x,y){
+  const p=P();
+  for(const n of npcs){ if(Math.hypot(n.x-x,n.y-38-y)<44){ const info=NPCS[n.k]; say({face:info.e,name:info.n,text:`¡Hola, señor alcalde! ${pick(info.hi)}`,speak:false}); return; } }
+  const go=(door,fn)=>{ player.tx=door[0]; player.ty=door[1]; player.path=[]; player.act=fn; tapFx={x:door[0],y:door[1],t:0}; };
+  if(inRect(x,y,B.taller)) return go(B.taller.door,openVTaller);
+  if(inRect(x,y,{x:B.tablon.x-16,y:B.tablon.y-10,w:B.tablon.w+32,h:B.tablon.h+10})) return go(B.tablon.door,()=>{ renderAlcalde(); show('alcalde'); });
+  if(inRect(x,y,B.ayto)) return go(B.ayto.door,openFicha);
+  if(inRect(x,y,B.panaderia)) return go(B.panaderia.door,()=>openFicha('pan'));
+  if(inRect(x,y,B.biblio)) return go(B.biblio.door,()=>openFicha('bib'));
+  if(inRect(x,y,B.tienda)) return go(B.tienda.door,()=>say({face:'🐔',name:NPCS.coco.n,text:`¡Hola, alcalde! ${p.name} tiene ${p.coins} botones para gastar aquí.`,speak:false}));
+  if(inRect(x,y,{x:B.tend.x,y:B.tend.y-20,w:B.tend.w,h:B.tend.h+40})) return go(B.tend.door,()=>openBook('telas'));
+  for(const [k,i] of [['A',0],['B',1]]){ if(inRect(x,y,B['house'+k])||inRect(x,y,B['plot'+k])) return go(B['house'+k].door,()=>{ if(DB.profiles[i]) openHouse(i); else toast('Casa vacía'); }); }
+  if(x>=1790&&x<=1990&&y>=740&&y<=890) return go([1830,850],()=>say({face:'🦦',name:NPCS.lia.n,text:`El puente va por ${bridgeTotal()} de ${BRIDGE_GOAL} botones. ${DB.profiles.filter(Boolean).map(q=>q.name+' ha puesto '+(q.bridge||0)).join(' y ')}.`,speak:false}));
+  if(x>=1870){ toast('Al otro lado del río están el Huerto y el Laboratorio (todavía cerrados)'); return; }
+  if(player.x>1880){ player.x=1850; }
+  let tx=clamp(x,30,1860), ty=clamp(y,60,1580);
+  if(inPond(tx,ty)){ const a=Math.atan2((ty-POND.y)/POND.ry,(tx-POND.x)/POND.rx); tx=POND.x+Math.cos(a)*(POND.rx+24); ty=POND.y+Math.sin(a)*(POND.ry+24); }
+  player.tx=tx; player.ty=ty; player.path=[]; player.act=null; tapFx={x:tx,y:ty,t:0};
+}
+
+/* ---- fichas ---- */
+function pctTag(ok,tot){ if(!tot) return '<span class="pct n">—</span>'; const v=Math.round(ok/tot*100); return `<span class="pct ${v>=80?'g':v>=50?'a':'r'}">${v}%</span>`; }
+function telarByType(p){
+  const ty={}; Object.values(p.stats||{}).forEach(st=>{ const k=st.type||'?'; const o=ty[k]=ty[k]||{n:0,first:0,s3:0,plays:0,secs:0}; o.n++; o.plays+=st.plays||0; if(st.firstTry) o.first++; if(st.best===3) o.s3++; o.secs+=st.secs||0; });
+  return ty;
+}
+function lastDays(n){ const out=[]; const d0=new Date(now()); for(let i=n-1;i>=0;i--){ const d=new Date(d0.getTime()-i*864e5); out.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')); } return out; }
+function dayChart(p){
+  const days=lastDays(14), W=320, H=110, bw=W/14;
+  const mins=days.map(d=>Math.round(((p.play||{})[d]||0)/60));
+  const ex=days.map(d=>{ const L=(p.log||{})[d]||{}; return ((L.t||[])[0]||0)+((L.p||[])[0]||0)+((L.b||[])[0]||0); });
+  const mx=Math.max(20,...mins);
+  let s=`<svg viewBox="0 -14 ${W} ${H+48}" width="100%" style="max-width:420px;display:block">`;
+  s+=`<line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="#e5d6bd" stroke-width="2"/>`;
+  const L15=H-15/mx*H; s+=`<line x1="0" y1="${L15}" x2="${W}" y2="${L15}" stroke="#55b05a" stroke-dasharray="4 4" stroke-width="1.5"/><text x="${W-2}" y="${L15-3}" font-size="10" text-anchor="end" fill="#3c8546">15 min</text>`;
+  days.forEach((d,i)=>{ const h=mins[i]/mx*H, x=i*bw+3; const wd='DLMXJVS'[new Date(d+'T12:00').getDay()];
+    if(mins[i]) s+=`<rect x="${x}" y="${H-h}" width="${bw-6}" height="${h}" rx="5" fill="${p.color}"><title>${d}: ${mins[i]} min, ${ex[i]} ejercicios</title></rect><text x="${x+(bw-6)/2}" y="${H-h-3}" font-size="10" text-anchor="middle" fill="#4a3b2c">${mins[i]}</text>`;
+    s+=`<text x="${x+(bw-6)/2}" y="${H+14}" font-size="11" text-anchor="middle" fill="${d===today()?'#e4574f':'#8a7660'}" font-weight="${d===today()?800:400}">${wd}</text>`;
+    if(ex[i]) s+=`<text x="${x+(bw-6)/2}" y="${H+29}" font-size="10" text-anchor="middle" fill="#2f5f96">${ex[i]}</text>`; });
+  s+='</svg>';
+  const played=mins.filter(m=>m>0), tot=mins.reduce((a,b)=>a+b,0);
+  return s+`<div class="counter">Arriba, minutos jugados; abajo, ejercicios hechos. ${played.length?`${played.length} días con juego · ${tot} min en total · ${Math.round(tot/played.length)} min de media`:'Sin datos de tiempo en estas dos semanas.'}</div>`;
+}
+function insights(p){
+  const out=[]; const ty=telarByType(p);
+  const tt=Object.entries(ty).filter(([k,o])=>o.n>=3).map(([k,o])=>({n:'Telar · '+(TYPE_NAMES[k]||k),r:o.first/o.n}));
+  const mm=Object.entries(p.math||{}).filter(([k,o])=>o.total>=4).map(([k,o])=>({n:'Mates · '+(MATH_NAMES[k]||k),r:o.ok/o.total}));
+  const all=tt.concat(mm).sort((a,b)=>b.r-a.r);
+  if(all.length){ const top=all.filter(x=>x.r>=0.8).slice(0,2), low=all.filter(x=>x.r<0.6).slice(-2).reverse();
+    if(top.length) out.push('💪 Le sale muy bien: '+top.map(x=>`${x.n} (${Math.round(x.r*100)}%)`).join(', ')+'.');
+    if(low.length) out.push('🧩 Le cuesta: '+low.map(x=>`${x.n} (${Math.round(x.r*100)}%)`).join(', ')+'.');
+    if(!top.length&&!low.length) out.push('Todo en un punto intermedio: ni muy fácil ni muy difícil.'); }
+  else out.push('Todavía hay pocos ejercicios para sacar conclusiones.');
+  const fl=[]; cuadernosFor(p).forEach(c=>c.preguntas.forEach((q,i)=>{ const s=(p.sr||{})[c.id+':'+i]; if(s&&s.f&&s.b<2) fl.push(q.q); }));
+  if(fl.length) out.push(`📚 Preguntas que se le resisten: ${fl.length}.`);
+  const last=p.days&&p.days.last; if(last&&last!==today()){ const dd=dayNum(today())-dayNum(last); if(dd>=2) out.push(`⏸️ Lleva ${dd} días sin jugar.`); }
+  return out;
+}
+function fichaCard(p,i,focus){
+  const c=el('div','fcard');
+  const head=el('div','fhead'); head.append(avatarCanvas(p,84));
+  const hd=el('div'); hd.innerHTML=`<div class="fn">${esc(p.name)}</div><div class="counter">${p.age<=7?'Grupo 6 (6-7 años)':'Grupo 9 (8-10 años)'}${p.days.last?` · jugó por última vez ${p.days.last===today()?'hoy':p.days.last.split('-').reverse().slice(0,2).join('/')}`:''}</div>`;
+  head.append(hd); c.append(head);
+  const tasks=(DB.msgs||[]).concat(localMsgs()).filter(m=>isTask(m)&&m.para===p.id);
+  c.append(el('div','fchips',`<span>🔘 ${p.coins} botones</span><span>🏆 ${p.counters.earned||0} ganados</span><span>🔥 racha ${p.days.streak||0} (mejor ${p.days.best||0})</span><span>📅 ${p.days.count||0} días</span><span>🌉 ${p.bridge||0} al puente</span>`));
+  // hoy
+  const d=p.daily&&p.daily.date===today()?p.daily:null;
+  const hoyMin=Math.round(((p.play||{})[today()]||0)/60);
+  c.append(el('div','fsec',`<h4>☀️ Hoy</h4><div class="fnote">${d?`🧶 Telar ${d.list.filter(x=>d.done[x.id]).length} de ${d.list.length} · 🥐 Panadería ${d.math?'✅':'—'} · 🦉 Biblioteca ${d.read?'✅':'—'}${d.bonus?' · 🎉 ruta completa':''}`:'Todavía no ha entrado hoy.'} · ⏱️ ${hoyMin} min</div>`));
+  // conclusiones
+  c.append(el('div','fsec',`<h4>🔎 De un vistazo</h4>${insights(p).map(t=>`<div class="fnote">${esc(t)}</div>`).join('')}`));
+  // tiempo
+  const tc=el('div','fsec'); tc.innerHTML='<h4>⏱️ Últimas dos semanas</h4>'+dayChart(p); c.append(tc);
+  // niveles
+  let lv='<h4>⭐ Niveles</h4>';
+  Object.entries(MAST).forEach(([a,M])=>{ const l=mLevel(p,a), n=(p.mastery||{})[a]||0; lv+=`<div class="frow"><span style="font-size:22px">${M.e}</span><div class="fl"><b>${M.n} ${l}</b> · ${esc(M.t[l-1])}<div class="pbar"><i style="width:${Math.round(mProgress(p,a)*100)}%"></i></div></div><span class="counter">${n}${l<M.th.length?' / '+M.th[l]:''}</span></div>`; });
+  lv+=`<div class="counter">Telar: ${p.unlocked>=3?'todos los tipos de reto abiertos':'nivel '+p.unlocked+' de 3 ('+LEVELS[p.unlocked]+')'} · ${Object.keys(p.medals||{}).length}/${MEDALS.length} medallas · ${(p.stories||[]).length}/${Object.keys(STORIES).length} historias · ${Object.keys(p.bloomedKinds||{}).length}/12 plantas</div>`;
+  c.append(el('div','fsec',lv));
+  // telar
+  const ty=telarByType(p); let tl=`<h4>🧶 Telar · ${p.counters.encargos||0} encargos</h4>`;
+  const tk=Object.keys(ty).sort((a,b)=>ty[b].n-ty[a].n);
+  if(!tk.length) tl+='<div class="counter">Aún no ha hecho encargos.</div>';
+  else tl+='<div class="frow counter"><span class="fl">Tipo</span><span>Hechos</span><span style="min-width:52px;text-align:center">A la 1ª</span><span style="min-width:52px;text-align:center">3★</span></div>'+tk.map(k=>{ const o=ty[k]; return `<div class="frow"><span class="fl">${esc(TYPE_NAMES[k]||k)}</span><span class="fv">${o.n}</span>${pctTag(o.first,o.n)}${pctTag(o.s3,o.n)}</div>`; }).join('');
+  c.append(el('div','fsec',tl));
+  // panadería
+  const mk=Object.keys(p.math||{}); let pn=`<h4>🥐 Panadería · ${mk.reduce((a,k)=>a+p.math[k].total,0)} problemas</h4>`;
+  pn+=mk.length?mk.sort((a,b)=>p.math[b].total-p.math[a].total).map(k=>{ const o=p.math[k]; return `<div class="frow"><span class="fl">${esc(MATH_NAMES[k]||k)}</span><span class="fv">${o.ok}/${o.total}</span>${pctTag(o.ok,o.total)}</div>`; }).join(''):'<div class="counter">Aún no ha hecho turnos.</div>';
+  pn+=`<div class="counter">Foco de clase: ${p.mathFocus?esc(p.mathFocus.replace('tabla:','tabla del ')):'variado'}</div>`;
+  const pe=el('div','fsec',pn); pe.id='ficha-pan-'+i; c.append(pe);
+  // biblioteca
+  let bb='<h4>🦉 Biblioteca</h4>'; const cs=cuadernosFor(p);
+  if(!cs.length) bb+='<div class="counter">No hay cuadernos para ella.</div>';
+  cs.forEach(cu=>{ let sab=0,vis=0; const fl=[]; cu.preguntas.forEach((q,k)=>{ const s=(p.sr||{})[cu.id+':'+k]; if(s){ vis++; if(s.b>=2) sab++; if(s.f&&s.b<2) fl.push(q.q); } });
+    bb+=`<div class="frow"><span style="font-size:20px">${cu.emoji||'📘'}</span><span class="fl">${esc(cu.titulo)}<div class="pbar"><i style="width:${Math.round(sab/cu.preguntas.length*100)}%"></i></div></span><span class="counter">${sab}/${cu.preguntas.length} sabidas</span></div>`;
+    if(fl.length) bb+=`<div class="fnote" style="margin:0 0 6px 30px;color:#a73a34">Le cuesta: ${fl.slice(0,3).map(esc).join(' · ')}</div>`; });
+  const be=el('div','fsec',bb); be.id='ficha-bib-'+i; c.append(be);
+  // tablón
+  const pend=tasks.filter(m=>m.estado==='hecha').length, acc=tasks.filter(m=>['nuevo','aceptada'].includes(m.estado)).length;
+  const tb=el('div','fsec',`<h4>📌 Tablón</h4><div class="fnote">${p.counters.tasks||0} tareas cobradas · ${acc} abiertas · <b>${pend} por comprobar</b></div>`);
+  const tbtn=el('button','btn'+(pend?' primary':''),pend?'✅ Comprobar tareas':'📌 Poner una tarea'); tbtn.style.marginTop='8px'; tbtn.onclick=()=>{ renderAlcalde(); show('alcalde'); }; tb.append(tbtn); c.append(tb);
+  // accesos
+  const acts=el('div','fchips');
+  const B1=(t,fn)=>{ const b=el('button','btn',t); b.onclick=fn; acts.append(b); };
+  B1('🏡 Su casa',()=>{ if(!VISIT) startVisit(i); openHouse(i); });
+  B1('🧶 Sus encargos',()=>{ if(!VISIT) startVisit(i); else DB.cur=i; renderVisitBar(); openVTaller(); });
+  B1('🚶 Su pueblo',()=>startVisit(i));
+  c.append(acts);
+  return c;
+}
+function openFicha(focus){
+  const b=$('#ficha-body'); b.innerHTML='';
+  const g=girlsIdx(); if(!g.length) b.append(el('div','counter','Todavía no hay jugadoras.'));
+  g.forEach(i=>b.append(fichaCard(DB.profiles[i],i,focus)));
+  show('ficha');
+  if(focus){ const t=document.getElementById(`ficha-${focus}-${VISIT?DB.cur:g[0]}`); if(t) setTimeout(()=>t.scrollIntoView({behavior:'smooth',block:'center'}),60); }
+}
+
+/* ---- taller visto por papá ---- */
+function tryAsCatalog(e,p){ const ee=Object.assign({},e,{kind:'catalog'}); openPuzzle(ee,{age:p.age}); }
+function vtCard(e,p,starsGot,extra){
+  const c=el('div','ecard');
+  c.innerHTML=`<div class="who" data-npc="${e.npc}"></div><div class="t">${esc(e.title)}</div><div class="badge">${esc(TYPE_NAMES[e.type]||e.type)}</div><div class="stars" style="font-size:24px">${starsGot?starsHTML(starsGot):'<span class="counter">Sin hacer</span>'}</div>${extra?`<div class="counter">${extra}</div>`:''}`;
+  const b=el('button','btn','▶ Probarlo yo'); b.onclick=()=>tryAsCatalog(e,p); c.append(b); fillWho(c); return c;
+}
+function openVTaller(){
+  const p=P(); $('#vt-title').textContent='🧶 Encargos de '+p.name;
+  const V=$('#vt-body'); V.innerHTML='';
+  V.append(el('div','help','<div>Puedes probar cualquier encargo sin que cuente para su partida. Dentro tienes el botón 👁️ Solución.</div>'));
+  const sec=(t)=>{ const s=el('div','panel'); s.append(el('div','wsec',t)); const g=el('div','vtgrid'); g.style.marginTop='10px'; s.append(g); V.append(s); return g; };
+  const d=p.daily;
+  const g1=sec(d?`📋 Ruta del día (${d.date===today()?'hoy':d.date.split('-').reverse().slice(0,2).join('/')})`:'📋 Ruta del día');
+  if(!d) g1.append(el('div','counter','Todavía no ha abierto el taller.'));
+  else d.list.forEach(x=>{ const e=encOf(p,x.id); if(e) g1.append(vtCard(e,p,d.done[x.id],x.gen?'Generado para ella':'Con historia')); });
+  const g2=sec(`📜 Encargos con historia (${ENC.filter(e=>p.done[e.id]).length} de ${ENC.length})`);
+  ENC.forEach(e=>{ const st=(p.stats||{})[e.id]; g2.append(vtCard(e,p,p.done[e.id]||0,e.lvl>p.unlocked?'🔒 Aún no lo tiene abierto':st?`${st.plays} veces · ${st.tries} intentos`:'')); });
+  const g3=sec('🎲 Un reto como los suyos');
+  const types=['seq','reglas','cua'].concat(p.unlocked>=2?['rep','cab']:[]).concat(p.unlocked>=3?['mot','hilo']:[]);
+  types.forEach(t=>{ const c=el('div','ecard'); c.innerHTML=`<div class="t">${esc(TYPE_NAMES[t])}</div><div class="counter">Uno nuevo, del nivel que le sale a ella</div>`; const b=el('button','btn','▶ Probar'); b.onclick=()=>{ const e=genEncargo(p,'vt'+t+Date.now(),'catalog','vt'+Date.now(),t); e.kind='catalog'; openPuzzle(e,{age:p.age}); }; c.append(b); g3.append(c); });
+  const s4=el('div','panel'); s4.append(el('div','wsec',`🧵 Sus telas (${p.fabrics.length})`));
+  const fg=el('div','fabgrid'); fg.style.padding='10px 0 0';
+  if(!p.fabrics.length) fg.append(el('div','counter','Todavía no tiene telas.'));
+  p.fabrics.slice(-24).reverse().forEach(f=>{ const c=el('div','fabcard'); c.append(fabricCanvas(f.cells,f.w,{s:Math.max(8,Math.min(18,Math.floor(130/f.w)))})); c.append(el('div','',esc(f.name))); fg.append(c); });
+  s4.append(fg); V.append(s4);
+  show('vtaller');
+}
+/* =========================================================
    CATÁLOGO DE EJERCICIOS (puerta trasera, solo modo prueba)
    ========================================================= */
 function showSolution(){
@@ -3401,7 +3625,7 @@ function showSolution(){
   renderPuzzle(); setMsg('Solución cargada ('+cardCount(PZ.prog)+' tarjetas). Pulsa ▶ Tejer.','good');
 }
 function ensureTestProfile(){ if(!P()){ const i=DB.profiles.findIndex(p=>p); if(i>=0) DB.cur=i; else { DB.profiles[0]=newProfile('Papá',9,'#4a8fdc'); DB.profiles[0].met=true; DB.cur=0; } saveQuiet(); } }
-function openCatalog(){ ensureTestProfile(); renderCatalog(); show('catalog'); }
+function openCatalog(){ if(VISIT){ openVTaller(); return; } ensureTestProfile(); renderCatalog(); show('catalog'); }
 function catCard(e,label,extra){
   const c=el('div','ecard'); c.style.cursor='default';
   c.innerHTML=`<div class="who" data-npc="${e.npc}"></div><div class="t">${esc(label||e.title)}</div><div class="badge">${TYPE_NAMES[e.type]}</div>${extra?`<div class="counter">${extra}</div>`:''}`;
