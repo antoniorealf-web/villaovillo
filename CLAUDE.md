@@ -42,6 +42,10 @@ Lo que cambia a menudo (temas del cole, economía, hoja de ruta, decisiones) viv
 - Al tejer, `animateKnit` usa `traceProg` para marcar con una flecha la tarjeta que se ejecuta y la vuelta de Repetir (`knitHL`); el cabezal usa `cabApply`.
 - Pueblo compartido: `progressStats` y los vecinos (`townLv`) se calculan con las dos niñas. Los logros se apuntan con `addNews` en `DB.news` y la otra los ve al entrar (`showNews`) o en el Ayuntamiento (`openNews`).
 
+- Códigos de entrada: cada niña entra con `p.code` (4 números, lo elige ella la primera vez con `askGirlCode`); papá los ve y cambia en el modo alcalde (`renderCodesBox`). El código del alcalde (`askPin`, teclado `askKeypad`) protege además borrar partidas, la nube y las copias de seguridad.
+- Pizarra (`fu_pizarra`, pared): `p.board = {img, notes}`. La dueña dibuja; la otra niña y papá dejan notas (`openBoardView`). Al entrar, `boardNotice` avisa de mensajes nuevos.
+- Pecera (`fu_pecera`, suelo, 300 botones y 14 días jugados): `p.aqua = {fish, deco, fed}`, vista grande en `openAqua`, con peces (`FISH`) y decoración (`AQDECO`) que se desbloquean con maestrías y medallas. Dar de comer una vez al día da 1 botón.
+
 ## Registro y estadísticas
 
 - El juego guarda por día y por niña `p.log[fecha] = {t:[hechos,3★], p:[hechos,bien], b:[hechas,bien], ta, ty:{tipo:n}, cu:[cuadernos], e:botones ganados acumulados, m:[maestría telar, pan, bib acumuladas]}` y los minutos en `p.play[fecha]` (en segundos).
