@@ -21,7 +21,10 @@ function renderLibrary(){
 }
 function startQuiz(c){
   const p=P(); let pool=dueQuestions(p,c);
-  if(!pool.length) pool=c.preguntas.map((q,i)=>({q,key:c.id+':'+i}));
+  // x.due: la pregunta tocaba hoy. Solo esas mueven el calendario de repaso y la maestría (T6);
+  // si no queda nada pendiente, se puede repasar igual, pero como práctica.
+  pool.forEach(x=>x.due=true);
+  if(!pool.length) pool=c.preguntas.map((q,i)=>({q,key:c.id+':'+i,due:false}));
   pool=shuffle(pool.slice(),Math.random).slice(0,6);
   LQ={c,qs:pool,i:0,ok:0,tries:0,order:[]}; show('quiz'); renderQuiz();
 }
@@ -48,8 +51,8 @@ async function answerQuiz(v){
   const x=LQ.qs[LQ.i], q=x.q, p=P(); p.sr=p.sr||{};
   const right = q.t==='ordenar' ? JSON.stringify(v)===JSON.stringify(q.items) : q.t==='vf' ? v===q.a : v===q.a;
   if(right){
-    if(!LQ.catalog) addMastery(p,'bib',1);
-    if(LQ.tries===0){ LQ.ok++; x.good=true; const s=p.sr[x.key]||{b:-1}; s.b=Math.min(4,s.b+1); s.n=dayNum(today())+SR_DAYS[s.b]; p.sr[x.key]=s; }
+    if(LQ.tries===0){ LQ.ok++; x.good=true;
+      if(x.due&&!LQ.catalog){ const s=p.sr[x.key]||{b:-1}; s.b=Math.min(4,s.b+1); s.n=dayNum(today())+SR_DAYS[s.b]; p.sr[x.key]=s; addMastery(p,'bib',1); } }
     fanfare(); $('#qz-msg').textContent='¡Correcto! '+(q.exp||''); $('#qz-msg').className='good';
     await new Promise(r=>setTimeout(r,1500)); nextQuiz();
   } else {
@@ -66,7 +69,10 @@ async function nextQuiz(){
   const p=P(), n=LQ.qs.length, ok=LQ.ok, stars=ok>=n?3:ok>=n-2?2:1;
   if(LQ.catalog){ await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:24px;font-weight:800">${ok} de ${n}</div></div>`}); openCatalog(); return; }
   const first=!(p.daily&&p.daily.read);
-  const coins=first?ok*2:Math.min(ok,3), xp=first?ok+1:0;
+  // repasos extra: hasta 3 botones cada uno y 6 al día en total
+  const rx=(p.readExtra&&p.readExtra.date===today())?p.readExtra.coins:0;
+  const coins=first?ok*2:Math.min(ok,3,Math.max(0,6-rx)), xp=first?ok+1:0;
+  if(!first) p.readExtra={date:today(),coins:rx+coins};
   if(first&&p.daily) p.daily.read=true;
   p.coins+=coins; p.counters.earned+=coins; p.counters.reads=(p.counters.reads||0)+1; addXP(p,xp); logAct(p,'b',n,ok,LQ.c.id);
   save(`Biblioteca: ${LQ.c.titulo} ${ok}/${n}`); fanfare();

@@ -130,7 +130,6 @@ async function answerMath(v){
   const q=MZ.qs[MZ.i], p=P(); p.math=p.math||{}; const st=p.math[q.k]=p.math[q.k]||{ok:0,total:0};
   if(String(v)===String(q.a)){
     if(MZ.tries===0){ MZ.ok++; q.good=true; st.ok++; } st.total++;
-    if(!MZ.catalog) addMastery(p,'pan',1);
     fanfare(); $('#bk-msg').textContent='¡Correcto! '+q.exp; $('#bk-msg').className='good';
     await new Promise(r=>setTimeout(r,1300)); nextMath();
   } else {
@@ -149,6 +148,7 @@ async function nextMath(){
   if(first){ coins=MZ.qs.filter(q=>q.good).reduce((s,q)=>s+(q.tier<0?1:q.tier>0?3:2),0); xp=ok+1; if(p.daily) p.daily.math=true; }
   else { const pc=(p.mathPractice&&p.mathPractice.date===today())?p.mathPractice.coins:0; coins=Math.min(Math.max(0,10-pc),ok); p.mathPractice={date:today(),coins:pc+coins}; xp=0; }
   p.coins+=coins; p.counters.earned+=coins; p.counters.math=(p.counters.math||0)+1; addXP(p,xp); logAct(p,'p',n,ok);
+  if(ok) addMastery(p,'pan',ok); // maestría: solo aciertos a la primera, al terminar el turno
   save(`Panadería: ${ok}/${n} bien`); fanfare();
   await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:26px;font-weight:800">¡Turno terminado! ${ok} de ${n} a la primera</div><div class="rw-items">${coins?`<div class="rw-item">🔘 +${coins} botones</div>`:''}${xp?`<div class="rw-item">✨ +${xp} experiencia</div>`:''}</div><div style="font-size:18px">🐻 «¡Gracias por ayudarme con las cuentas!»</div>${first?'':'<div class="counter">Los turnos extra dan menos premio. ¡Mañana hay turno nuevo!</div>'}</div>`});
   await dailyBonusCheck(p); await afterRewards();

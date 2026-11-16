@@ -21,9 +21,12 @@ function recordStats(p,id,stars,type){
   p.stats[id]=st;
 }
 let playTicks=0;
+let lastInput=Date.now();
+['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{ lastInput=Date.now(); },{capture:true,passive:true}));
 function startPlayClock(){
   setInterval(()=>{
     const p=P(); if(!p||VISIT||['profiles','alcalde','ficha','catalog'].includes(curScreen)||document.hidden) return;
+    if(Date.now()-lastInput>60000) return; // nadie toca la tablet desde hace más de un minuto: no cuenta
     if(p.days.last!==today() && curScreen==='village' && !$('#dlg').classList.contains('on')) newDayCheck();
     const d=today(); p.play[d]=(p.play[d]||0)+15; touchLog(p); p.updatedAt=Date.now(); saveQuiet();
     if(++playTicks%20===0) scheduleCloud();

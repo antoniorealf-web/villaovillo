@@ -273,7 +273,8 @@ async function success(){
     } else { coins=Math.max(0,stars-prev)*2; xp=Math.max(0,stars-prev); }
     p.streak = (PZ.attempts<=1&&stars===3) ? (p.streak||0)+1 : 0;
   }
-  p.coins+=coins; p.counters.earned+=coins; addXP(p,xp); addMastery(p,'telar',1);
+  p.coins+=coins; p.counters.earned+=coins; addXP(p,xp);
+  if(first||kind==='practice') addMastery(p,'telar',1); // repetir un encargo ya hecho no suma maestría
   if(e.L&&(first||kind==='practice')&&!VISIT){ const lvUp=tlvUpdate(p,t,PZ.attempts<=1&&stars===3&&!PZ.hints,stars<=1||PZ.attempts>=4||PZ.hints>0);
     if(lvUp==='up'){ items.push(`📈 ${TYPE_NAMES[t]}: ¡nivel ${tlvOf(p,t)}!`); addNews(p,'📈',`ha subido ${TYPE_NAMES[t]} al nivel ${tlvOf(p,t)}`); } }
   if(coins) items.unshift(`🔘 +${coins} botones`);

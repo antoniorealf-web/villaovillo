@@ -18,6 +18,14 @@ CHECKS = {
    for(let k=0;k<3;k++){ openPuzzle(e); PZ.prog.main=PZ.target.slice(); PZ.attempts=1; await success(); await new Promise(r=>setTimeout(r,250)); r.push(p.mastery.telar); }
    return r[2]===r[0]; }""",
 }
+CHECKS.update({
+ 'F4 panadería: la maestría solo suma aciertos a la primera': """async()=>{ const p=P(); openBakery(); await new Promise(r=>setTimeout(r,200)); const m0=p.mastery.pan;
+   for(let i=0;i<MZ.qs.length;i++){ const q=MZ.qs[MZ.i]; const i0=MZ.i; if(i%2){ await answerMath(-1); await answerMath(q.a); } else await answerMath(q.a); for(let w=0;w<60&&MZ.i===i0;w++) await new Promise(r=>setTimeout(r,30)); }
+   await new Promise(r=>setTimeout(r,600)); return p.mastery.pan-m0===Math.ceil(MZ.qs.length/2); }""",
+ 'F3 repasos extra: como mucho 6 botones al día': """async()=>{ const p=P(); p.days.last=today(); ensureDaily(p); const c=cuadernosFor(p)[0]; const run=async()=>{ startQuiz(c); while(curScreen==='quiz'&&LQ&&LQ.i<LQ.qs.length){ const q=LQ.qs[LQ.i].q; const i0=LQ.i; answerQuiz(q.t==='ordenar'?q.items.slice():q.a); for(let w=0;w<60&&LQ.i===i0&&curScreen==='quiz';w++) await new Promise(r=>setTimeout(r,40)); } await new Promise(r=>setTimeout(r,400)); };
+   await run(); for(let k=0;k<4;k++) await run(); return p.readExtra.date===today()&&p.readExtra.coins===6; }""",
+ 'F8 el reloj de juego no cuenta sin toques': """async()=>{ const p=P(); show('village'); lastInput=Date.now()-120000; const d=today(); const t0=p.play[d]||0; await new Promise(r=>setTimeout(r,15600)); return (p.play[d]||0)===t0; }""",
+})
 
 async def main():
     async with async_playwright() as pw:
