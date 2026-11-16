@@ -15,11 +15,12 @@ Juego educativo para dos niñas (6 y 9 años): pensamiento computacional tejiend
 2. Menú **Extensiones → Apps Script**.
 3. Borra lo que haya y pega el contenido de `apps-script/Code.gs`.
 4. Arriba del todo, cambia `CLAVE` (la clave de la familia) y `PIN` (el tuyo). Guarda con el icono del disquete.
-5. **Implementar → Nueva implementación** → tipo **Aplicación web**.
+5. Elige la función **preparar** en el desplegable de arriba y pulsa **▶ Ejecutar**. Google pedirá permisos para la hoja y para Drive: acéptalos. Se crea en tu Drive la carpeta **«Villaovillo · partidas»**, con un archivo por niña y la subcarpeta **«copias»** (una copia por niña y día, se guardan 60 días).
+6. **Implementar → Nueva implementación** → tipo **Aplicación web**.
    - Ejecutar como: **Yo**
    - Quién tiene acceso: **Cualquier usuario**
-6. Pulsa **Implementar** y autoriza los permisos. Google avisa de que la aplicación no está verificada: pulsa **Configuración avanzada → Ir a…** (es tu propio script).
-7. Copia la **URL de la aplicación web** (termina en `/exec`) y pásasela a Claude para ponerla en `config.js`.
+7. Pulsa **Implementar** y autoriza los permisos. Google avisa de que la aplicación no está verificada: pulsa **Configuración avanzada → Ir a…** (es tu propio script).
+8. Copia la **URL de la aplicación web** (termina en `/exec`) y pásasela a Claude para ponerla en `config.js`.
 
 ### 2. La web (GitHub Pages)
 En el repositorio: **Settings → Pages → Build and deployment → Deploy from a branch → `main` / `(root)` → Save**.
@@ -34,6 +35,8 @@ Abre `https://antoniorealf-web.github.io/villaovillo/panel.html`, escribe la cla
 
 ## Si algo va mal
 - **⚠️ Sin conexión:** el juego sigue guardando en la tablet y sube los cambios cuando vuelve la conexión.
+- **Copia automática en la tablet:** cada día el juego guarda una copia de las partidas. Si la partida no se puede leer, la aparta en vez de borrarla. Las dos se recuperan desde **♻️ Restaurar**.
+- **Copias en Drive:** con la nube instalada, en la carpeta «Villaovillo · partidas → copias» hay una copia por niña y día.
 - **Copia de seguridad manual:** en la pantalla de inicio, **💾 Copia de seguridad** genera un código; **♻️ Restaurar** lo recupera.
 - **Si cambias el código del script:** usa **Implementar → Gestionar implementaciones → editar → Nueva versión**, para que la URL no cambie.
 

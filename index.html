@@ -592,19 +592,37 @@ function migrate(p){
   p.counters=Object.assign({encargos:Object.keys(p.done||{}).length,firstTry:0,hiloRight:0,bloomed:0,water:0,tasks:0,designs:0,earned:p.coins||0,retos:0},p.counters||{});
   p.medals=p.medals||{}; p.bloomedKinds=p.bloomedKinds||{}; p.gardenRows=p.gardenRows||4;
   if(!p.mastery) p.mastery={telar:p.counters.encargos||0,pan:Object.values(p.math||{}).reduce((a,v)=>a+(v.ok||0),0),bib:Object.keys(p.sr||{}).length};
+  if(p.panLv==null) p.panLv=3; // escalera de cuentas del grupo 9 (0-5), ver PAN9_LEVELS
   p.bridge=p.bridge||0; p.tlv=p.tlv||{}; p.tlvRun=p.tlvRun||{}; p.newsSeen=p.newsSeen||0; p.code=p.code||'';
   p.garden=(p.garden||[]).map(cellObj); while(p.garden.length<8*p.gardenRows) p.garden.push(null);
   return p;
 }
-function load(){ try{ const s=localStorage.getItem(KEY); if(s){ const d=JSON.parse(s); if(d&&d.profiles){ DB=Object.assign({dayOffset:0,msgs:[]},d); } } }catch(e){} DB.profiles=DB.profiles.map(migrate); }
+/* Protección del guardado: si la partida no se puede leer, se aparta en KEY+'.danada' en vez de perderse;
+   una vez al día se guarda una copia en KEY+'.copia' (fecha en KEY+'.copiaFecha'), recuperable desde «Restaurar». */
+let DB_DAMAGED=false, saveWarned=0;
+function load(){
+  let raw=null; try{ raw=localStorage.getItem(KEY); }catch(e){}
+  if(raw){ try{ const d=JSON.parse(raw); if(!d||!d.profiles) throw 0; DB=Object.assign({dayOffset:0,msgs:[]},d); }
+    catch(e){ DB_DAMAGED=true; try{ if(!localStorage.getItem(KEY+'.danada')) localStorage.setItem(KEY+'.danada',raw); }catch(e2){} } }
+  DB.profiles=DB.profiles.map(migrate);
+  if(raw&&!DB_DAMAGED){ try{ if(localStorage.getItem(KEY+'.copiaFecha')!==today()){ localStorage.setItem(KEY+'.copia',raw); localStorage.setItem(KEY+'.copiaFecha',today()); } }catch(e){ try{ localStorage.removeItem(KEY+'.copia'); localStorage.removeItem(KEY+'.copiaFecha'); }catch(e2){} } }
+}
+function writeDB(){
+  const s=JSON.stringify(DB);
+  try{ localStorage.setItem(KEY,s); return true; }
+  catch(e){ // sin sitio: se sacrifica la copia diaria y se reintenta
+    try{ localStorage.removeItem(KEY+'.copia'); localStorage.removeItem(KEY+'.copiaFecha'); localStorage.setItem(KEY,s); return true; }catch(e2){}
+    if(Date.now()-saveWarned>60000){ saveWarned=Date.now(); try{ toast('⚠️ No se ha podido guardar en la tablet. Avisa a papá.',5000); }catch(e3){} }
+    return false; }
+}
 let lastEvent='';
 function save(evento){
   if(VISIT){ saveQuiet(); return; }
   const p=P(); if(p){ p.updatedAt=Date.now(); if(evento) lastEvent = lastEvent? lastEvent+' · '+evento : evento; }
-  try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){}
+  writeDB();
   if(p) scheduleCloud();
 }
-function saveQuiet(){ try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){} }
+function saveQuiet(){ writeDB(); }
 function P(){ return DB.profiles[DB.cur]; }
 function now(){ return Date.now() + (DB.dayOffset||0)*864e5; }
 function today(){ const d=new Date(now()); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -1640,7 +1658,6 @@ function summary(p){ return {nivel:p.unlocked, encargos:Object.keys(p.done).leng
 function scheduleCloud(){ if(!cloudReady()) return; clearTimeout(cloudTimer); cloudTimer=setTimeout(pushCloud,3000); }
 async function pushCloud(){
   const p=P(); if(!p||!cloudReady()) return;
-  if(JSON.stringify(p).length>45000) p.fabrics=p.fabrics.slice(-40);
   const ev=lastEvent; setCloud('sync');
   try{ await api('save',{profile:p,sum:summary(p),evento:ev}); if(lastEvent===ev) lastEvent=''; else lastEvent=lastEvent.slice(ev.length).replace(/^ · /,''); setCloud('ok'); await flushPending(); }
   catch(e){ setCloud(e.message==='clave'?'clave':'err'); }
@@ -1716,9 +1733,19 @@ async function showBackup(){
   $('#bk-copy').onclick=async()=>{ try{ await navigator.clipboard.writeText(code); toast('📋 Código copiado'); }catch(e){ const ta=$('#bk-code'); ta.select(); toast('Selecciona el texto y cópialo'); } };
   await pr;
 }
+/* Botones para rellenar «Restaurar» con la copia automática del día o con una partida apartada por estar dañada */
+function autoCopyButtons(){
+  const src=[]; try{ const c=localStorage.getItem(KEY+'.copia'), f=localStorage.getItem(KEY+'.copiaFecha'); if(c) src.push(['copia','📅 Usar la copia automática del '+(f||'?').split('-').reverse().join('/')]);
+    if(localStorage.getItem(KEY+'.danada')) src.push(['danada','🩹 Intentar recuperar la partida apartada']); }catch(e){}
+  return src.map(([k,t])=>`<button class="btn" style="margin-top:8px" onclick="fillRestore('${k}')">${t}</button>`).join(' ');
+}
+function fillRestore(k){
+  try{ const d=JSON.parse(localStorage.getItem(KEY+'.'+k)); document.getElementById('rs-code').value='VO1:'+b64e(JSON.stringify({profiles:d.profiles})); toast('Copia cargada: pulsa «Restaurar»'); }
+  catch(e){ toast('Esa copia no se puede leer'); }
+}
 async function restoreBackup(){
   const r=await say({center:true,face:'♻️',name:'Restaurar partida',speak:false,
-    html:`<div style="font-size:18px">Pega aquí el código de la copia de seguridad. <b>Sustituirá</b> las partidas de esta tablet.</div><textarea class="code" id="rs-code" placeholder="VO1:..."></textarea>`,
+    html:`<div style="font-size:18px">Pega aquí el código de la copia de seguridad. <b>Sustituirá</b> las partidas de esta tablet.</div><textarea class="code" id="rs-code" placeholder="VO1:..."></textarea>${autoCopyButtons()}`,
     buttons:[{t:'Cancelar'},{t:'Restaurar',cls:'primary'}]});
   if(r!==1) return;
   const v=(document.getElementById('rs-code').value||'').trim();
@@ -2432,6 +2459,14 @@ function renderAlcalde(){
     row.innerHTML=`<b>${esc(p.name)}</b> <select class="inputline">${opts.map(([v,t])=>`<option value="${v}" ${p.mathFocus===v?'selected':''}>${t}</option>`).join('')}</select>`;
     row.querySelector('select').onchange=ev=>{ p.mathFocus=ev.target.value; p.updatedAt=Date.now(); saveQuiet(); toast('Guardado'); };
     b5.append(row);
+    if(p.age>7){ // escalera de cuentas: nivel central de la mezcla
+      const lv=el('div','mitem'); lv.style.cssText='padding:8px 12px;align-items:center;margin:4px 0 10px';
+      const L=panLvOf(p);
+      lv.innerHTML=`<div class="mt"><b>Nivel de cuentas de ${esc(p.name)}: ${L+1} de ${PAN9_LEVELS.length}</b>${esc(PAN9_LEVELS[L].n)}<div class="counter">Cada turno: la mayoría de este nivel, alguno de repaso (🌱, 1 botón) y alguno de reto (🔥, 3 botones). Con «Variado».</div></div>`;
+      const a=el('div','ma'); const mi=el('button','btn','–'), pl=el('button','btn','+');
+      const setL=d=>{ p.panLv=Math.max(0,Math.min(PAN9_LEVELS.length-1,panLvOf(p)+d)); p.updatedAt=Date.now(); saveQuiet(); renderAlcalde(); };
+      mi.onclick=()=>setL(-1); pl.onclick=()=>setL(1); a.append(mi,pl); lv.append(a); b5.append(lv);
+    }
   });
   const b7=box('🧹 Empezar de cero');
   b7.append(el('div','counter','Borra las partidas de esta tablet (jugadoras, progreso y tareas). Úsalo antes de que tus hijas empiecen a jugar.'));
@@ -2463,19 +2498,21 @@ function genMath(p){
     if(small){ if(f&&Math.random()<0.6) return f; const ks=['contar','sumas','sumas'].concat(pl>=2?['restas','restas']:[]).concat(pl>=3?['dinero']:[]).concat(pl>=4?['sumas','restas']:[]); return ks[rr(0,ks.length-1)]; }
     if(f.startsWith('tabla')&&Math.random()<0.6) return 'multi';
     if(f&&!f.startsWith('tabla')&&Math.random()<0.6) return {division:'reparto',dinero:'cambio',fracciones:'fraccion',problemas:'dospasos'}[f];
+    return 'escalera';
     const ks=['multi','multi','suma100','receta'].concat(pl>=2?['reparto','cambio']:[]).concat(pl>=4?['dospasos','fraccion']:[]); return ks[rr(0,ks.length-1)];
   };
   const k=pickKind();
+  if(k==='escalera') return genMath9(p);
   if(k==='contar'){ const n=rr(5,15); return {k,q:`¿Cuántos ${e} hay en la bandeja?`,vis:emojis(e,n),a:n,exp:`Hay ${n}. Cuenta de 5 en 5: cada fila tiene 5.`}; }
   if(k==='sumas'){ const a=rr(2,10), b=rr(1,Math.min(10,20-a)); return {k,q:`En una bandeja hay ${a} ${e} y en otra ${b}. ¿Cuántos hay en total?`,vis:emojis(e,a)+'<div class="mplus">+</div>'+emojis(e,b),a:a+b,exp:`${a} + ${b} = ${a+b}`}; }
   if(k==='restas'){ const a=rr(6,18), b=rr(1,a-2); return {k,q:`Bruno tenía ${a} ${e}. Ha vendido ${b}. ¿Cuántos le quedan?`,vis:`<div class="mvis">${Array.from({length:a},(_,i)=>`<span style="${i<b?'opacity:.25':''}">${e}</span>${(i+1)%5===0?'<br>':''}`).join('')}</div>`,a:a-b,exp:`${a} − ${b} = ${a-b}`}; }
   if(k==='dinero'){ const x=rr(1,6), y=rr(1,6);
     if(Math.random()<0.5) return {k,q:`Un pan cuesta ${x} botones y un bollo ${y}. ¿Cuánto cuesta todo?`,vis:`<div class="mvis">🥖 ${'🔘'.repeat(x)}<br>🥐 ${'🔘'.repeat(y)}</div>`,a:x+y,exp:`${x} + ${y} = ${x+y} botones`};
-    const c=x+y; return {k,q:`Una tarta cuesta ${c} botones. Pagas con 10. ¿Cuántos botones te devuelven?`,vis:`<div class="mvis">🎂 ${'🔘'.repeat(c)}<br>💰 ${'🔘'.repeat(10)}</div>`,a:10-c,exp:`10 − ${c} = ${10-c}`}; }
+    const c=rr(2,9); return {k,q:`Una tarta cuesta ${c} botones. Pagas con 10. ¿Cuántos botones te devuelven?`,vis:`<div class="mvis">🎂 ${'🔘'.repeat(c)}<br>💰 ${'🔘'.repeat(10)}</div>`,a:10-c,exp:`10 − ${c} = ${10-c}`}; }
   if(k==='multi'){ const t=f.startsWith('tabla')?+f.split(':')[1]:rr(2,9); const n=rr(2,10); const [a,b]=Math.random()<0.5?[n,t]:[t,n];
     return {k,q:`Bruno llena ${a} cajas con ${b} ${e} en cada una. ¿Cuántos ${e} hay?`,vis:a*b<=60?`<div class="mvis">${Array.from({length:a},()=>`<div class="mbox">${e.repeat(b)}</div>`).join('')}</div>`:`<div class="mvis">📦 × ${a} &nbsp; (${b} ${e} en cada caja)</div>`,a:a*b,exp:`${a} × ${b} = ${a*b}`}; }
   if(k==='reparto'){ const b=rr(2,9), q=rr(2,9); return {k,q:`Hay ${b*q} ${e} para repartir en ${b} bolsas iguales. ¿Cuántos van en cada bolsa?`,vis:`<div class="mvis">${'🛍️'.repeat(b)}</div>`,a:q,exp:`${b*q} : ${b} = ${q}, porque ${b} × ${q} = ${b*q}`}; }
-  if(k==='cambio'){ const n=rr(2,5), pr=rr(2,9), tot=n*pr, pay=tot<=20?20:tot<=50?50:100; return {k,q:`Compras ${n} barras de pan a ${pr} botones cada una y pagas con ${pay}. ¿Cuánto te devuelven?`,vis:`<div class="mvis">${'🥖'.repeat(n)}</div>`,a:pay-tot,exp:`${n} × ${pr} = ${tot}; ${pay} − ${tot} = ${pay-tot}`}; }
+  if(k==='cambio'){ const n=rr(2,5), pr=rr(2,9), tot=n*pr, pay=tot<20?20:tot<50?50:100; return {k,q:`Compras ${n} barras de pan a ${pr} botones cada una y pagas con ${pay}. ¿Cuánto te devuelven?`,vis:`<div class="mvis">${'🥖'.repeat(n)}</div>`,a:pay-tot,exp:`${n} × ${pr} = ${tot}; ${pay} − ${tot} = ${pay-tot}`}; }
   if(k==='dospasos'){ const a=rr(3,6), b=rr(4,8), c=rr(3,a*b-3); return {k,q:`Bruno hornea ${a} bandejas de ${b} ${e}. Vende ${c}. ¿Cuántos le quedan?`,vis:`<div class="mvis">${'🍽️'.repeat(a)}</div>`,a:a*b-c,exp:`${a} × ${b} = ${a*b}; ${a*b} − ${c} = ${a*b-c}`}; }
   if(k==='receta'){ const h=rr(2,4), t=rr(2,5); if(Math.random()<0.4){ const hh=h*2; return {k,q:`Para una tarta se necesitan ${hh} huevos. ¿Cuántos hacen falta para media tarta?`,vis:`<div class="mvis">🎂 ${'🥚'.repeat(hh)}</div>`,a:hh/2,exp:`La mitad de ${hh} es ${hh/2}`}; }
     return {k,q:`Para una tarta se necesitan ${h} huevos. ¿Cuántos hacen falta para ${t} tartas?`,vis:`<div class="mvis">${'🎂'.repeat(t)}</div>`,a:h*t,exp:`${t} × ${h} = ${h*t}`}; }
@@ -2485,10 +2522,71 @@ function genMath(p){
   // suma100
   const a=rr(12,58), b=rr(11,40); return {k:'suma100',q:`Por la mañana Bruno vendió ${a} ${e} y por la tarde ${b}. ¿Cuántos vendió en total?`,vis:'',a:a+b,exp:`${a} + ${b} = ${a+b}`};
 }
+/* ---------- Escalera de cuentas del grupo 9 (p.panLv) ----------
+   Cada turno mezcla niveles como una campana: la mayoría del nivel actual, algunos de repaso (menos premio)
+   y alguno de reto (más premio). q.tier: -2/-1 repaso, 0 actual, 1 reto. */
+const PAN9_LEVELS=[
+  {n:'Tablas y sumas de dos cifras',ks:['multi','suma100','reparto']},
+  {n:'Sumas de 3 cifras y restas de 2 cifras llevando',ks:['suma3','resta2','mult21']},
+  {n:'Restas de 3 cifras (una llevada) y 2 cifras × 1',ks:['resta3a','mult21b','cambio','receta']},
+  {n:'Restas de 3 cifras llevando y 3 cifras × 1',ks:['resta3','resta3','resta3','mult31','mult31','mult31','fraccion']},
+  {n:'Restas con ceros (503 − 278), 4 cifras × 1 y dos pasos',ks:['resta0','mult41','dospasos3']},
+  {n:'Multiplicar por 2 cifras y repartos con resto',ks:['mult22','resto','dospasos3']}
+];
+const PAN_TIER={'-2':'🌱 Repaso','-1':'🌱 Repaso','1':'🔥 Reto'};
+function panLvOf(p){ return Math.max(0,Math.min(PAN9_LEVELS.length-1,p.panLv==null?3:p.panLv)); }
+function digits(n){ return String(n).split('').map(Number); }
+function colOp(a,b,op){ // cuenta colocada en vertical, como en el cuaderno
+  const w=Math.max(String(a).length,String(b).length)+1;
+  const pad=s=>String(s).padStart(w,' ');
+  return `<div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:34px;font-weight:800;line-height:1.15;display:inline-block;text-align:right;background:#fff;border:2px solid #e5d6bd;border-radius:12px;padding:6px 16px;margin:8px 0">${pad(a)}<br>${op}${pad(b).slice(1)}<div style="border-top:3px solid #4a3b2c;margin-top:4px"></div>&nbsp;</div>`;
+}
+function genMath9(p){
+  const center=panLvOf(p), r=Math.random();
+  const off=r<0.05?-2:r<0.25?-1:r<0.85?0:1;
+  const lv=Math.max(0,Math.min(PAN9_LEVELS.length-1,center+off));
+  const tier=Math.max(-2,Math.min(1,lv-center));
+  const k=pick(PAN9_LEVELS[lv].ks);
+  const E=['🥐','🧁','🍪','🥖','🍩','🥨'], e=pick(E);
+  const bare=Math.random()<0.5; // la mitad, cuenta en vertical; la otra mitad, problema con historia
+  let q;
+  const sub=(a,b)=>bare?{q:`Haz la cuenta: ${a} − ${b}`,vis:colOp(a,b,'−'),say:`${a} menos ${b}`}:pick([
+    {q:`En el almacén de Bruno había ${a} kilos de harina. Ha gastado ${b}. ¿Cuántos kilos quedan?`},
+    {q:`Bruno quiere hornear ${a} galletas y ya lleva ${b}. ¿Cuántas le faltan?`},
+    {q:`El lunes Bruno vendió ${a} ${e} y el martes ${b}. ¿Cuántos vendió de más el lunes?`}]);
+  const mul=(a,b)=>bare?{q:`Haz la cuenta: ${a} × ${b}`,vis:colOp(a,b,'×'),say:`${a} por ${b}`}:pick([
+    {q:`Bruno empaqueta ${a} ${e} cada día. ¿Cuántos empaqueta en ${b} días?`},
+    {q:`Cada caja lleva ${a} ${e}. ¿Cuántos hay en ${b} cajas?`},
+    {q:`Un saco de harina pesa ${a} gramos. ¿Cuánto pesan ${b} sacos?`}]);
+  const add=(a,b)=>bare?{q:`Haz la cuenta: ${a} + ${b}`,vis:colOp(a,b,'+'),say:`${a} más ${b}`}:{q:`Por la mañana Bruno vendió ${a} ${e} y por la tarde ${b}. ¿Cuántos vendió en total?`};
+  // números con llevadas
+  const borrow=(nd,minB)=>{ for(;;){ const a=rr(10**(nd-1)+10**(nd-1)/2|0,10**nd-1), b=rr(10**(nd-1),a-1); const da=digits(a).reverse(), db=digits(b).reverse(); let n=0; for(let i=0;i<db.length;i++) if(da[i]<db[i]) n++; if(n>=minB&&(nd<3||n<=(minB===1?1:3))) return [a,b]; } };
+  const carryMul=(nd)=>{ for(;;){ const a=rr(10**(nd-1),10**nd-1), b=rr(3,9); if(digits(a).some(d=>d*b>=10)) return [a,b]; } };
+  if(k==='multi'){ const t=rr(2,9), n=rr(2,10); q={q:`Bruno llena ${n} cajas con ${t} ${e} en cada una. ¿Cuántos ${e} hay?`,a:n*t,exp:`${n} × ${t} = ${n*t}`}; }
+  else if(k==='suma100'){ const a=rr(12,58), b=rr(11,40); q=Object.assign(add(a,b),{a:a+b,exp:`${a} + ${b} = ${a+b}`}); }
+  else if(k==='reparto'){ const b=rr(2,9), c=rr(2,9); q={q:`Hay ${b*c} ${e} para repartir en ${b} bolsas iguales. ¿Cuántos van en cada bolsa?`,a:c,exp:`${b*c} : ${b} = ${c}, porque ${b} × ${c} = ${b*c}`}; }
+  else if(k==='suma3'){ let a,b; do{ a=rr(120,689); b=rr(110,299); }while(!(a%10+b%10>=10||((a/10|0)%10+(b/10|0)%10)>=10)||a+b>999); q=Object.assign(add(a,b),{a:a+b,exp:`${a} + ${b} = ${a+b}`}); }
+  else if(k==='resta2'){ const [a,b]=borrow(2,1); q=Object.assign(sub(a,b),{a:a-b,exp:`${a} − ${b} = ${a-b}`}); }
+  else if(k==='resta3a'){ const [a,b]=borrow(3,1); q=Object.assign(sub(a,b),{a:a-b,exp:`${a} − ${b} = ${a-b}`}); }
+  else if(k==='resta3'){ const [a,b]=borrow(3,2); q=Object.assign(sub(a,b),{a:a-b,exp:`${a} − ${b} = ${a-b}`}); }
+  else if(k==='resta0'){ let a,b; do{ a=rr(2,9)*100+rr(0,8); b=rr(101,a-11); }while(b%10<=a%10||(b/10|0)%10===0); q=Object.assign(sub(a,b),{a:a-b,exp:`${a} − ${b} = ${a-b}. Como en las decenas hay un 0, hay que pedir prestado a las centenas.`}); }
+  else if(k==='mult21'){ let a,b; do{ a=rr(11,43); b=rr(2,3); }while(digits(a).some(d=>d*b>=10)); q=Object.assign(mul(a,b),{a:a*b,exp:`${a} × ${b} = ${a*b}`}); }
+  else if(k==='mult21b'){ const [a,b]=carryMul(2); q=Object.assign(mul(a,b),{a:a*b,exp:`${a} × ${b} = ${a*b}`}); }
+  else if(k==='mult31'){ const [a,b]=carryMul(3); q=Object.assign(mul(a,b),{a:a*b,exp:`${a} × ${b} = ${a*b}`}); }
+  else if(k==='mult41'){ const [a,b]=carryMul(4); q=Object.assign(mul(a,b),{a:a*b,exp:`${a} × ${b} = ${a*b}`}); }
+  else if(k==='mult22'){ const a=rr(12,49), b=rr(11,19); q=Object.assign(bare?{q:`Haz la cuenta: ${a} × ${b}`,vis:colOp(a,b,'×'),say:`${a} por ${b}`}:{q:`En la panadería hay ${b} estantes con ${a} ${e} cada uno. ¿Cuántos ${e} hay?`},{a:a*b,exp:`${a} × ${b} = ${a*b}`}); }
+  else if(k==='resto'){ const b=rr(3,9), c=rr(4,12), s=rr(1,b-1), n=b*c+s; q={q:`Bruno reparte ${n} ${e} en bolsas de ${b}. Llena todas las bolsas que puede. ¿Cuántos ${e} le sobran?`,a:s,exp:`${b} × ${c} = ${b*c}; ${n} − ${b*c} = ${s}. Sobran ${s}.`}; }
+  else if(k==='dospasos3'){ const a=rr(105,248), b=rr(3,4), c=rr(120,a*b-60); q={q:`Bruno hornea ${b} bandejas de ${a} ${e}. Vende ${c}. ¿Cuántos le quedan?`,a:a*b-c,exp:`${a} × ${b} = ${a*b}; ${a*b} − ${c} = ${a*b-c}`}; }
+  else if(k==='cambio'){ const n=rr(2,5), pr=rr(2,9), tot=n*pr, pay=tot<20?20:50; q={q:`Compras ${n} barras de pan a ${pr} botones cada una y pagas con ${pay}. ¿Cuánto te devuelven?`,vis:`<div class="mvis">${'🥖'.repeat(n)}</div>`,a:pay-tot,exp:`${n} × ${pr} = ${tot}; ${pay} − ${tot} = ${pay-tot}`}; }
+  else if(k==='receta'){ const h=rr(2,4), t=rr(3,8); q={q:`Para una tarta se necesitan ${h} huevos. ¿Cuántos hacen falta para ${t} tartas?`,a:h*t,exp:`${t} × ${h} = ${h*t}`}; }
+  else { const n=[4,6,8][rr(0,2)], c=rr(1,n-1); const opts=shuffle([`${n-c}/${n}`,`${c}/${n}`,`${n}/${n-c}`,`${n-c}/${c}`].filter((x,i,a)=>a.indexOf(x)===i),Math.random);
+    q={q:`La tarta tenía ${n} trozos iguales y se han comido ${c}. ¿Qué parte de la tarta queda?`,vis:pieSVG(n,c),a:`${n-c}/${n}`,choices:opts,exp:`Quedan ${n-c} trozos de ${n}: ${n-c}/${n}`}; }
+  q.k=k; q.tier=tier; q.vis=q.vis||''; return q;
+}
 function pieSVG(n,eaten){ let s='<svg viewBox="-52 -52 104 104" width="120" height="120">'; for(let i=0;i<n;i++){ const a0=i/n*Math.PI*2-Math.PI/2, a1=(i+1)/n*Math.PI*2-Math.PI/2; const x0=Math.cos(a0)*48,y0=Math.sin(a0)*48,x1=Math.cos(a1)*48,y1=Math.sin(a1)*48;
   s+=`<path d="M0,0 L${x0.toFixed(1)},${y0.toFixed(1)} A48,48 0 0,1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="${i<eaten?'#f3ead9':'#f29b38'}" stroke="#8a5a36" stroke-width="2"/>`; } return s+'</svg>'; }
 function openBakery(age){
-  const p=P(); const src=age?{age,mathFocus:''}:p;
+  const p=P(); const src=age?{age,mathFocus:'',panLv:CAT_PAN}:p;
   MZ={qs:Array.from({length:src.age<=7?5:6},()=>genMath(src)),i:0,ok:0,tries:0,input:'',catalog:!!age};
   show('bakery'); renderBakery();
   if(!age && !p._bakeryHi){ p._bakeryHi=true; saveQuiet(); say({face:'🐻',name:'Bruno el panadero',text:'¡Bienvenida a mi panadería! Necesito ayuda con las cuentas. Cada día puedes hacer un turno de problemas.'}); }
@@ -2496,21 +2594,22 @@ function openBakery(age){
 function renderBakery(){
   const p=P(), q=MZ.qs[MZ.i]; $('#bk-coins').textContent='🔘 '+p.coins;
   $('#bk-prog').innerHTML=MZ.qs.map((_,i)=>`<span class="mdot ${i<MZ.i?(MZ.qs[i].good?'ok':'ko'):i===MZ.i?'cur':''}"></span>`).join('');
-  $('#bk-q').innerHTML=`<div class="npcline"><div class="face" id="bk-face"></div><div class="ask">${esc(q.q)}</div><button class="speak" id="bk-sp">🔊</button></div>${q.vis||''}`;
+  const tag=PAN_TIER[q.tier]?`<div class="badge" style="display:inline-block;margin:0 0 6px;${q.tier>0?'background:#ffe0d6;color:#b4432f':'background:#e2f4dc;color:#3c7d38'}">${PAN_TIER[q.tier]} · 🔘 ${q.tier>0?3:1}</div>`:'';
+  $('#bk-q').innerHTML=`${tag}<div class="npcline"><div class="face" id="bk-face"></div><div class="ask">${esc(q.q)}</div><button class="speak" id="bk-sp">🔊</button></div>${q.vis||''}`;
   $('#bk-face').append(npcIcon('bruno',64));
-  $('#bk-sp').onclick=()=>speakNow(q.q);
+  $('#bk-sp').onclick=()=>speakNow(q.say||q.q);
   const A=$('#bk-ans'); A.innerHTML='';
   if(q.choices){ const g=el('div','mchoices'); q.choices.forEach(c=>{ const b=el('button','btn',esc(c)); b.style.fontSize='26px'; b.onclick=()=>answerMath(c); g.append(b); }); A.append(g); }
   else {
     A.append(el('div','mdisp',MZ.input||'&nbsp;'));
     const pad=el('div','mpad');
     ['1','2','3','4','5','6','7','8','9','⌫','0','✔'].forEach(k=>{ const b=el('button','btn'+(k==='✔'?' green':''),k); b.onclick=()=>{
-      if(k==='⌫') MZ.input=MZ.input.slice(0,-1); else if(k==='✔'){ if(MZ.input!=='') answerMath(+MZ.input); return; } else if(MZ.input.length<4) MZ.input+=k;
+      if(k==='⌫') MZ.input=MZ.input.slice(0,-1); else if(k==='✔'){ if(MZ.input!=='') answerMath(+MZ.input); return; } else if(MZ.input.length<5) MZ.input+=k;
       beep(600,0.03); renderBakery(); }; pad.append(b); });
     A.append(pad);
   }
   $('#bk-msg').textContent=''; $('#bk-msg').className='';
-  speakAuto(q.q);
+  speakAuto(q.say||q.q);
 }
 async function answerMath(v){
   const q=MZ.qs[MZ.i], p=P(); p.math=p.math||{}; const st=p.math[q.k]=p.math[q.k]||{ok:0,total:0};
@@ -2532,7 +2631,7 @@ async function nextMath(){
   if(MZ.catalog){ await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:24px;font-weight:800">${ok} de ${n} a la primera</div></div>`}); openCatalog(); return; }
   const first=!(p.daily&&p.daily.math);
   let coins, xp;
-  if(first){ coins=ok*2; xp=ok+1; if(p.daily) p.daily.math=true; }
+  if(first){ coins=MZ.qs.filter(q=>q.good).reduce((s,q)=>s+(q.tier<0?1:q.tier>0?3:2),0); xp=ok+1; if(p.daily) p.daily.math=true; }
   else { const pc=(p.mathPractice&&p.mathPractice.date===today())?p.mathPractice.coins:0; coins=Math.min(Math.max(0,10-pc),ok); p.mathPractice={date:today(),coins:pc+coins}; xp=0; }
   p.coins+=coins; p.counters.earned+=coins; p.counters.math=(p.counters.math||0)+1; addXP(p,xp); logAct(p,'p',n,ok);
   save(`Panadería: ${ok}/${n} bien`); fanfare();
@@ -4321,7 +4420,7 @@ function drawNight(c,st){
 /* =========================================================
    PASEO DEL ALCALDE (supervisión: el pueblo visto por papá)
    ========================================================= */
-const MATH_NAMES={contar:'Contar',sumas:'Sumas',restas:'Restas',dinero:'Dinero',multi:'Multiplicar',suma100:'Sumas grandes',receta:'Recetas (doble y mitad)',reparto:'Repartos',cambio:'Cambio',dospasos:'Problemas de dos pasos',fraccion:'Fracciones'};
+const MATH_NAMES={suma3:'Sumas de 3 cifras',resta2:'Restas de 2 cifras llevando',mult21:'2 cifras × 1',resta3a:'Restas de 3 cifras (una llevada)',mult21b:'2 cifras × 1 llevando',resta3:'Restas de 3 cifras llevando',mult31:'3 cifras × 1',resta0:'Restas con ceros',mult41:'4 cifras × 1',dospasos3:'Dos pasos (grandes)',mult22:'Multiplicar por 2 cifras',resto:'Repartos con resto',contar:'Contar',sumas:'Sumas',restas:'Restas',dinero:'Dinero',multi:'Multiplicar',suma100:'Sumas grandes',receta:'Recetas (doble y mitad)',reparto:'Repartos',cambio:'Cambio',dospasos:'Problemas de dos pasos',fraccion:'Fracciones'};
 function girlsIdx(){ return DB.profiles.map((p,i)=>p?i:-1).filter(i=>i>=0); }
 function startVisit(i){
   const g=girlsIdx(); if(!g.length){ toast('Todavía no hay jugadoras'); return; }
@@ -4446,7 +4545,7 @@ function fichaCard(p,i,focus){
   // panadería
   const mk=Object.keys(p.math||{}); let pn=`<h4>🥐 Panadería · ${mk.reduce((a,k)=>a+p.math[k].total,0)} problemas</h4>`;
   pn+=mk.length?mk.sort((a,b)=>p.math[b].total-p.math[a].total).map(k=>{ const o=p.math[k]; return `<div class="frow"><span class="fl">${esc(MATH_NAMES[k]||k)}</span><span class="fv">${o.ok}/${o.total}</span>${pctTag(o.ok,o.total)}</div>`; }).join(''):'<div class="counter">Aún no ha hecho turnos.</div>';
-  pn+=`<div class="counter">Foco de clase: ${p.mathFocus?esc(p.mathFocus.replace('tabla:','tabla del ')):'variado'}</div>`;
+  pn+=`<div class="counter">Foco de clase: ${p.mathFocus?esc(p.mathFocus.replace('tabla:','tabla del ')):'variado'}${p.age>7?` · Nivel de cuentas ${panLvOf(p)+1}: ${esc(PAN9_LEVELS[panLvOf(p)].n)}`:''}</div>`;
   const pe=el('div','fsec',pn); pe.id='ficha-pan-'+i; c.append(pe);
   // biblioteca
   let bb='<h4>🦉 Biblioteca</h4>'; const cs=cuadernosFor(p);
@@ -4519,7 +4618,7 @@ function showSolution(){
   renderPuzzle(); setMsg('Solución cargada ('+cardCount(PZ.prog)+' tarjetas). Pulsa ▶ Tejer.','good');
 }
 function ensureTestProfile(){ if(!P()){ const i=DB.profiles.findIndex(p=>p); if(i>=0) DB.cur=i; else { DB.profiles[0]=newProfile('Papá',9,'#4a8fdc'); DB.profiles[0].met=true; DB.cur=0; } saveQuiet(); } }
-let CAT_L=5;
+let CAT_L=5, CAT_PAN=3;
 function openCatalog(){ if(VISIT){ openVTaller(); return; } ensureTestProfile(); renderCatalog(); show('catalog'); }
 function catCard(e,label,extra){
   const c=el('div','ecard'); c.style.cursor='default';
@@ -4538,7 +4637,9 @@ function renderCatalog(){
   });
   L.append(el('div','wsec','Otras casas del pueblo'));
   const bk=el('div','ecard'); bk.innerHTML='<div class="who">🥐</div><div class="t">Turno en la panadería</div><div class="badge">Mates</div><div class="counter">Problemas generados según la edad y el foco que elijas en el modo alcalde</div>';
-  const bkr=el('div','choice'); bkr.style.justifyContent='flex-start'; [[6,'👧 6-7 años'],[9,'👧 8-10 años']].forEach(([a,t])=>{ const b=el('button','',t); b.onclick=()=>openBakery(a); bkr.append(b); }); bk.append(bkr); L.append(bk);
+  const bkr=el('div','choice'); bkr.style.justifyContent='flex-start'; [[6,'👧 6-7 años'],[9,'👧 8-10 años']].forEach(([a,t])=>{ const b=el('button','',t); b.onclick=()=>openBakery(a); bkr.append(b); }); bk.append(bkr);
+  const bkl=el('div','counter'); bkl.innerHTML='Nivel de cuentas (8-10 años): '; const bch=el('span','choice'); bch.style.display='inline-flex';
+  PAN9_LEVELS.forEach((x,k)=>{ const b=el('button',k===CAT_PAN?'sel':'',String(k+1)); b.title=x.n; b.onclick=()=>{ CAT_PAN=k; renderCatalog(); }; bch.append(b); }); bkl.append(bch); bk.append(bkl); L.append(bk);
   (window.CUADERNOS||[]).forEach(c=>{ const cc=el('div','ecard'); cc.innerHTML=`<div class="who">${c.emoji||'📘'}</div><div class="t">${esc(c.titulo)}</div><div class="badge">Biblioteca · para ${c.para==='6'?'6-7 años':c.para==='9'?'8-10 años':esc(c.para)}</div><div class="counter">${c.preguntas.length} preguntas</div>`; const b=el('button','btn','Probar'); b.onclick=()=>{ LQ=null; startQuiz(c); LQ.catalog=true; }; cc.append(b); L.append(cc); });
   L.append(el('div','wsec','Encargos generados (cada vez sale uno distinto)'));
   const lvr=el('div','wnote'); lvr.innerHTML='Nivel de reto de los generados: '; const ch=el('span','choice'); ch.style.display='inline-flex';
@@ -4555,7 +4656,9 @@ $('#cat-back').onclick=()=>{ if(P()&&P().met) show('village'); else { renderProf
    INICIO
    ========================================================= */
 load();
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
 initExtras();
+if(DB_DAMAGED) setTimeout(()=>toast('⚠️ La partida guardada no se podía leer. Está apartada: papá puede recuperarla en «♻️ Restaurar».',8000),800);
 if('speechSynthesis' in window){ try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>{}; }catch(e){} }
 renderProfiles(); show('profiles');
 </script>

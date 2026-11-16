@@ -25,17 +25,19 @@ Lo que cambia a menudo (temas del cole, economía, hoja de ruta, decisiones) viv
 
 | Archivo | Qué es |
 | --- | --- |
-| `index.html` | El juego entero (HTML, CSS y JS en un archivo, unos 280 KB) |
+| `index.html` | El juego entero (HTML, CSS y JS en un archivo, unos 396 KB: toca partirlo pronto) |
 | `cuadernos.js` | Cuadernos de repaso de la Biblioteca (`window.CUADERNOS`) |
 | `config.js` | URL del Apps Script de la nube (vacía mientras no esté instalada) |
 | `panel.html` | Panel del alcalde para el móvil (lee y escribe en la nube) |
 | `apps-script/Code.gs` | Backend en una hoja de Google (`CLAVE` y `PIN`) |
 
-- Guardado: `localStorage` con la clave `villaovillo.v1`; en el modo prueba, `villaovillo.prueba`. `DB.profiles[]` guarda un objeto por niña; `P()` devuelve la niña activa.
+- Guardado: `localStorage` con la clave `villaovillo.v1`; en el modo prueba, `villaovillo.prueba`. `DB.profiles[]` guarda un objeto por niña; `P()` devuelve la niña activa. Todo se escribe con `writeDB()`, que avisa si falla. `load()` aparta una partida ilegible en `KEY+'.danada'` y guarda una copia diaria en `KEY+'.copia'`; las dos se recuperan desde «Restaurar» (`autoCopyButtons`).
+- Nube: `apps-script/Code.gs` guarda cada partida como archivo en Drive (carpeta «Villaovillo · partidas», sin límite de tamaño) y una copia por niña y día en «copias» (60 días). La hoja «Partidas» solo tiene el resumen y `archivo:<id>`. Si cambia `Code.gs`, Antonio debe publicar una versión nueva de la implementación.
 - `index.html` está organizado en módulos con un comentario-cabecera (`/* ===== NOMBRE ===== */`). Los módulos nuevos se añaden antes del comentario «CATÁLOGO DE EJERCICIOS». Una `function` declarada más abajo sustituye a una anterior del mismo nombre: así se han ido ampliando algunas funciones. Antes de cambiar una función, busca su última definición.
 - Mundo de 2400×1600 con cámara, fondo prerrenderizado (`BGC`) y entidades ordenadas por profundidad. Los vecinos son sprites vectoriales en `NPC_DRAW`.
 - Zonas: telar (encargos de lógica), Panadería de Bruno (mates), Biblioteca de Sabina (repaso con repetición espaciada, `p.sr`), Tablón (tareas), Tienda de Coco (jardín y casa), casa propia (jardín `GD.mode='garden'` e interior `GD.mode='room'`, `p.room`), puente de Lía (`p.bridge`, objetivo común `BRIDGE_GOAL`).
 - Paseo del alcalde (supervisión): `VISIT` no nulo mientras papá recorre el pueblo de una niña (`startVisit`, `endVisit`). En ese modo `DB.cur` apunta a la niña visitada, `save()` no toca su partida, el reloj de juego no cuenta y los encargos se abren en modo `catalog`. Fichas visuales en `openFicha()` y taller de solo lectura en `openVTaller()`. Todo lo nuevo que pueda cambiar la partida debe comprobar `VISIT`.
+- Panadería: el grupo 9 usa una escalera de cuentas (`PAN9_LEVELS`, nivel central `p.panLv`, papá lo cambia en el modo alcalde). `genMath9` mezcla niveles como una campana: 60 % del nivel, 25 % de repaso (🌱, 1 botón), 15 % de reto (🔥, 3 botones); `q.tier` guarda cuál. Con un foco de clase elegido, el 60 % es del foco. El grupo 6 sigue con `genMath`.
 - Progresión: maestría por área (`MAST`, `p.mastery`, `addMastery`, `mLevel`), desbloqueos en `MAST_UNLOCK`, zonas al otro lado del río en `ZONE_REQ` (además del puente terminado). Medallas en `MEDALS`.
 - Ejercicios del telar: `genEncargo(p, seed, kind, id, forceType)` con los tipos `seq`, `reglas`, `rep`, `mot`, `hilo`, `cab`, `cua`, `falta` (tarjeta perdida) y `custom`. La lista diaria sale de `ensureDaily` (tipos de `tlvTypesFor`), con tipos distintos cada día. La última definición de `genEncargo` está en el módulo «NIVELES DE RETO DEL TELAR».
 - Nivel de reto por tipo (`p.tlv[tipo]`, 1-10, `tlvOf`, `tlvUpdate`): sube tras 2 encargos perfectos seguidos y baja tras 2 atascos (`p.tlvRun`). El nivel cambia el tamaño, los colores, el límite de tarjetas (`v.max`), los bucles dentro de bucles del cabezal (`cabBest`), los huecos sueltos o en diagonal de «¿Qué sigue?» (`v.holes`) y los fallos de Hilo (`v.bugs`, fase `locate` para señalar dónde está). Papá lo ajusta en las fichas. En el catálogo se elige el nivel.
