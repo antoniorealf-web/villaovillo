@@ -30,5 +30,18 @@ if faltan or sin_cargar or repetidos:
     if repetidos: print('  Se cargan dos veces:', repetidos)
     sys.exit(1)
 
+html2 = re.sub(r'<meta name="villa-version" content="[^"]*">', f'<meta name="villa-version" content="{v}">', html2)
 open(INDEX, 'w', encoding='utf-8').write(html2)
-print(f'Versión {v} en {n} piezas.')
+
+# Lista de piezas que sw.js guarda en la tablet para jugar sin internet
+piezas = ['./', 'index.html', 'panel.html', 'manifest.webmanifest']
+piezas += re.findall(r'(?:src|href)="([^"]+\?v=[^"]+)"', html2)
+for carpeta, ext in (('iconos', '.png'), ('fuentes', '.woff2')):
+    piezas += sorted(f'{carpeta}/{f}' for f in os.listdir(os.path.join(RAIZ, carpeta)) if f.endswith(ext))
+SWP = os.path.join(RAIZ, 'sw.js')
+sw = open(SWP, encoding='utf-8').read()
+sw = re.sub(r"const VERSION = '[^']*';", f"const VERSION = '{v}';", sw)
+lista = '\n'.join(f"  '{x}'," for x in piezas)
+sw = re.sub(r'// LISTA-INICIO\n.*?// LISTA-FIN', '// LISTA-INICIO\n' + lista + '\n// LISTA-FIN', sw, flags=re.S)
+open(SWP, 'w', encoding='utf-8').write(sw)
+print(f'Versión {v} en {n} piezas; {len(piezas)} guardadas para jugar sin internet.')

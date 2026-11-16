@@ -1,0 +1,46 @@
+<!DOCTYPE html><html><body style="margin:0;background:transparent">
+<svg id="ic" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+ <defs>
+  <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe6ff"/><stop offset="1" stop-color="#e9f7ff"/></linearGradient>
+  <linearGradient id="hierba" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd16a"/><stop offset="1" stop-color="#5daf45"/></linearGradient>
+  <radialGradient id="lana" cx=".38" cy=".34" r=".75"><stop offset="0" stop-color="#ff9fb8"/><stop offset=".6" stop-color="#ef5f86"/><stop offset="1" stop-color="#c63c63"/></radialGradient>
+  <clipPath id="bola"><circle cx="256" cy="312" r="118"/></clipPath>
+ </defs>
+ <g id="fondo">
+  <rect width="512" height="512" fill="url(#cielo)"/>
+  <circle cx="404" cy="104" r="40" fill="#ffe27a"/>
+  <path d="M0 330 Q120 270 256 300 T512 290 V512 H0Z" fill="url(#hierba)"/>
+ </g>
+ <g id="dibujo">
+  <!-- casita -->
+  <g transform="translate(286 170)">
+   <rect x="18" y="70" width="124" height="104" rx="14" fill="#fff6e6" stroke="#4a3b2c" stroke-width="9"/>
+   <path d="M2 82 L80 14 L158 82" fill="#e4574f" stroke="#4a3b2c" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/>
+   <rect x="62" y="112" width="36" height="62" rx="10" fill="#b77a45" stroke="#4a3b2c" stroke-width="8"/>
+   <rect x="28" y="96" width="26" height="24" rx="6" fill="#bfe6ff" stroke="#4a3b2c" stroke-width="6"/>
+   <rect x="110" y="30" width="20" height="34" rx="4" fill="#9c6b45" stroke="#4a3b2c" stroke-width="7"/>
+  </g>
+  <!-- agujas clavadas en el ovillo -->
+  <g stroke-linecap="round">
+   <line x1="190" y1="320" x2="136" y2="128" stroke="#4a3b2c" stroke-width="22"/>
+   <line x1="190" y1="320" x2="136" y2="128" stroke="#f4c430" stroke-width="12"/>
+   <circle cx="134" cy="122" r="17" fill="#4a8fdc" stroke="#4a3b2c" stroke-width="7"/>
+   <line x1="210" y1="320" x2="272" y2="136" stroke="#4a3b2c" stroke-width="22"/>
+   <line x1="210" y1="320" x2="272" y2="136" stroke="#f4c430" stroke-width="12"/>
+   <circle cx="274" cy="130" r="17" fill="#55b05a" stroke="#4a3b2c" stroke-width="7"/>
+  </g>
+  <!-- hilo suelto hacia la casita -->
+  <path d="M300 390 Q360 440 420 400 T470 380" fill="none" stroke="#4a3b2c" stroke-width="14" stroke-linecap="round"/>
+  <path d="M300 390 Q360 440 420 400 T470 380" fill="none" stroke="#ef5f86" stroke-width="7" stroke-linecap="round"/>
+  <!-- ovillo -->
+  <g transform="translate(-50 26) scale(.95)" style="transform-origin:256px 312px">
+  <circle cx="256" cy="312" r="118" fill="url(#lana)"/>
+  <g clip-path="url(#bola)" fill="none" stroke="#b2304f" stroke-width="7" stroke-linecap="round" opacity=".75">
+   <path d="M150 250 Q256 330 362 250"/><path d="M140 290 Q256 380 372 290"/><path d="M150 340 Q256 420 362 340"/>
+   <path d="M196 196 Q300 300 230 430"/><path d="M250 192 Q350 300 290 432"/>
+  </g>
+  <circle cx="256" cy="312" r="118" fill="none" stroke="#4a3b2c" stroke-width="10"/>
+  <ellipse cx="218" cy="262" rx="26" ry="15" fill="#fff" opacity=".45" transform="rotate(-30 218 262)"/>
+  </g>
+ </g>
+</svg></body></html>

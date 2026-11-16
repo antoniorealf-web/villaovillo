@@ -72,3 +72,11 @@ Cada día salen tipos distintos, con más probabilidad para el concepto más nue
 - El juego guarda un registro diario de cada niña: minutos, ejercicios por área, aciertos, tareas, botones y maestría.
 - En el **modo alcalde**, **📊 Informe para Claude → Copiar** (o **Enviar**) saca ese registro como texto. Se pega en el proyecto de Claude para actualizar la hoja de registro y las estadísticas.
 - `CLAUDE.md` explica la estructura del juego a cualquier sesión nueva de Claude.
+
+## Instalar el juego en la tablet
+
+1. Abre https://antoniorealf-web.github.io/villaovillo/ con internet.
+2. iPad (Safari): botón Compartir → «Añadir a pantalla de inicio». Android (Chrome): menú ⋮ → «Instalar aplicación».
+3. Abre siempre el juego desde ese icono. Desde entonces funciona sin wifi; las versiones nuevas llegan solas y se ponen al volver a la pantalla de inicio.
+4. En el modo alcalde, «📲 El juego en esta tablet» dice qué versión hay y si está listo para jugar sin internet.
+
