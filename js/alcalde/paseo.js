@@ -120,7 +120,7 @@ function fichaCard(p,i,focus){
   tsec.append(el('div','frow counter','<span class="fl">Tipo</span><span>Hechos</span><span style="min-width:52px;text-align:center">A la 1ª</span><span style="min-width:52px;text-align:center">3★</span><span style="min-width:112px;text-align:center">Nivel de reto</span>'));
   tk.forEach(k=>{ const o=ty[k]||{n:0,first:0,s3:0}; const r=el('div','frow',`<span class="fl">${esc(TYPE_NAMES[k]||k)}</span><span class="fv">${o.n}</span>${pctTag(o.first,o.n)}${pctTag(o.s3,o.n)}`);
     if(TLV_TYPES.includes(k)){ const lvb=el('span','lvctl'); const mi=el('button','','–'), nn=el('b','',String(tlvOf(p,k))), pl=el('button','','+');
-      const setL=d=>{ p.tlv=p.tlv||{}; p.tlv[k]=Math.max(1,Math.min(TLV_MAX,tlvOf(p,k)+d)); (p.tlvRun||{})[k]=0; nn.textContent=p.tlv[k]; saveQuiet(); toast(`${p.name} · ${TYPE_NAMES[k]}: nivel ${p.tlv[k]}`); };
+      const setL=async d=>{ const v=Math.max(1,Math.min(TLV_MAX,tlvOf(p,k)+d)); if(v===tlvOf(p,k)) return; const t=`${p.name} · ${TYPE_NAMES[k]}: nivel ${v}`; if(await alcHaz(p.id,'set',{campo:'tlv.'+k,valor:v},t)){ nn.textContent=tlvOf(p,k); toast(t); } };
       mi.onclick=()=>setL(-1); pl.onclick=()=>setL(1); lvb.append(mi,nn,pl); r.append(lvb); }
     tsec.append(r); });
   c.append(tsec);

@@ -83,4 +83,4 @@ async function nextQuiz(){
 $('#bk-back').onclick=()=>{ if(MZ&&MZ.catalog) openCatalog(); else show('village'); };
 $('#qz-back').onclick=()=>{ if(LQ&&LQ.catalog) openCatalog(); else openLibrary(); };
 $('#board-alc').onclick=()=>openAlcalde();
-$('#alc-back').onclick=()=>{ if(VISIT){ show('village'); return; } stopSpeak(); renderProfiles(); show('profiles'); };
+$('#alc-back').onclick=()=>{ if(VISIT){ show('village'); return; } if(REMOTO) return; stopSpeak(); renderProfiles(); show('profiles'); };

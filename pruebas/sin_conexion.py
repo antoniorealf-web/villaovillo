@@ -34,7 +34,7 @@ async def main():
             inst = [e['errorId'] for e in (await cdp.send('Page.getInstallabilityErrors')).get('installabilityErrors', []) if e['errorId'] != 'in-incognito']
             ok(not inst, 'el navegador lo acepta como aplicación instalable ' + (str(inst) if inst else ''))
             await ctx.set_offline(True)
-            for url in [U, U + '?prueba', U + 'panel.html']:
+            for url in [U, U + '?prueba', U + '?alcalde', U + 'panel.html']:
                 await pg.goto(url); await pg.wait_for_timeout(600)
                 ok('Villaovillo' in await pg.title(), 'abre sin internet: ' + url.replace(U, '/'))
             await pg.goto(U + '?prueba'); await pg.wait_for_timeout(600)

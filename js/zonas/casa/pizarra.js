@@ -48,15 +48,17 @@ function renderBoardNotes(){
   const inp=el('textarea','inputline'); inp.maxLength=140; inp.rows=2; inp.placeholder=mine?'Algo que no quiero olvidar…':'¡Hola! …'; inp.style.cssText='width:100%;resize:none;font-family:inherit';
   const st=el('div','choice'); BOARD_STICKERS.forEach(s=>{ const bb=el('button','',s); bb.style.fontSize='24px'; bb.onclick=()=>{ inp.value=(inp.value+' '+s).trim(); }; st.append(bb); });
   const send=el('button','btn primary','📌 Pegar en la pizarra'); send.style.marginTop='8px';
-  send.onclick=()=>{ const t=inp.value.trim(); if(!t){ toast('Escribe algo primero'); return; }
-    b.notes.unshift({id:'n'+Date.now().toString(36),from:me.name,fromId:me.id,text:t,t:Date.now(),seen:mine}); if(b.notes.length>30) b.notes.length=30;
-    saveQuiet(); fanfare(); toast(mine?'📌 Nota pegada':'📌 ¡Mensaje pegado! '+p.name+' lo verá al entrar.'); renderBoardNotes(); };
+  send.onclick=async()=>{ const t=inp.value.trim(); if(!t){ toast('Escribe algo primero'); return; }
+    const n={id:'n'+Date.now().toString(36),from:me.name,fromId:me.id,text:t,t:Date.now(),seen:mine};
+    if(VISIT){ if(!(await alcHaz(p.id,'pizNota',{n},'Mensaje en la pizarra de '+p.name))) return; }
+    else { b.notes.unshift(n); if(b.notes.length>30) b.notes.length=30; saveQuiet(); }
+    fanfare(); toast(mine?'📌 Nota pegada':'📌 ¡Mensaje pegado! '+p.name+' lo verá al entrar.'); renderBoardNotes(); };
   f.append(inp,st,send); N.append(f);
   if(!b.notes.length) N.append(el('div','counter','Todavía no hay notas.'));
   b.notes.forEach((n,i)=>{ const d=el('div','bnote'); d.style.background=['#fff3a8','#ffd1dc','#d6ecff','#dff5d8'][i%4]; d.style.transform=`rotate(${(i%3-1)*1.5}deg)`;
     const dt=new Date(n.t); d.innerHTML=`<div class="bfrom">${esc(n.from)} · ${dt.getDate()}/${dt.getMonth()+1}</div><div class="btxt">${esc(n.text)}</div>`;
     const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(n.from+' dice: '+n.text); d.append(sp);
-    if(mine||n.fromId===me.id){ const x=el('button','bdel','✖'); x.onclick=()=>{ b.notes.splice(i,1); saveQuiet(); renderBoardNotes(); }; d.append(x); }
+    if(mine||n.fromId===me.id){ const x=el('button','bdel','✖'); x.onclick=async()=>{ if(VISIT&&!mine){ if(!(await alcHaz(p.id,'pizDel',{id:n.id},'Quitar un mensaje de la pizarra de '+p.name))) return; } else { b.notes.splice(i,1); saveQuiet(); } renderBoardNotes(); }; d.append(x); }
     N.append(d); });
 }
 (function setupBoardCanvas(){

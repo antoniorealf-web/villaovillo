@@ -3,7 +3,7 @@
 Juego educativo para dos niñas (6 y 9 años): pensamiento computacional tejiendo telas con tarjetas, un pueblo que crece con los logros y un alcalde (papá) que escribe cartas, manda tareas y diseña retos.
 
 - `index.html`: el juego (para la tablet).
-- `panel.html`: el panel del alcalde (para el móvil de papá).
+- `?alcalde`: el alcalde a distancia (móvil u ordenador de papá). `panel.html` redirige ahí.
 - `index.html?prueba`: modo prueba, con su propio guardado.
 - `config.js`: dirección del script de Google.
 - `apps-script/Code.gs`: la «nube familiar» (se pega en una hoja de Google).
@@ -31,7 +31,7 @@ Al cabo de uno o dos minutos, el juego estará en `https://antoniorealf-web.gith
 2. En la pantalla de inicio del juego, pulsa **⚙️ Nube** y escribe la clave de la familia. Solo se hace una vez.
 
 ### 4. Tu móvil
-Abre `https://antoniorealf-web.github.io/villaovillo/panel.html`, escribe la clave y el PIN, y guárdalo en favoritos.
+Abre `https://antoniorealf-web.github.io/villaovillo/?alcalde`, escribe la clave y el PIN, e instálalo («Añadir a pantalla de inicio»): aparece como «Alcalde». Ves el pueblo de cada una, sus fichas y el tablón, y pones tareas, cartas, retos y ajustes. Los cambios llegan a la tablet cuando se conecta; desde el móvil nunca se toca una partida.
 
 ## Si algo va mal
 - **⚠️ Sin conexión:** el juego sigue guardando en la tablet y sube los cambios cuando vuelve la conexión.
@@ -62,7 +62,7 @@ Abre `https://antoniorealf-web.github.io/villaovillo/panel.html`, escribe la cla
 Cada día salen tipos distintos, con más probabilidad para el concepto más nuevo. Todos se pueden probar en `?prueba#catalogo`.
 
 ## Casas nuevas (v0.5)
-- **📌 Tablón de tareas:** tareas de casa y deberes. Ellas las aceptan, las marcan como hechas y, cuando papá las valida, recogen el premio. Se gestionan desde el **modo alcalde** de la tablet (PIN local, funciona sin nube) o desde el panel del móvil (con nube). Las tareas pueden repetirse cada día.
+- **📌 Tablón de tareas:** tareas de casa y deberes. Ellas las aceptan, las marcan como hechas y, cuando papá las valida, recogen el premio. Se gestionan desde el **modo alcalde** de la tablet (PIN local, funciona sin nube) o desde el alcalde a distancia en el móvil (`?alcalde`, con nube). Es un único tablón: lo que pones desde el móvil aparece en la tablet al conectarse. Las tareas pueden repetirse cada día.
 - **🥐 Panadería de Bruno:** turnos de problemas de mates según la edad: contar, sumas, restas y dinero (6-7); multiplicar, repartir, cambio, recetas, fracciones y problemas de dos pasos (8-10). En el modo alcalde se elige el «foco» de clase (p. ej. la tabla del 7).
 - **🦉 Biblioteca de Sabina:** repaso de lo que dan en clase, con preguntas de opción, verdadero/falso y ordenar. Usa repaso espaciado: lo que se falla vuelve a salir al día siguiente y lo que se sabe, cada vez más tarde. El contenido está en `contenido/cuadernos.js`.
 - **Cabezal:** se ilumina la tarjeta que se ejecuta y cada «Repetir» muestra en qué vuelta va. También hay modo **👣 Paso a paso**.

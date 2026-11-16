@@ -47,9 +47,9 @@ function renderCodesBox(V,box){
   b.append(el('div','counter','Cada niña entra con su código. Si no tiene, lo elige ella la próxima vez que entre. Aquí puedes verlos y cambiarlos.'));
   girlsIdx().forEach(i=>{ const p=DB.profiles[i]; const row=el('div','mitem'); row.style.cssText='padding:8px 12px;align-items:center;margin-top:8px';
     row.innerHTML=`<div class="mi"><span class="dot" style="width:24px;height:24px;background:${p.color};display:inline-block"></span></div><div class="mt"><b>${esc(p.name)}</b> ${p.code?`<span style="font-size:24px;letter-spacing:6px;font-weight:800">${esc(p.code)}</span>`:'<span class="counter">sin código todavía</span>'}</div>`;
-    const a=el('div','ma'); const ch=el('button','btn','✏️ Cambiar'); ch.onclick=async()=>{ const c=await askKeypad({face:'🔑',name:'Nuevo código de '+p.name,text:'4 números.'}); if(!c) return; p.code=c; saveQuiet(); toast('Código cambiado'); renderAlcalde(); };
-    const qu=el('button','btn','🗑️ Quitar'); qu.onclick=()=>{ p.code=''; saveQuiet(); toast(p.name+' elegirá uno nuevo al entrar'); renderAlcalde(); };
+    const a=el('div','ma'); const ch=el('button','btn','✏️ Cambiar'); ch.onclick=async()=>{ const c=await askKeypad({face:'🔑',name:'Nuevo código de '+p.name,text:'4 números.'}); if(!c) return; if(await alcHaz(p.id,'set',{campo:'code',valor:c},'Código nuevo de '+p.name)) toast('Código cambiado'); renderAlcalde(); };
+    const qu=el('button','btn','🗑️ Quitar'); qu.onclick=async()=>{ if(await alcHaz(p.id,'set',{campo:'code',valor:''},'Quitar el código de '+p.name)) toast(p.name+' elegirá uno nuevo al entrar'); renderAlcalde(); };
     a.append(ch,qu); row.append(a); b.append(row); });
   const cp=el('button','btn','🎩 Cambiar el código del alcalde'); cp.style.marginTop='10px'; cp.onclick=async()=>{ try{ localStorage.removeItem('villaovillo.pinLocal'); }catch(e){} if(!(await askPin())) toast('El código del alcalde se pedirá al volver a entrar'); };
-  b.append(cp);
+  if(!REMOTO) b.append(cp);
 }

@@ -45,8 +45,10 @@ async function openAlcalde(){ if(!(await askPin())) return; renderAlcalde(); sho
 function profileOptions(withAll=true){ return DB.profiles.filter(Boolean).map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')+(withAll&&DB.profiles.filter(Boolean).length>1?'<option value="todas">Las dos</option>':''); }
 function renderAlcalde(){
   const V=$('#alc-body'); V.innerHTML='';
+  $('#alc-back').style.display=REMOTO&&!VISIT?'none':''; const tt=$('#scr-alcalde .ttl'); if(tt) tt.textContent=REMOTO?'🎩 Alcalde a distancia':'🎩 Modo alcalde';
   const box=(title)=>{ const d=el('div','panel'); d.style.marginBottom='14px'; d.append(el('div','wsec',title)); V.append(d); return d; };
   // supervisión
+  if(REMOTO){ renderRemotoBox(V,box); renderNovedadesBox(box); }
   const b0=box(VISIT?'🚶 Estás paseando por el pueblo':'👀 Ver el juego por dentro');
   b0.append(el('div','counter',VISIT?'Vuelve al pueblo cuando quieras o sal del paseo.':'Entra al pueblo como alcalde: mira sus casas, sus encargos y cómo crece el pueblo de cada una, sin tocar su partida.'));
   const r0=el('div'); r0.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-top:8px';
@@ -54,21 +56,13 @@ function renderAlcalde(){
   else girlsIdx().forEach(i=>{ const q=DB.profiles[i]; const bv=el('button','btn primary','🚶 Pueblo de '+esc(q.name)); bv.onclick=()=>startVisit(i); r0.append(bv); });
   const bf=el('button','btn blue','📊 Fichas de las niñas'); bf.onclick=()=>openFicha(); r0.append(bf);
   b0.append(r0);
-  renderCodesBox(V,box);
-  renderInstalacionBox(box);
-  renderPaquetesBox(box);
-  const bn=box('🌙 Día y noche');
-  bn.append(el('div','counter','Normalmente el pueblo sigue la hora real. Aquí puedes dejarlo fijo de día o de noche.'));
-  const rn=el('div','choice'); rn.style.cssText='justify-content:flex-start;margin-top:8px';
-  [['auto','🕐 Según la hora'],['dia','☀️ Siempre de día'],['noche','🌙 Siempre de noche']].forEach(([k,t])=>{ const b=el('button',(DB.dayMode||'auto')===k?'sel':'',t); b.onclick=()=>setDayMode(k); rn.append(b); });
-  bn.append(rn);
   // pendientes de validar
   const all=(DB.msgs||[]).concat(localMsgs());
   const pend=all.filter(m=>isTask(m)&&['hecha','aceptada'].includes(m.estado));
   const b1=box(`✅ Tareas por comprobar (${pend.filter(m=>m.estado==='hecha').length})`);
   if(!pend.length) b1.append(el('div','counter','No hay nada pendiente.'));
   pend.forEach(m=>{ const pr=DB.profiles.find(p=>p&&p.id===m.para); const r=el('div','mitem'); r.innerHTML=`<div class="mi">${m.tipo==='deberes'?'📚':'🧹'}</div><div class="mt"><b>${esc(pr?pr.name:'?')} · ${m.estado==='hecha'?'dice que la ha hecho':'la ha aceptado'}</b>${esc(m.texto)}</div>`;
-    const a=el('div','ma'); const v=el('button','btn green','✅ Validar'); v.onclick=()=>{ validateMsg(m); renderAlcalde(); }; a.append(v); r.append(a); b1.append(r); });
+    const a=el('div','ma'); const v=el('button','btn green','✅ Validar'); v.onclick=async()=>{ await validateMsg(m); renderAlcalde(); }; a.append(v); r.append(a); b1.append(r); });
   // nueva tarea
   const b2=box('📌 Nueva tarea para el tablón');
   const f=el('div'); f.innerHTML=`<div class="lbl">Para</div><select class="inputline" id="a-para">${profileOptions()}</select>
@@ -76,19 +70,16 @@ function renderAlcalde(){
     <div class="lbl">Qué hay que hacer</div><input class="inputline" id="a-texto" placeholder="Ej.: Recoger la habitación">
     <div class="lbl">Premio (botones)</div><input class="inputline" id="a-premio" type="number" value="10" min="1" max="100">
     <label style="display:flex;gap:8px;align-items:center;font-size:18px;margin:6px 0"><input type="checkbox" id="a-rec" style="width:24px;height:24px"> 📅 Repetir cada día</label>`;
-  const send=el('button','btn primary','Poner en el tablón'); send.onclick=()=>{
+  const send=el('button','btn primary','Poner en el tablón'); send.onclick=async()=>{
     const para=$('#a-para').value, tipo=$('#a-tipo').value, texto=$('#a-texto').value.trim(), premio=Math.max(1,+$('#a-premio').value||10), rec=$('#a-rec').checked;
     if(!texto){ toast('Escribe la tarea'); return; }
-    if(rec){ DB.recTasks=DB.recTasks||[]; DB.recTasks.push({rid:'r'+Date.now().toString(36),para,tipo,texto,premio}); DB.profiles.filter(Boolean).forEach(ensureRecurring); }
-    else { const targets=para==='todas'?DB.profiles.filter(Boolean).map(p=>p.id):[para];
-      targets.forEach(pid=>localMsgs().push({id:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),para:pid,tipo,texto,premio,estado:'nuevo'})); }
-    saveQuiet(); toast('📌 ¡Tarea puesta en el tablón!'); renderAlcalde();
+    if(await nuevaTarea(para,tipo,texto,premio,rec)){ toast(REMOTO?'📌 Tarea enviada: saldrá en el tablón cuando se conecte la tablet':'📌 ¡Tarea puesta en el tablón!'); renderAlcalde(); }
   };
   f.append(send); b2.append(f);
   // tareas diarias
   const b3=box('📅 Tareas de cada día');
   (DB.recTasks||[]).forEach((r,i)=>{ const pr=DB.profiles.find(p=>p&&p.id===r.para); const row=el('div','mitem'); row.innerHTML=`<div class="mi">${r.tipo==='deberes'?'📚':'🧹'}</div><div class="mt"><b>${r.para==='todas'?'Las dos':esc(pr?pr.name:'?')} · 🔘 ${r.premio}</b>${esc(r.texto)}</div>`;
-    const a=el('div','ma'); const d=el('button','btn','🗑️ Quitar'); d.onclick=()=>{ DB.recTasks.splice(i,1); saveQuiet(); renderAlcalde(); }; a.append(d); row.append(a); b3.append(row); });
+    const a=el('div','ma'); const d=el('button','btn','🗑️ Quitar'); d.onclick=async()=>{ if(await alcHaz('pueblo','recDel',{rid:r.rid},'Quitar la tarea diaria «'+r.texto+'»')) renderAlcalde(); }; a.append(d); row.append(a); b3.append(row); });
   if(!(DB.recTasks||[]).length) b3.append(el('div','counter','Ninguna. Marca «Repetir cada día» al crear una tarea.'));
   // informe
   const bi=box('📊 Informe para Claude');
@@ -101,28 +92,40 @@ function renderAlcalde(){
   // carta
   const b4=box('✉️ Escribir una carta');
   const fc=el('div'); fc.innerHTML=`<select class="inputline" id="c-para">${profileOptions()}</select><input class="inputline" id="c-texto" placeholder="¡Estoy muy orgulloso de ti!"><div class="lbl">Regalo (botones, opcional)</div><input class="inputline" id="c-premio" type="number" value="0" min="0" max="50">`;
-  const cs=el('button','btn primary','Enviar carta'); cs.onclick=()=>{ const para=$('#c-para').value, texto=$('#c-texto').value.trim(); if(!texto){ toast('Escribe la carta'); return; }
-    const targets=para==='todas'?DB.profiles.filter(Boolean).map(p=>p.id):[para];
-    targets.forEach(pid=>localMsgs().push({id:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),para:pid,tipo:'carta',texto,premio:+$('#c-premio').value||0,estado:'nuevo'}));
-    saveQuiet(); toast('✉️ ¡Carta en el buzón!'); renderAlcalde(); };
+  const cs=el('button','btn primary','Enviar carta'); cs.onclick=async()=>{ const para=$('#c-para').value, texto=$('#c-texto').value.trim(); if(!texto){ toast('Escribe la carta'); return; }
+    if(await alcHaz(para,'tarea',{tipo:'carta',texto,premio:Math.max(0,+$('#c-premio').value||0)},'Carta para '+nombreDe(para))){ toast(REMOTO?'✉️ Carta enviada: llegará al buzón cuando se conecte la tablet':'✉️ ¡Carta en el buzón!'); renderAlcalde(); } };
   fc.append(cs); b4.append(fc);
+  renderRetoBox(box);
   // foco de mates
   const b5=box('🥐 Mates: ¿qué están dando en clase?');
   DB.profiles.filter(Boolean).forEach(p=>{
     const row=el('div'); row.style.margin='6px 0';
     const opts=p.age<=7?[['','Variado'],['sumas','Sumas'],['restas','Restas'],['dinero','Dinero'],['contar','Contar']]:[['','Variado'],...[2,3,4,5,6,7,8,9].map(n=>['tabla:'+n,'Tabla del '+n]),['division','Repartos (dividir)'],['dinero','Dinero y cambio'],['fracciones','Fracciones'],['problemas','Problemas de dos pasos']];
     row.innerHTML=`<b>${esc(p.name)}</b> <select class="inputline">${opts.map(([v,t])=>`<option value="${v}" ${p.mathFocus===v?'selected':''}>${t}</option>`).join('')}</select>`;
-    row.querySelector('select').onchange=ev=>{ p.mathFocus=ev.target.value; p.updatedAt=Date.now(); saveQuiet(); toast('Guardado'); };
+    row.querySelector('select').onchange=async ev=>{ const v=ev.target.value; if(await alcHaz(p.id,'set',{campo:'mathFocus',valor:v},'Mates de '+p.name+': '+ev.target.selectedOptions[0].textContent)) toast('Guardado'); renderAlcalde(); };
     b5.append(row);
     if(p.age>7){ // escalera de cuentas: nivel central de la mezcla
       const lv=el('div','mitem'); lv.style.cssText='padding:8px 12px;align-items:center;margin:4px 0 10px';
       const L=panLvOf(p);
       lv.innerHTML=`<div class="mt"><b>Nivel de cuentas de ${esc(p.name)}: ${L+1} de ${PAN9_LEVELS.length}</b>${esc(PAN9_LEVELS[L].n)}<div class="counter">Cada turno: la mayoría de este nivel, alguno de repaso (🌱, 1 botón) y alguno de reto (🔥, 3 botones). Con «Variado».</div></div>`;
       const a=el('div','ma'); const mi=el('button','btn','–'), pl=el('button','btn','+');
-      const setL=d=>{ p.panLv=Math.max(0,Math.min(PAN9_LEVELS.length-1,panLvOf(p)+d)); p.updatedAt=Date.now(); saveQuiet(); renderAlcalde(); };
+      const setL=async d=>{ const v=Math.max(0,Math.min(PAN9_LEVELS.length-1,panLvOf(p)+d)); if(v===panLvOf(p)) return; if(await alcHaz(p.id,'set',{campo:'panLv',valor:v},'Nivel de cuentas de '+p.name+': '+(v+1))) renderAlcalde(); };
       mi.onclick=()=>setL(-1); pl.onclick=()=>setL(1); a.append(mi,pl); lv.append(a); b5.append(lv);
     }
   });
+  renderCodesBox(V,box);
+  if(!REMOTO) renderInstalacionBox(box);
+  if(!REMOTO){ const bd=box('📱 Desde tu móvil o tu ordenador');
+    bd.append(el('div','counter','Abre esta dirección y entra con la clave de la familia y tu PIN: verás el pueblo de cada una, sus fichas y el tablón, y podrás poner tareas, cartas y ajustes. Llegan a esta tablet cuando se conecta.'));
+    bd.append(el('div','counter','<b>'+esc(location.origin+location.pathname)+'?alcalde</b>')); }
+  renderPaquetesBox(box);
+  const bn=box('🌙 Día y noche');
+  bn.append(el('div','counter','Normalmente el pueblo sigue la hora real. Aquí puedes dejarlo fijo de día o de noche.'));
+  const rn=el('div','choice'); rn.style.cssText='justify-content:flex-start;margin-top:8px';
+  [['auto','🕐 Según la hora'],['dia','☀️ Siempre de día'],['noche','🌙 Siempre de noche']].forEach(([k,t])=>{ const b=el('button',(DB.dayMode||'auto')===k?'sel':'',t); b.onclick=async()=>{ if(await alcHaz('pueblo','set',{campo:'dayMode',valor:k},'Día y noche: '+t)){ setDayMode(k); renderAlcalde(); } }; rn.append(b); });
+  bn.append(rn);
+  if(REMOTO){ renderInstalacionBox(box); const bs=box('🔐 Este aparato'); bs.append(el('div','counter','Para que nadie más entre como alcalde desde aquí, cierra la sesión. Tendrás que volver a escribir la clave y el PIN.'));
+    const bx=el('button','btn','🚪 Cerrar la sesión'); bx.style.marginTop='8px'; bx.onclick=remSalir; bs.append(bx); return; }
   const b7=box('🧹 Empezar de cero');
   b7.append(el('div','counter','Borra las partidas de esta tablet (jugadoras, progreso y tareas). Úsalo antes de que tus hijas empiecen a jugar.'));
   const rz=el('button','btn','🧹 Reiniciar todo el juego'); rz.style.marginTop='8px'; rz.onclick=async()=>{ const a=await say({center:true,face:'⚠️',name:'¿Reiniciar todo?',text:'Se borrarán las dos partidas, las tareas y los mensajes de esta tablet. No se puede deshacer.',buttons:[{t:'No'},{t:'Sí, borrar todo',cls:'primary'}],speak:false}); if(a!==1) return;
@@ -132,9 +135,19 @@ function renderAlcalde(){
   const b6=box('🔐 Seguridad');
   const cp=el('button','btn','Cambiar PIN'); cp.onclick=()=>{ try{ localStorage.removeItem('villaovillo.pinLocal'); }catch(e){} toast('Ahora crea un PIN nuevo'); openAlcalde(); }; b6.append(cp);
 }
-function validateMsg(m){
-  if(!String(m.id).startsWith('L')){ toast('Esta tarea llegó desde la nube: valídala desde el panel del móvil.'); return; }
-  m.estado='validada';
-  if(!String(m.id).startsWith('L')&&cloudReady()) api('msgState',{id:m.id,estado:'validada',pin:''}).catch(()=>{});
-  saveQuiet(); toast('✅ Validada: ya puede recoger su premio');
+function nombreDe(para){ return para==='todas'?'las dos':((DB.profiles.find(p=>p&&p.id===para)||{}).name||'?'); }
+/* Tarea nueva (desde el modo alcalde o desde el tablón): de una vez o de cada día */
+function nuevaTarea(para,tipo,texto,premio,rec){
+  return rec ? alcHaz('pueblo','recAdd',{para,tipo,texto,premio},'Tarea de cada día para '+nombreDe(para)+': «'+texto+'»')
+             : alcHaz(para,'tarea',{tipo,texto,premio},'Tarea para '+nombreDe(para)+': «'+texto+'»');
+}
+async function validateMsg(m){
+  if(!String(m.id).startsWith('L')){ // mensajes antiguos del panel, guardados en la hoja «Mensajes»
+    if(!REMOTO){ toast('Esta tarea llegó desde la nube: valídala desde tu móvil (alcalde a distancia).'); return false; }
+    try{ await api('msgState',{id:m.id,estado:'validada',pin:remPin()}); m.estado='validada'; saveQuiet(); toast('✅ Validada: ya puede recoger su premio'); return true; }
+    catch(e){ toast('⚠️ Sin conexión: no se ha validado'); return false; }
+  }
+  const ok=await alcHaz('pueblo','validar',{id:m.id},'Validar «'+(m.texto||'')+'» de '+nombreDe(m.para));
+  if(ok) toast(REMOTO?'✅ Validada: le llegará el premio cuando se conecte la tablet':'✅ Validada: ya puede recoger su premio');
+  return ok;
 }

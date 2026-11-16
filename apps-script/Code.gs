@@ -5,12 +5,24 @@
 
 // ====== CAMBIA ESTOS DOS VALORES ======
 const CLAVE = 'cambia-esta-clave';   // clave de la familia: la escribirás una vez en la tablet y en tu móvil
-const PIN   = '1234';                // PIN del panel del alcalde (solo tú)
+const PIN   = '1234';                // PIN del alcalde (solo tú)
 // ======================================
+// La primera vez que el script recibe tus valores, los guarda aparte (Propiedades del script).
+// Así, en las próximas actualizaciones puedes pegar el código nuevo tal cual, sin volver a escribirlos.
+function claves_() {
+  const pr = PropertiesService.getScriptProperties();
+  if (CLAVE !== 'cambia-esta-clave') {
+    if (pr.getProperty('CLAVE') !== CLAVE || pr.getProperty('PIN') !== PIN) { pr.setProperty('CLAVE', CLAVE); pr.setProperty('PIN', PIN); }
+    return {clave: CLAVE, pin: PIN};
+  }
+  return {clave: pr.getProperty('CLAVE') || CLAVE, pin: pr.getProperty('PIN') || PIN};
+}
 
 const H_PART = ['id','nombre','actualizado','nivel','encargos','estrellas','botones','estado'];
 const H_HIST = ['fecha','nombre','evento','nivel','encargos','estrellas','botones'];
 const H_MSG  = ['id','fecha','para','nombre','tipo','texto','premio','estado','extra','actualizado'];
+// Órdenes del alcalde a distancia: el móvil las deja aquí y la tablet las aplica a la partida y las marca como «aplicada».
+const H_ORD  = ['id','fecha','para','tipo','dato','estado','actualizado'];
 
 function doGet() {
   return out_({ok: true, info: 'Villaovillo funcionando'});
@@ -20,15 +32,16 @@ function doGet() {
 function preparar() {
   const f = carpeta_();
   subcarpeta_(f, 'copias');
-  hoja_('Partidas', H_PART); hoja_('Mensajes', H_MSG); hoja_('Historial', H_HIST);
+  hoja_('Partidas', H_PART); hoja_('Mensajes', H_MSG); hoja_('Historial', H_HIST); hoja_('Órdenes', H_ORD);
   Logger.log('Listo. Carpeta: ' + f.getUrl());
 }
 
 function doPost(e) {
   let q;
   try { q = JSON.parse(e.postData.contents); } catch (x) { return out_({ok: false, error: 'formato'}); }
-  if (q.key !== CLAVE) return out_({ok: false, error: 'clave'});
-  const papa = (q.pin === PIN);
+  const C = claves_();
+  if (q.key !== C.clave) return out_({ok: false, error: 'clave'});
+  const papa = (String(q.pin || '') === String(C.pin));
   const lock = LockService.getScriptLock();
   lock.waitLock(15000);
   try {
@@ -37,7 +50,10 @@ function doPost(e) {
       case 'load':     return out_(load_(papa));
       case 'msgState': return out_(msgState_(q, papa));
       case 'addMsg':   return papa ? out_(addMsg_(q)) : out_({ok: false, error: 'pin'});
-      case 'checkPin': return out_(papa ? {ok: true} : {ok: false, error: 'pin'});
+      case 'checkPin': return out_(papa ? {ok: true, version: 2} : {ok: false, error: 'pin'});
+      case 'pueblo':   return out_(guardaPueblo_(q));
+      case 'addOrden': return papa ? out_(addOrden_(q)) : out_({ok: false, error: 'pin'});
+      case 'ordenHecha': return out_(ordenHecha_(q));
       default:         return out_({ok: false, error: 'accion'});
     }
   } catch (err) {
@@ -132,11 +148,17 @@ function load_(papa) {
     .filter(r => r[0] && r[7] !== 'borrada')
     .map(r => ({id: r[0], fecha: r[1], para: r[2], nombre: r[3], tipo: r[4], texto: r[5], premio: Number(r[6]) || 0,
                 estado: r[7], extra: r[8] ? safeJson_(r[8]) : null}));
-  const res = {ok: true, profiles: part, msgs: msgs};
+  const res = {ok: true, profiles: part, msgs: msgs, version: 2};
+  const pf = carpeta_().getFilesByName('pueblo.json');
+  if (pf.hasNext()) res.pueblo = safeJson_(pf.next().getBlob().getDataAsString());
+  const ords = hoja_('Órdenes', H_ORD).getDataRange().getValues().slice(1).filter(r => r[0])
+    .map(r => ({id: r[0], fecha: r[1], para: r[2], tipo: r[3], dato: safeJson_(r[4]), estado: r[5], actualizado: r[6]}));
+  res.ordenes = ords.filter(o => o.estado === 'pendiente');
   if (papa) {
     const h = hoja_('Historial', H_HIST).getDataRange().getValues().slice(1);
     res.historial = h.slice(-300).map(r => ({fecha: r[0], nombre: r[1], evento: r[2]}));
     res.papa = true;
+    res.ordenesHechas = ords.filter(o => o.estado !== 'pendiente').slice(-40);
   }
   return res;
 }
@@ -175,4 +197,35 @@ function msgState_(q, papa) {
     return {ok: true, estado: to};
   }
   return {ok: false, error: 'no existe'};
+}
+
+/* ---- Lo común del pueblo (tablón, tareas de cada día, ajustes) ----
+   Lo envía la tablet; el móvil del alcalde solo lo lee. */
+function guardaPueblo_(q) {
+  if (!q.pueblo) return {ok: false, error: 'pueblo'};
+  escribe_(carpeta_(), 'pueblo.json', JSON.stringify(q.pueblo));
+  return {ok: true};
+}
+
+/* ---- Órdenes del alcalde a distancia ----
+   Nunca cambian una partida aquí: solo se apuntan. La tablet las aplica (si están permitidas) y avisa. */
+function addOrden_(q) {
+  const o = q.orden || {};
+  if (!o.para || !o.tipo) return {ok: false, error: 'orden'};
+  const id = 'o' + Date.now() + Math.floor(Math.random() * 1000);
+  hoja_('Órdenes', H_ORD).appendRow([id, new Date(), o.para, o.tipo, JSON.stringify(o.dato || {}), 'pendiente', new Date()]);
+  return {ok: true, id: id};
+}
+function ordenHecha_(q) {
+  const res = q.res || [];
+  if (!res.length) return {ok: true};
+  const s = hoja_('Órdenes', H_ORD);
+  const data = s.getDataRange().getValues();
+  const est = {};
+  res.forEach(r => { if (r && r.id && (r.estado === 'aplicada' || r.estado === 'rechazada')) est[r.id] = r.estado; });
+  for (let i = 1; i < data.length; i++) {
+    const e = est[data[i][0]];
+    if (e && data[i][5] === 'pendiente') { s.getRange(i + 1, 6, 1, 2).setValues([[e, new Date()]]); }
+  }
+  return {ok: true};
 }

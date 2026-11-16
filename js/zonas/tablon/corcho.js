@@ -27,9 +27,9 @@ function boardCards(){
         const B=(t,cls,fn)=>{ const b=el('button','btn '+(cls||''),t); b.onclick=fn; a.append(b); };
         const again=()=>{ closePaper(); renderBoard(); };
         if(alc){
-          if(m.estado==='hecha') B('✅ Validar','green',()=>{ validateMsg(m); again(); });
+          if(m.estado==='hecha') B('✅ Validar','green',async()=>{ await validateMsg(m); again(); });
           else a.append(el('span','pstate',m.estado==='nuevo'?'Sin empezar':m.estado==='aceptada'?'Aceptada':m.estado==='validada'?'Validada · falta recoger':''));
-          if(String(m.id).startsWith('L')) B('🗑️ Quitar','',()=>{ m.estado='borrada'; saveQuiet(); again(); });
+          if(String(m.id).startsWith('L')) B('🗑️ Quitar','',async()=>{ if(await alcHaz('pueblo','quitar',{id:m.id},'Quitar la tarea «'+(m.texto||'')+'»')) again(); });
         } else {
           if(m.estado==='nuevo') B('✋ Aceptar','primary',()=>{ setMsgState(m,'aceptada'); beep(700,0.08,'triangle'); toast('📌 ¡Tarea aceptada! Cuando la termines, márcala.'); again(); });
           else if(m.estado==='aceptada') B('✅ ¡Ya la hice!','green',()=>{ closePaper(); doneTask(m).then(renderBoard); });
@@ -43,7 +43,7 @@ function boardCards(){
     const st=(String(n.text).match(/\p{Extended_Pictographic}/u)||['✏️'])[0];
     cards.push({key:'n'+(n.id||n.t), tipo:'nota', estilo:'posit', color:n.col||PAPER_COLS[i%PAPER_COLS.length], emoji:st, titulo:'Nota de '+n.from,
       texto:n.text, firma:n.from+' · '+dt.getDate()+'/'+(dt.getMonth()+1), prio:60-i, leer:n.from+' dice: '+n.text,
-      acciones:(alc||n.fromId===me)?(a=>{ const x=el('button','btn','🗑️ Quitar la nota'); x.onclick=()=>{ const k=corkMsgs().indexOf(n); if(k>=0) corkMsgs().splice(k,1); saveQuiet(); closePaper(); renderBoard(); }; a.append(x); }):null});
+      acciones:(alc||n.fromId===me)?(a=>{ const x=el('button','btn','🗑️ Quitar la nota'); x.onclick=async()=>{ if(alc){ if(!(await alcHaz('pueblo','notaDel',{id:n.id},'Quitar la nota «'+n.text+'»'))) return; } else { const k=corkMsgs().indexOf(n); if(k>=0) corkMsgs().splice(k,1); saveQuiet(); } closePaper(); renderBoard(); }; a.append(x); }):null});
   });
   (DB.news||[]).slice(-2).reverse().forEach((n,i)=>cards.push({key:'g'+n.t, tipo:'logro', estilo:'periodico', emoji:n.e, titulo:'¡Bien por '+n.name+'!',
     texto:n.name+' '+n.txt+'.', firma:'La Gaceta de Villaovillo · Última hora', prio:50-i}));
@@ -110,9 +110,10 @@ async function corkNewNote(){
   if(r!==1) return;
   const t=(document.getElementById('ck-t').value||'').trim(); if(!t) return;
   const col=(document.querySelector('#ck-col .sel')||{dataset:{c:PAPER_COLS[0]}}).dataset.c;
-  corkMsgs().push({id:'k'+Date.now().toString(36),from:alc?'Papá, el alcalde':p.name,fromId:alc?'alcalde':p.id,text:t,t:Date.now(),col});
-  if(corkMsgs().length>30) corkMsgs().splice(0,corkMsgs().length-30);
-  saveQuiet(); fanfare(); toast('📌 ¡Nota pinchada en el tablón!'); renderBoard();
+  const n={id:'k'+Date.now().toString(36),from:alc?'Papá, el alcalde':p.name,fromId:alc?'alcalde':p.id,text:t,t:Date.now(),col};
+  if(alc){ if(!(await alcHaz('pueblo','nota',{n},'Nota en el tablón: «'+t+'»'))) return; }
+  else { corkMsgs().push(n); if(corkMsgs().length>30) corkMsgs().splice(0,corkMsgs().length-30); saveQuiet(); }
+  fanfare(); toast('📌 ¡Nota pinchada en el tablón!'); renderBoard();
 }
 document.addEventListener('click',ev=>{ const s=ev.target.closest('#ck-st button'); if(s){ const ta=document.getElementById('ck-t'); if(ta) ta.value=(ta.value+' '+s.textContent).trim(); }
   const c=ev.target.closest('#ck-col .dot'); if(c){ document.querySelectorAll('#ck-col .dot').forEach(x=>x.classList.remove('sel')); c.classList.add('sel'); } });
@@ -126,8 +127,7 @@ async function corkNewTask(){
   if(r!==1) return;
   const para=$('#ct-para').value, tipo=$('#ct-tipo').value, texto=$('#ct-texto').value.trim(), premio=Math.max(1,+$('#ct-premio').value||10), rec=$('#ct-rec').checked;
   if(!texto){ toast('Escribe la tarea'); return; }
-  if(rec){ DB.recTasks=DB.recTasks||[]; DB.recTasks.push({rid:'r'+Date.now().toString(36),para,tipo,texto,premio}); DB.profiles.filter(Boolean).forEach(ensureRecurring); }
-  else { const targets=para==='todas'?DB.profiles.filter(Boolean).map(q=>q.id):[para]; targets.forEach(pid=>localMsgs().push({id:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),para:pid,tipo,texto,premio,estado:'nuevo'})); }
-  saveQuiet(); toast('📌 ¡Tarea puesta en el tablón!'); renderBoard();
+  if(!(await nuevaTarea(para,tipo,texto,premio,rec))) return;
+  toast(REMOTO?'📌 Tarea enviada: saldrá en la tablet cuando se conecte':'📌 ¡Tarea puesta en el tablón!'); renderBoard();
 }
 addEventListener('resize',()=>{ if(curScreen==='board') renderBoard(); });

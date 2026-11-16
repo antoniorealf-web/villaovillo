@@ -3,8 +3,8 @@
    NUBE (Google Apps Script)
    ========================================================= */
 let cloudStatus='off', cloudTimer=null;
-function cloudKey(){ try{ return localStorage.getItem('villaovillo.clave')||''; }catch(e){ return ''; } }
-function cloudReady(){ return !TEST && !!(CFG.scriptUrl && cloudKey()); }
+function cloudKey(){ try{ return localStorage.getItem(REMOTO?'villaovillo.alcaldeClave':'villaovillo.clave')||''; }catch(e){ return ''; } }
+function cloudReady(){ return !TEST && !REMOTO && !!(CFG.scriptUrl && cloudKey()); } // el alcalde a distancia nunca sincroniza partidas
 async function api(action,data={}){
   const r=await fetch(CFG.scriptUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action,key:cloudKey()},data))});
   const j=await r.json(); if(!j.ok) throw new Error(j.error||'error'); return j;
@@ -14,7 +14,7 @@ function scheduleCloud(){ if(!cloudReady()) return; clearTimeout(cloudTimer); cl
 async function pushCloud(){
   const p=P(); if(!p||!cloudReady()) return;
   const ev=lastEvent; setCloud('sync');
-  try{ await api('save',{profile:p,sum:summary(p),evento:ev}); if(lastEvent===ev) lastEvent=''; else lastEvent=lastEvent.slice(ev.length).replace(/^ · /,''); setCloud('ok'); await flushPending(); }
+  try{ await api('save',{profile:p,sum:summary(p),evento:ev}); if(lastEvent===ev) lastEvent=''; else lastEvent=lastEvent.slice(ev.length).replace(/^ · /,''); setCloud('ok'); await flushPending(); await pushPueblo(); }
   catch(e){ setCloud(e.message==='clave'?'clave':'err'); }
 }
 async function flushPending(){
@@ -23,9 +23,10 @@ async function flushPending(){
   }
   saveQuiet();
 }
+let cloudBusy=false;
 async function cloudPull(mergeProfiles=true){
-  if(!cloudReady()) return false;
-  setCloud('sync');
+  if(!cloudReady()||cloudBusy) return false;
+  cloudBusy=true; setCloud('sync');
   try{
     const j=await api('load');
     if(mergeProfiles){
@@ -37,10 +38,22 @@ async function cloudPull(mergeProfiles=true){
     }
     DB.msgs=(j.msgs||[]);
     for(const p of DB.profiles){ if(!p) continue; for(const [id,est] of Object.entries(p.pendingMsg||{})){ const m=DB.msgs.find(m=>m.id===id); if(m) m.estado=est; } }
-    saveQuiet(); setCloud('ok'); flushPending();
+    saveQuiet(); setCloud('ok'); await flushPending();
+    if(j.ordenes&&j.ordenes.length) await aplicaOrdenesNube(j.ordenes);
+    await pushPueblo();
     if(curScreen==='village') updateHUD(); if(curScreen==='mail') renderMail();
     return true;
   }catch(e){ setCloud(e.message==='clave'?'clave':'err'); return false; }
+  finally{ cloudBusy=false; }
+}
+/* Lo común del pueblo (tablón, tareas, ajustes) se sube para que papá lo vea desde el móvil. Solo si ha cambiado. */
+let puebloSubido='';
+function puebloDatos(){ return {news:(DB.news||[]).slice(-40),boardMsgs:DB.boardMsgs||[],recTasks:DB.recTasks||[],localMsgs:(DB.localMsgs||[]).filter(m=>!['borrada','caducada'].includes(m.estado)).slice(-120),dayMode:DB.dayMode||'auto',paqForce:DB.paqForce||{},paq:DB.paq||{},en:Date.now()}; }
+async function pushPueblo(){
+  if(!cloudReady()) return true;
+  const d=puebloDatos(), h=JSON.stringify(Object.assign({},d,{en:0}));
+  if(h===puebloSubido) return true;
+  try{ await api('pueblo',{pueblo:d}); puebloSubido=h; return true; }catch(e){ return false; }
 }
 function setCloud(s){ cloudStatus=s; const c=$('#cloudchip'); if(c) c.innerHTML=cloudLabel(); }
 function cloudLabel(){

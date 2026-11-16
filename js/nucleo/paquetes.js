@@ -86,7 +86,7 @@ function renderPaquetesBox(box){
     r.innerHTML=`<div class="mi">${def.emoji||'📦'}</div><div class="mt"><b>${esc(def.nombre||def.id)}</b> · ${on?'🟢 activo':'⚪ apagado'}<div class="counter">${esc(paqCuandoTexto(def))}${extra?' · '+esc(extra):''}</div>${PAQ_ERR[def.id]?`<div class="counter" style="color:#b4432f">⚠️ ${esc(PAQ_ERR[def.id])}</div>`:''}</div>`;
     const a=el('div','ma'); const sel=el('select','inputline'); sel.style.cssText='width:auto;font-size:16px;min-height:42px';
     [['auto','Automático'],['on','Encendido'],['off','Apagado']].forEach(([v,tx])=>{ const o=document.createElement('option'); o.value=v; o.textContent=tx; if((f===null&&v==='auto')||(f===true&&v==='on')||(f===false&&v==='off')) o.selected=true; sel.append(o); });
-    sel.onchange=()=>{ setPaqForzado(def.id,sel.value==='auto'?null:sel.value==='on'); renderAlcalde(); };
+    sel.onchange=async()=>{ const v=sel.value==='auto'?null:sel.value==='on'; await alcHaz('pueblo','set',{campo:'paqForce.'+def.id,valor:v},(def.nombre||def.id)+': '+sel.selectedOptions[0].textContent); renderAlcalde(); };
     a.append(sel); r.append(a); b.append(r);
   });
   Object.keys(PAQ_ERR).filter(id=>!PAQUETES.some(d=>d.id===id)).forEach(id=>b.append(el('div','counter','⚠️ No se pudo cargar el paquete «'+id+'»: '+PAQ_ERR[id])));

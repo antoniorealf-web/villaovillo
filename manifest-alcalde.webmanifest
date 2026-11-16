@@ -1,0 +1,33 @@
+{
+  "name": "Villaovillo · Alcalde",
+  "short_name": "Alcalde",
+  "description": "El alcalde de Villaovillo: ver el pueblo de las niñas, poner tareas y ajustes desde el móvil.",
+  "lang": "es-ES",
+  "start_url": "./?alcalde",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6eedf",
+  "theme_color": "#f6e3c4",
+  "icons": [
+    {
+      "src": "iconos/icono-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "iconos/icono-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "iconos/icono-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "./?alcalde"
+}

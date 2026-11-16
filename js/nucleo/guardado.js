@@ -3,7 +3,10 @@
    GUARDADO
    ========================================================= */
 const TEST = (()=>{ try{ return new URLSearchParams(location.search).has('prueba'); }catch(e){ return false; } })();
-const KEY = TEST ? 'villaovillo.prueba' : 'villaovillo.v1';
+/* ?alcalde: «alcalde a distancia» (el móvil o el ordenador de papá). Ve las partidas de la nube y manda órdenes;
+   nunca escribe una partida. Guarda su copia de lo visto aparte, en 'villaovillo.alcalde'. */
+const REMOTO = !TEST && (()=>{ try{ return new URLSearchParams(location.search).has('alcalde'); }catch(e){ return false; } })();
+const KEY = TEST ? 'villaovillo.prueba' : REMOTO ? 'villaovillo.alcalde' : 'villaovillo.v1';
 const CFG = window.VILLA_CONFIG || {scriptUrl:''};
 let DB = {profiles:[null,null], cur:0, dayOffset:0, msgs:[]};
 let VISIT=null; // paseo del alcalde: {from: índice de la niña activa antes de entrar}
@@ -42,7 +45,7 @@ function writeDB(){
 }
 let lastEvent='';
 function save(evento){
-  if(VISIT){ saveQuiet(); return; }
+  if(VISIT||REMOTO){ saveQuiet(); return; }
   const p=P(); if(p){ p.updatedAt=Date.now(); if(evento) lastEvent = lastEvent? lastEvent+' · '+evento : evento; }
   writeDB();
   if(p) scheduleCloud();

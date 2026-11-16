@@ -34,7 +34,7 @@ html2 = re.sub(r'<meta name="villa-version" content="[^"]*">', f'<meta name="vil
 open(INDEX, 'w', encoding='utf-8').write(html2)
 
 # Lista de piezas que sw.js guarda en la tablet para jugar sin internet
-piezas = ['./', 'index.html', 'panel.html', 'manifest.webmanifest']
+piezas = ['./', 'index.html', 'panel.html', 'manifest.webmanifest', 'manifest-alcalde.webmanifest']
 piezas += re.findall(r'(?:src|href)="([^"]+\?v=[^"]+)"', html2)
 for carpeta, ext in (('iconos', '.png'), ('fuentes', '.woff2')):
     piezas += sorted(f'{carpeta}/{f}' for f in os.listdir(os.path.join(RAIZ, carpeta)) if f.endswith(ext))

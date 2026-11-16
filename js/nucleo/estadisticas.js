@@ -31,5 +31,5 @@ function startPlayClock(){
     const d=today(); p.play[d]=(p.play[d]||0)+15; touchLog(p); p.updatedAt=Date.now(); saveQuiet();
     if(++playTicks%20===0) scheduleCloud();
   },15000);
-  setInterval(()=>{ if(P()&&curScreen!=='profiles') cloudPull('others'); },60000);
+  setInterval(()=>{ if(VISIT||document.hidden) return; if(P()&&curScreen!=='profiles') cloudPull('others'); else if(curScreen==='profiles') cloudPull(false); },60000); // también recoge las órdenes del alcalde a distancia
 }

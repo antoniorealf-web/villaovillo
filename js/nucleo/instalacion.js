@@ -11,7 +11,7 @@ function esInstalado(){ try{ return matchMedia('(display-mode: standalone)').mat
 function swPonerVersionNueva(){ if(SW.reg&&SW.reg.waiting){ SW.reg.waiting.postMessage('actualizar'); return true; } return false; }
 function swTick(){ // pone la versión nueva si está descargada y nadie está jugando
   if(!SW.reg||!SW.reg.waiting||!SW.hadCtrl) return;
-  if(curScreen!=='profiles'||document.querySelector('#dlg.on')) return;
+  if(!(curScreen==='profiles'||(REMOTO&&curScreen==='alcalde'))||document.querySelector('#dlg.on')) return;
   swPonerVersionNueva();
 }
 async function swInit(){
