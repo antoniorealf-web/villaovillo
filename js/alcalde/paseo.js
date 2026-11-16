@@ -4,23 +4,29 @@
    ========================================================= */
 const MATH_NAMES={suma3:'Sumas de 3 cifras',resta2:'Restas de 2 cifras llevando',mult21:'2 cifras × 1',resta3a:'Restas de 3 cifras (una llevada)',mult21b:'2 cifras × 1 llevando',resta3:'Restas de 3 cifras llevando',mult31:'3 cifras × 1',resta0:'Restas con ceros',mult41:'4 cifras × 1',dospasos3:'Dos pasos (grandes)',mult22:'Multiplicar por 2 cifras',resto:'Repartos con resto',contar:'Contar',sumas:'Sumas',restas:'Restas',dinero:'Dinero',multi:'Multiplicar',suma100:'Sumas grandes',receta:'Recetas (doble y mitad)',reparto:'Repartos',cambio:'Cambio',dospasos:'Problemas de dos pasos',fraccion:'Fracciones'};
 function girlsIdx(){ return DB.profiles.map((p,i)=>p?i:-1).filter(i=>i>=0); }
+/* El pueblo es uno solo: se pasea sin elegir niña. Solo al mirar algo que es de cada una (sus encargos, sus botones)
+   se pregunta de quién (elegirNina) o se enseñan las dos (fichas). */
 function startVisit(i){
   const g=girlsIdx(); if(!g.length){ toast('Todavía no hay jugadoras'); return; }
   if(!VISIT) VISIT={from:DB.cur};
   DB.cur=g.includes(i)?i:g[0];
   player.placed=false; cam.ok=false; setupNPCs();
   $('#scr-village').classList.add('visit'); renderVisitBar(); show('village');
-  toast('🎩 Pueblo de '+P().name+': toca los edificios para curiosear',2200);
+  toast('🎩 Toca los edificios para curiosear',2200);
 }
-function switchVisit(i){ DB.cur=i; setupNPCs(); renderVisitBar(); updateHUD(); toast('Pueblo de '+P().name); }
 function endVisit(){
   if(!VISIT) return; DB.cur=VISIT.from; VISIT=null; player.placed=false; cam.ok=false;
   $('#scr-village').classList.remove('visit'); saveQuiet(); renderAlcalde(); show('alcalde');
 }
+async function elegirNina(pregunta){
+  const g=girlsIdx(); if(g.length<2) return g.length?g[0]:null;
+  const r=await say({center:true,face:'🎩',name:pregunta,speak:false,buttons:[{t:'Cancelar'}].concat(g.map(i=>({t:DB.profiles[i].name,cls:'primary'})))});
+  return r>=1?g[r-1]:null;
+}
+async function verEncargos(){ const i=await elegirNina('¿Los encargos de quién?'); if(i==null) return; DB.cur=i; openVTaller(); }
 function renderVisitBar(){
   const nb=$('#vb-night'); if(nb) nb.textContent=nightLevel()>0.5?'☀️':'🌙';
-  const w=$('#vb-who'); w.innerHTML='';
-  girlsIdx().forEach(i=>{ const p=DB.profiles[i]; const b=el('button',i===DB.cur?'sel':'',`<span class="dot" style="width:18px;height:18px;background:${p.color}"></span>${esc(p.name)}`); b.onclick=()=>switchVisit(i); w.append(b); });
+  const w=$('#vb-who'); if(w) w.innerHTML=''; // ya no se elige niña para pasear: el pueblo es de las dos
 }
 $('#vb-map').onclick=()=>openMap();
 $('#vb-ficha').onclick=()=>openFicha();
@@ -40,12 +46,12 @@ function visitTap(x,y){
   const p=P();
   for(const n of npcs){ if(Math.hypot(n.x-x,n.y-38-y)<44){ const info=NPCS[n.k]; npcVoice(n.k); say({face:info.e,name:info.n,text:`¡Hola, señor alcalde! ${pick(info.hi)}`,speak:false}); return; } }
   const go=(door,fn)=>{ tapFx={x:door[0],y:door[1],t:0}; if(andarA(player,door[0],door[1])<5){ player.act=null; fn(); } else player.act=fn; };
-  if(inRect(x,y,B.taller)) return go(B.taller.door,openVTaller);
+  if(inRect(x,y,B.taller)) return go(B.taller.door,verEncargos);
   if(inRect(x,y,{x:B.tablon.x-16,y:B.tablon.y-10,w:B.tablon.w+32,h:B.tablon.h+10})) return go(B.tablon.door,openBoard);
   if(inRect(x,y,B.ayto)) return go(B.ayto.door,openFicha);
   if(inRect(x,y,B.panaderia)) return go(B.panaderia.door,()=>openFicha('pan'));
   if(inRect(x,y,B.biblio)) return go(B.biblio.door,()=>openFicha('bib'));
-  if(inRect(x,y,B.tienda)) return go(B.tienda.door,()=>say({face:'🐔',name:NPCS.coco.n,text:`¡Hola, alcalde! ${p.name} tiene ${p.coins} botones para gastar aquí.`,speak:false}));
+  if(inRect(x,y,B.tienda)) return go(B.tienda.door,()=>say({face:'🐔',name:NPCS.coco.n,text:'¡Hola, alcalde! '+DB.profiles.filter(Boolean).map(q=>q.name+' tiene '+q.coins+' botones').join(' y ')+' para gastar aquí.',speak:false}));
   if(inRect(x,y,{x:B.tend.x,y:B.tend.y-20,w:B.tend.w,h:B.tend.h+40})) return go(B.tend.door,()=>openBook('telas'));
   for(const [k,i] of [['A',0],['B',1]]){ if(inRect(x,y,B['house'+k])||inRect(x,y,B['plot'+k])) return go(B['house'+k].door,()=>{ if(DB.profiles[i]) openHouse(i); else toast('Casa vacía'); }); }
   if(x>=1790&&x<=1990&&y>=740&&y<=890) return go([1830,850],()=>say({face:'🦦',name:NPCS.lia.n,text:`El puente va por ${bridgeTotal()} de ${BRIDGE_GOAL} botones. ${DB.profiles.filter(Boolean).map(q=>q.name+' ha puesto '+(q.bridge||0)).join(' y ')}.`,speak:false}));
@@ -144,8 +150,8 @@ function fichaCard(p,i,focus){
   const acts=el('div','fchips');
   const B1=(t,fn)=>{ const b=el('button','btn',t); b.onclick=fn; acts.append(b); };
   B1('🏡 Su casa',()=>{ if(!VISIT) startVisit(i); openHouse(i); });
-  B1('🧶 Sus encargos',()=>{ if(!VISIT) startVisit(i); else DB.cur=i; renderVisitBar(); openVTaller(); });
-  B1('🚶 Su pueblo',()=>startVisit(i));
+  B1('🧶 Sus encargos',()=>{ if(!VISIT) startVisit(i); else DB.cur=i; openVTaller(); });
+  B1('🚶 Pasear por el pueblo',()=>startVisit(i));
   c.append(acts);
   return c;
 }

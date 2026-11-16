@@ -166,7 +166,9 @@ function drawNPC(c,n){
   if(n.k==='alcalde'){ c.font="800 13px 'Baloo 2',sans-serif"; c.fillStyle='#5a3d22'; c.textAlign='center'; c.textBaseline='middle'; c.fillText('Alcalde',n.x,n.y+14); }
   if(hasEncargo(n.k)){ const by=n.y+top+Math.sin(tGlobal*4)*2; c.fillStyle='#fffaf1'; c.beginPath(); c.arc(n.x+16,by,11,0,Math.PI*2); c.fill(); c.strokeStyle='#f2b632'; c.lineWidth=3; c.stroke(); c.fillStyle='#e4574f'; c.font="800 16px 'Baloo 2',sans-serif"; c.textAlign='center'; c.textBaseline='middle'; c.fillText('!',n.x+16,by+1); }
 }
-function hasEncargo(k){ const p=P(); if(k==='alcalde') return mailCount()+taskCount()>0; if(!p.daily) return false; return p.daily.list.some(x=>!p.daily.done[x.id] && (encOf(p,x.id)||{}).npc===k); }
+function hasEncargo(k){ if(VISIT){ if(k==='alcalde') return false; return DB.profiles.filter(Boolean).some(p=>encargoDe(p,k)); } // en el paseo: si alguna de las dos tiene uno
+  const p=P(); if(k==='alcalde') return mailCount()+taskCount()>0; return encargoDe(p,k); }
+function encargoDe(p,k){ if(!p||!p.daily) return false; return p.daily.list.some(x=>!p.daily.done[x.id] && (encOf(p,x.id)||{}).npc===k); }
 
 // --- toques en el pueblo
 vcanvas.addEventListener('pointerdown',ev=>{

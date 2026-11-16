@@ -52,10 +52,10 @@ function renderAlcalde(){
   // supervisión
   if(REMOTO){ renderRemotoBox(V,box); renderNovedadesBox(box); }
   const b0=box(VISIT?'🚶 Estás paseando por el pueblo':'👀 Ver el juego por dentro');
-  b0.append(el('div','counter',VISIT?'Vuelve al pueblo cuando quieras o sal del paseo.':'Entra al pueblo como alcalde: mira sus casas, sus encargos y cómo crece el pueblo de cada una, sin tocar su partida.'));
+  b0.append(el('div','counter',VISIT?'Vuelve al pueblo cuando quieras o sal del paseo.':'Pasea por el pueblo de las dos: entra en sus casas, mira los encargos de cada una y cómo crece el pueblo, sin tocar sus partidas.'));
   const r0=el('div'); r0.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-top:8px';
   if(VISIT){ const bv=el('button','btn primary','🚶 Volver al pueblo'); bv.onclick=()=>show('village'); r0.append(bv); const bx=el('button','btn','🚪 Terminar el paseo'); bx.onclick=endVisit; r0.append(bx); }
-  else girlsIdx().forEach(i=>{ const q=DB.profiles[i]; const bv=el('button','btn primary','🚶 Pueblo de '+esc(q.name)); bv.onclick=()=>startVisit(i); r0.append(bv); });
+  else if(girlsIdx().length){ const bv=el('button','btn primary','🚶 Pasear por el pueblo'); bv.onclick=()=>startVisit(); r0.append(bv); }
   const bf=el('button','btn blue','📊 Fichas de las niñas'); bf.onclick=()=>openFicha(); r0.append(bf);
   b0.append(r0);
   // pendientes de validar

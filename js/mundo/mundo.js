@@ -265,8 +265,8 @@ function drawBuntingX(c){
 /* ---------- vecinos y movimiento ---------- */
 function setupNPCs(){
   const lv=townLv();
-  const list=(VISIT?[]:['alcalde']).concat(['rosa','tomas','coco']); if(lv>=2) list.push('bruno','lia'); if(lv>=3) list.push('nube','hilo');
-  const homes={alcalde:[1300,660],rosa:[760,880],tomas:[1520,640],coco:[1470,520],bruno:[1000,1390],lia:[1800,960],nube:[1620,1420],hilo:[1640,760]};
+  const list=(VISIT?[]:['alcalde']).concat(['rosa','tomas','coco','lia']); if(lv>=2) list.push('bruno'); // Lía está desde el principio: construye el puente if(lv>=3) list.push('nube','hilo');
+  const homes={alcalde:[1300,660],rosa:[760,880],tomas:[1520,640],coco:[1470,520],bruno:[1000,1390],lia:[1810,900],nube:[1620,1420],hilo:[1640,760]};
   npcs=list.map(k=>{ const old=npcs.find(n=>n.k===k&&n.home===homes[k]); return old||{k,x:homes[k][0],y:homes[k][1],tx:homes[k][0],ty:homes[k][1],home:homes[k],wait:Math.random()*3}; });
   butterflies=[]; const nb=lv>=2?lv*3:2; for(let i=0;i<nb;i++) butterflies.push({x:400+Math.random()*1400,y:300+Math.random()*1200,a:Math.random()*6,sp:0.5+Math.random()});
   if(!player.placed){ player.x=player.tx=1200; player.y=player.ty=920; player.path=[]; player.placed=true; }
