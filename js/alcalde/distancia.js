@@ -58,14 +58,15 @@ function aplicaOrden(o){
       return true;
     }
     case 'recDel': DB.recTasks=(DB.recTasks||[]).filter(r=>r.rid!==d.rid); return true;
-    case 'nota': { const n=ordNota(d.n,true); if(!n.text) return false; const L=corkMsgs(); if(!L.some(x=>x.id===n.id)){ L.push(n); if(L.length>30) L.splice(0,L.length-30); } return true; }
+    case 'nota': { const n=ordNota(d.n,true); if(!n.text) return false; corkPonNota(n); return true; } // sustituye a la nota anterior del alcalde
+    case 'sugLeida': { const s=(DB.sugs||[]).find(x=>x.id===d.id); if(!s) return false; s.leida=true; if(d.resp) s.resp=ordTexto(d.resp,300); return true; }
     case 'notaDel': { const L=corkMsgs(), k=L.findIndex(x=>x.id===d.id); if(k>=0) L.splice(k,1); return true; }
     case 'pizNota': { if(!p) return false; const n=ordNota(d.n,false); n.from='Papá'; if(!n.text) return false; const b=boardOf(p); if(!b.notes.some(x=>x.id===n.id)){ b.notes.unshift(n); if(b.notes.length>30) b.notes.length=30; } p.updatedAt=Date.now(); return true; }
     case 'pizDel': { if(!p) return false; const b=boardOf(p), k=b.notes.findIndex(x=>x.id===d.id); if(k>=0) b.notes.splice(k,1); p.updatedAt=Date.now(); return true; }
   }
   return false;
 }
-const ORD_TIPOS=['set','tarea','validar','quitar','recAdd','recDel','nota','notaDel','pizNota','pizDel'];
+const ORD_TIPOS=['set','tarea','validar','quitar','recAdd','recDel','nota','notaDel','pizNota','pizDel','sugLeida'];
 function ordenPermitida(o){ if(!ORD_TIPOS.includes(o.tipo)) return false; if(o.tipo!=='set') return true;
   return o.para==='pueblo'?ORD_SET_PUEBLO.test(o.dato.campo||''):ORD_SET_NINA.test(o.dato.campo||''); }
 /* Papá hace un cambio. En la tablet se aplica ya; en el móvil se envía a la nube. Devuelve true si salió bien. */
@@ -136,7 +137,7 @@ async function remCargar(){
   const i=DB.profiles.findIndex(p=>p&&p.id===cur); DB.cur=i>=0?i:0;
   DB.msgs=j.msgs||[];
   const pu=j.pueblo||{};
-  ['news','boardMsgs','recTasks','localMsgs','paq'].forEach(k=>{ DB[k]=pu[k]||(k==='paq'?{}:[]); });
+  ['news','boardMsgs','recTasks','localMsgs','paq','sugs'].forEach(k=>{ DB[k]=pu[k]||(k==='paq'?{}:[]); });
   DB.dayMode=pu.dayMode||'auto'; DB.paqForce=pu.paqForce||{};
   REM.puebloEn=pu.en||0; REM.sinPueblo=!j.pueblo; REM.version=j.version||1;
   // las órdenes que la tablet aún no ha recogido se vuelven a aplicar a lo que se ve

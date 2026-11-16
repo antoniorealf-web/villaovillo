@@ -25,6 +25,6 @@ async function openNews(){
   const all=(DB.news||[]).slice(-10).reverse();
   const r=await say({face:'🎩',name:'Ayuntamiento · Noticias',speak:false,
     html:all.length?`<div style="display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto">${all.map(newsLine).join('')}</div>`:'<div style="font-size:18px">Todavía no hay noticias. ¡Cada logro de las dos aparecerá aquí!</div>',
-    buttons:[{t:'Cerrar'},{t:'📌 Tablón de tareas',cls:'primary'}]});
-  if(r===1) openBoard();
+    buttons:[{t:'Cerrar'},{t:'💡 Buzón de ideas'},{t:'📌 Tablón de tareas',cls:'primary'}]});
+  if(r===1) openSugerencias(); else if(r===2) openBoard();
 }

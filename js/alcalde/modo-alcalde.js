@@ -36,7 +36,7 @@ function buildReport(){
       puente:p.bridge||0,tareas:p.counters.tasks||0,retos:p.counters.retos||0,historias:(p.stories||[]).length,
       tiposTelar:ty,mates:p.math||{},cuadernos:cu,dias:log};
   });
-  const data={v:1,fecha:today(),puente:[bridgeTotal(),BRIDGE_GOAL],perfiles:perf};
+  const data={v:1,fecha:today(),puente:[bridgeTotal(),BRIDGE_GOAL],perfiles:perf,ideas:(DB.sugs||[]).slice(-20).map(s=>({fecha:new Date(s.t).toISOString().slice(0,10),nina:s.nombre,tema:s.cat,texto:s.texto,leida:!!s.leida,resp:s.resp||''}))};
   return 'VILLAOVILLO-INFORME v1 '+today()+'\n'+JSON.stringify(data);
 }
 async function copyText(t){
@@ -65,6 +65,7 @@ function renderAlcalde(){
   if(!pend.length) b1.append(el('div','counter','No hay nada pendiente.'));
   pend.forEach(m=>{ const pr=DB.profiles.find(p=>p&&p.id===m.para); const r=el('div','mitem'); r.innerHTML=`<div class="mi">${m.tipo==='deberes'?'📚':'🧹'}</div><div class="mt"><b>${esc(pr?pr.name:'?')} · ${m.estado==='hecha'?'dice que la ha hecho':'la ha aceptado'}</b>${esc(m.texto)}</div>`;
     const a=el('div','ma'); const v=el('button','btn green','✅ Validar'); v.onclick=async()=>{ await validateMsg(m); renderAlcalde(); }; a.append(v); r.append(a); b1.append(r); });
+  renderSugBox(box);
   // nueva tarea
   const b2=box('📌 Nueva tarea para el tablón');
   const TF=tareaForm(); const f=TF.el;

@@ -5,6 +5,9 @@
 /* DB.boardMsgs = notas pinchadas por las niñas o papá, visibles para todos. Noticias, chistes y adivinanzas: paquete paquetes/gaceta.js. */
 const PAPER_COLS=['#fff3a8','#ffd1dc','#d6ecff','#dff5d8','#ffe2c2'];
 function corkMsgs(){ DB.boardMsgs=DB.boardMsgs||[]; return DB.boardMsgs; }
+/* Una nota por persona (cada niña y el alcalde): la última que escribe sustituye a la anterior y se queda colgada. */
+function corkNotasVivas(){ const L=corkMsgs(), seen=new Set(), out=[]; for(let i=L.length-1;i>=0;i--){ const k=L[i].fromId||L[i].from; if(seen.has(k)) continue; seen.add(k); out.push(L[i]); } return out; }
+function corkPonNota(n){ const L=corkMsgs(); if(L.some(x=>x.id===n.id)) return; for(let i=L.length-1;i>=0;i--) if((L[i].fromId||L[i].from)===n.fromId) L.splice(i,1); L.push(n); }
 /* ---------- Carteles ----------
    El tablón es un corcho con carteles pequeños (no se leen); al tocar uno, sale en grande como una hoja de papel.
    Un cartel es un objeto:
@@ -37,7 +40,7 @@ function boardCards(){
         }
       }});
   });
-  corkMsgs().slice(-4).reverse().forEach((n,i)=>{
+  corkNotasVivas().forEach((n,i)=>{
     const dt=new Date(n.t), me=alc?'alcalde':(p&&p.id);
     const st=(String(n.text).match(/\p{Extended_Pictographic}/u)||['✏️'])[0];
     cards.push({key:'n'+(n.id||n.t), tipo:'nota', estilo:'posit', color:n.col||PAPER_COLS[i%PAPER_COLS.length], emoji:st, titulo:'Nota de '+n.from,
@@ -104,14 +107,14 @@ function speakBtn(t){ const a=el('div','pacts'); const sp=el('button','speak','�
 async function corkNewNote(){
   const alc=!!VISIT, p=P();
   const r=await say({face:'✏️',name:alc?'Nota del alcalde':'Nota para el tablón',speak:false,
-    html:`<textarea class="inputline" id="ck-t" maxlength="120" rows="3" style="width:100%;resize:none;font-family:inherit" placeholder="${alc?'¡Mañana vamos al parque!':'¡Hola! …'}"></textarea><div class="choice" id="ck-st">${BOARD_STICKERS.map(s=>`<button style="font-size:24px">${s}</button>`).join('')}</div><div class="choice" id="ck-col" style="margin-top:6px">${PAPER_COLS.map((c,i)=>`<button class="dot${i===0?' sel':''}" data-c="${c}" style="background:${c}"></button>`).join('')}</div>`,
+    html:`<div style="font-size:17px;margin-bottom:6px">${alc?'Tu nota se queda colgada en el tablón para las dos. Si escribes otra, quita la anterior.':'Tu nota se queda colgada en el tablón para que la lean tu hermana y papá. Si escribes otra, quita la anterior.'}</div><textarea class="inputline" id="ck-t" maxlength="120" rows="3" style="width:100%;resize:none;font-family:inherit" placeholder="${alc?'¡Mañana vamos al parque!':'¡Hola! …'}"></textarea><div class="choice" id="ck-st">${BOARD_STICKERS.map(s=>`<button style="font-size:24px">${s}</button>`).join('')}</div><div class="choice" id="ck-col" style="margin-top:6px">${PAPER_COLS.map((c,i)=>`<button class="dot${i===0?' sel':''}" data-c="${c}" style="background:${c}"></button>`).join('')}</div>`,
     buttons:[{t:'Cancelar'},{t:'📌 Pinchar',cls:'primary'}]});
   if(r!==1) return;
   const t=(document.getElementById('ck-t').value||'').trim(); if(!t) return;
   const col=(document.querySelector('#ck-col .sel')||{dataset:{c:PAPER_COLS[0]}}).dataset.c;
   const n={id:'k'+Date.now().toString(36),from:alc?'Papá, el alcalde':p.name,fromId:alc?'alcalde':p.id,text:t,t:Date.now(),col};
   if(alc){ if(!(await alcHaz('pueblo','nota',{n},'Nota en el tablón: «'+t+'»'))) return; }
-  else { corkMsgs().push(n); if(corkMsgs().length>30) corkMsgs().splice(0,corkMsgs().length-30); saveQuiet(); }
+  else { corkPonNota(n); saveQuiet(); }
   fanfare(); toast('📌 ¡Nota pinchada en el tablón!'); renderBoard();
 }
 document.addEventListener('click',ev=>{ const s=ev.target.closest('#ck-st button'); if(s){ const ta=document.getElementById('ck-t'); if(ta) ta.value=(ta.value+' '+s.textContent).trim(); }

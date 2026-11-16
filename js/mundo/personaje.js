@@ -36,6 +36,8 @@ function drawHero(c,x,y,o){
     c.fillStyle=front?skin:shade(skin,-0.08); c.beginPath(); c.arc(0,13,3.3,0,Math.PI*2); c.fill(); ol(c,1.8);
     c.restore();
   };
+  /* El cuerpo (brazos y piernas) va girado respecto a la cabeza: así, al andar, el paso va hacia donde mira. */
+  c.save(); c.scale(-1,1);
   arm(-9, armL, false);
   // ---- piernas y zapatos
   const leg=(sx,lift)=>{
@@ -46,6 +48,7 @@ function drawHero(c,x,y,o){
     c.restore();
   };
   leg(-4.5,liftL); leg(4.5,liftR);
+  c.restore();
   // ---- vestido
   const g=c.createLinearGradient(0,-36,0,-12); g.addColorStop(0,shade(dress,0.12)); g.addColorStop(1,dressD);
   c.fillStyle=g; c.beginPath();
@@ -57,7 +60,7 @@ function drawHero(c,x,y,o){
   c.fillStyle='#fff'; c.beginPath(); c.moveTo(-6,-35); c.quadraticCurveTo(-3,-29,0,-32); c.quadraticCurveTo(3,-29,6,-35); c.quadraticCurveTo(0,-37,-6,-35); c.fill(); ol(c,1.6);
   c.fillStyle='#fff'; c.globalAlpha=.85; c.beginPath(); const hx=0,hy=-23; c.moveTo(hx,hy+3); c.bezierCurveTo(hx-5,hy-1,hx-2,hy-5,hx,hy-2); c.bezierCurveTo(hx+2,hy-5,hx+5,hy-1,hx,hy+3); c.fill(); c.globalAlpha=1;
   // ---- brazo de delante (saluda a veces)
-  arm(9, o.wave ? -2.15+Math.sin(t*14)*0.3 : -armR, true);
+  c.save(); if(!o.wave) c.scale(-1,1); arm(9, o.wave ? -2.15+Math.sin(t*14)*0.3 : -armR, true); c.restore();
   // ---- coletas / moño (detrás de la cabeza en parte)
   const sw=mv?Math.sin(w)*2.2:Math.sin(t*2)*0.6;
   if(L.style==='coletas'){ for(const s of [-1,1]){ c.fillStyle=hair; c.beginPath(); c.ellipse(s*18+sw*0.3,-44+Math.abs(sw)*0.4,6,8,s*0.35,0,Math.PI*2); c.fill(); ol(c); c.fillStyle=dress; c.beginPath(); c.arc(s*14.5,-50,2.6,0,Math.PI*2); c.fill(); ol(c,1.5); } }
