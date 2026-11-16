@@ -31,8 +31,7 @@ function boardCards(){
           else a.append(el('span','pstate',m.estado==='nuevo'?'Sin empezar':m.estado==='aceptada'?'Aceptada':m.estado==='validada'?'Validada · falta recoger':''));
           if(String(m.id).startsWith('L')) B('🗑️ Quitar','',async()=>{ if(await alcHaz('pueblo','quitar',{id:m.id},'Quitar la tarea «'+(m.texto||'')+'»')) again(); });
         } else {
-          if(m.estado==='nuevo') B('✋ Aceptar','primary',()=>{ setMsgState(m,'aceptada'); beep(700,0.08,'triangle'); toast('📌 ¡Tarea aceptada! Cuando la termines, márcala.'); again(); });
-          else if(m.estado==='aceptada') B('✅ ¡Ya la hice!','green',()=>{ closePaper(); doneTask(m).then(renderBoard); });
+          if(m.estado==='nuevo'||m.estado==='aceptada') B('✅ ¡Ya la hice!','green',()=>{ closePaper(); doneTask(m).then(renderBoard); }); // sin paso de «Aceptar»
           else if(m.estado==='hecha') a.append(el('span','pstate','⏳ Papá lo comprobará'));
           else if(m.estado==='validada') B('🎁 Recoger premio','primary',()=>{ closePaper(); collectTask(m).then(renderBoard); });
         }
@@ -118,16 +117,11 @@ async function corkNewNote(){
 document.addEventListener('click',ev=>{ const s=ev.target.closest('#ck-st button'); if(s){ const ta=document.getElementById('ck-t'); if(ta) ta.value=(ta.value+' '+s.textContent).trim(); }
   const c=ev.target.closest('#ck-col .dot'); if(c){ document.querySelectorAll('#ck-col .dot').forEach(x=>x.classList.remove('sel')); c.classList.add('sel'); } });
 async function corkNewTask(){
-  const r=await say({face:'📌',name:'Nueva tarea',speak:false,html:`<div class="lbl">Para</div><select class="inputline" id="ct-para">${profileOptions()}</select>
-    <div class="lbl">Tipo</div><select class="inputline" id="ct-tipo"><option value="casa">🧹 Tarea de casa</option><option value="deberes">📚 Deberes del cole</option></select>
-    <div class="lbl">Qué hay que hacer</div><input class="inputline" id="ct-texto" placeholder="Ej.: Recoger la habitación">
-    <div class="lbl">Premio (botones)</div><input class="inputline" id="ct-premio" type="number" value="10" min="1" max="100">
-    <label style="display:flex;gap:8px;align-items:center;font-size:18px;margin:6px 0"><input type="checkbox" id="ct-rec" style="width:24px;height:24px"> 📅 Repetir cada día</label>`,
-    buttons:[{t:'Cancelar'},{t:'📌 Pinchar en el tablón',cls:'primary'}]});
-  if(r!==1) return;
-  const para=$('#ct-para').value, tipo=$('#ct-tipo').value, texto=$('#ct-texto').value.trim(), premio=Math.max(1,+$('#ct-premio').value||10), rec=$('#ct-rec').checked;
-  if(!texto){ toast('Escribe la tarea'); return; }
-  if(!(await nuevaTarea(para,tipo,texto,premio,rec))) return;
+  const pr=say({face:'📌',name:'Nueva tarea',speak:false,html:'<div id="ct-form"></div>',buttons:[{t:'Cancelar'},{t:'📌 Pinchar en el tablón',cls:'primary'}]});
+  const F=tareaForm(); document.getElementById('ct-form').append(F.el);
+  if((await pr)!==1) return;
+  const v=F.leer(); if(!v) return;
+  if(!(await nuevaTarea(v.para,v.tipo,v.texto,v.premio,v.rec,v.dias))) return;
   toast(REMOTO?'📌 Tarea enviada: saldrá en la tablet cuando se conecte':'📌 ¡Tarea puesta en el tablón!'); renderBoard();
 }
 addEventListener('resize',()=>{ if(curScreen==='board') renderBoard(); });

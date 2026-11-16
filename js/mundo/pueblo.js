@@ -185,7 +185,7 @@ async function talkNPC(n){
   let text=pick(info.hi);
   if(hasEncargo(n.k)) text='¡Hola, '+p.name+'! Tengo un encargo para ti en el taller. ¿Vamos?';
   const r=await say({face:info.e,name:info.n,text,buttons:hasEncargo(n.k)?[{t:'Luego'},{t:'¡Al taller!',cls:'primary'}]:[{t:'¡Adiós!',cls:'primary'}]});
-  if(hasEncargo(n.k)&&r===1){ player.tx=B.taller.door[0]; player.ty=B.taller.door[1]; player.act=openWorkshop; }
+  if(hasEncargo(n.k)&&r===1){ andarA(player,B.taller.door[0],B.taller.door[1]); player.act=openWorkshop; }
 }
 async function visitOther(){
   const oi=DB.cur===0?1:0, o=DB.profiles[oi];

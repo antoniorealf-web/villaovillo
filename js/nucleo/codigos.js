@@ -42,6 +42,14 @@ async function askPin(){
   if(pinHash(v)!==stored){ toast('Código incorrecto'); return false; }
   return true;
 }
+/* Cambia el código del alcalde: el viejo sigue valiendo hasta que el nuevo se ha escrito dos veces igual */
+async function changePin(){
+  const a=await askKeypad({face:'🎩',name:'Código nuevo del alcalde',text:'Elige 4 números. Solo papá debe saberlos.'}); if(!a) return false;
+  const b=await askKeypad({face:'🎩',name:'Repite el código nuevo',text:'Otra vez, para comprobarlo.'}); if(!b) return false;
+  if(a!==b){ toast('No coinciden: sigue valiendo el código de antes',3500); return false; }
+  try{ localStorage.setItem('villaovillo.pinLocal',pinHash(a)); }catch(e){ toast('No se ha podido guardar'); return false; }
+  toast('🔐 Código del alcalde cambiado'); return true;
+}
 function renderCodesBox(V,box){
   const b=box('🔑 Códigos de entrada');
   b.append(el('div','counter','Cada niña entra con su código. Si no tiene, lo elige ella la próxima vez que entre. Aquí puedes verlos y cambiarlos.'));
@@ -50,6 +58,6 @@ function renderCodesBox(V,box){
     const a=el('div','ma'); const ch=el('button','btn','✏️ Cambiar'); ch.onclick=async()=>{ const c=await askKeypad({face:'🔑',name:'Nuevo código de '+p.name,text:'4 números.'}); if(!c) return; if(await alcHaz(p.id,'set',{campo:'code',valor:c},'Código nuevo de '+p.name)) toast('Código cambiado'); renderAlcalde(); };
     const qu=el('button','btn','🗑️ Quitar'); qu.onclick=async()=>{ if(await alcHaz(p.id,'set',{campo:'code',valor:''},'Quitar el código de '+p.name)) toast(p.name+' elegirá uno nuevo al entrar'); renderAlcalde(); };
     a.append(ch,qu); row.append(a); b.append(row); });
-  const cp=el('button','btn','🎩 Cambiar el código del alcalde'); cp.style.marginTop='10px'; cp.onclick=async()=>{ try{ localStorage.removeItem('villaovillo.pinLocal'); }catch(e){} if(!(await askPin())) toast('El código del alcalde se pedirá al volver a entrar'); };
+  const cp=el('button','btn','🎩 Cambiar el código del alcalde'); cp.style.marginTop='10px'; cp.onclick=changePin;
   if(!REMOTO) b.append(cp);
 }

@@ -269,18 +269,19 @@ function setupNPCs(){
   const homes={alcalde:[1300,660],rosa:[760,880],tomas:[1520,640],coco:[1470,520],bruno:[1000,1390],lia:[1800,960],nube:[1620,1420],hilo:[1640,760]};
   npcs=list.map(k=>{ const old=npcs.find(n=>n.k===k&&n.home===homes[k]); return old||{k,x:homes[k][0],y:homes[k][1],tx:homes[k][0],ty:homes[k][1],home:homes[k],wait:Math.random()*3}; });
   butterflies=[]; const nb=lv>=2?lv*3:2; for(let i=0;i<nb;i++) butterflies.push({x:400+Math.random()*1400,y:300+Math.random()*1200,a:Math.random()*6,sp:0.5+Math.random()});
-  if(!player.placed){ player.x=player.tx=1200; player.y=player.ty=920; player.placed=true; }
+  if(!player.placed){ player.x=player.tx=1200; player.y=player.ty=920; player.path=[]; player.placed=true; }
 }
 function insideBuilding(x,y){ return ['taller','tienda','ayto','houseA','houseB','plotA','plotB','tend','tablon','panaderia','biblio'].some(k=>inRect(x,y,B[k]))||inPond(x,y); }
 function update(dt){
   heroStep(dt); stepSfx(dt);
   const dx=player.tx-player.x, dy=player.ty-player.y, d=Math.hypot(dx,dy);
-  if(d>4){ player.v=Math.min(300,(player.v||60)+700*dt); const sp=Math.min(player.v,d*7+40)*dt; player.x+=dx/d*Math.min(sp,d); player.y+=dy/d*Math.min(sp,d); player.moving=true; if(Math.abs(dx)>2) player.dir=dx>0?1:-1; }
+  if(d>4){ player.v=Math.min(player.largo>900?470:300,(player.v||60)+700*dt); /* trayectos largos, más deprisa */ const sp=Math.min(player.v,d*7+40)*dt; player.x+=dx/d*Math.min(sp,d); player.y+=dy/d*Math.min(sp,d); player.moving=true; if(Math.abs(dx)>2) player.dir=dx>0?1:-1; }
   else if(player.moving){ if(player.path&&player.path.length){ const nx=player.path.shift(); player.tx=nx[0]; player.ty=nx[1]; return; } player.moving=false; player.v=60; player.hop=0.32; if(player.act){ const a=player.act; player.act=null; a(); } }
   for(const n of npcs){
     const ddx=n.tx-n.x, ddy=n.ty-n.y, dd=Math.hypot(ddx,ddy);
     if(dd>3){ const sp=45*dt; n.x+=ddx/dd*Math.min(sp,dd); n.y+=ddy/dd*Math.min(sp,dd); n.dir=ddx>0?1:-1; }
-    else { n.wait-=dt; if(n.wait<=0){ n.wait=2+Math.random()*4; n.tx=clamp(n.home[0]+(Math.random()-0.5)*260,80,1850); n.ty=clamp(n.home[1]+(Math.random()-0.5)*200,140,1560); if(insideBuilding(n.tx,n.ty)){ n.tx=n.home[0]; n.ty=n.home[1]; } } }
+    else if(n.path&&n.path.length){ const nx=n.path.shift(); n.tx=nx[0]; n.ty=nx[1]; }
+    else { n.wait-=dt; if(n.wait<=0){ n.wait=2+Math.random()*4; let tx=clamp(n.home[0]+(Math.random()-0.5)*260,80,1850), ty=clamp(n.home[1]+(Math.random()-0.5)*200,140,1560); if(insideBuilding(tx,ty)){ tx=n.home[0]; ty=n.home[1]; } andarA(n,tx,ty); } }
   }
   for(const b of butterflies){ b.a+=dt*b.sp; b.x+=Math.cos(b.a*0.7)*30*dt; b.y+=Math.sin(b.a)*22*dt; }
   if(tapFx){ tapFx.t+=dt; if(tapFx.t>0.5) tapFx=null; }
@@ -291,7 +292,7 @@ function handleWorldTap(x,y){
   if(VISIT) return visitTap(x,y);
   for(const n of npcs){ if(Math.hypot(n.x-x,n.y-38-y)<44){ talkNPC(n); return; } }
   const mine=DB.cur===0?'A':'B', other=mine==='A'?'B':'A';
-  const go=(door,fn)=>{ player.tx=door[0]; player.ty=door[1]; player.act=fn; tapFx={x:door[0],y:door[1],t:0}; };
+  const go=(door,fn)=>{ tapFx={x:door[0],y:door[1],t:0}; if(andarA(player,door[0],door[1])<5){ player.act=null; fn(); } else player.act=fn; };
   if(inRect(x,y,B.taller)) return go(B.taller.door,openWorkshop);
   if(inRect(x,y,{x:B.tablon.x-16,y:B.tablon.y-10,w:B.tablon.w+32,h:B.tablon.h+10})) return go(B.tablon.door,openBoard);
   if(inRect(x,y,B.ayto)) return go(B.ayto.door,openNews);
@@ -302,7 +303,7 @@ function handleWorldTap(x,y){
   if(inRect(x,y,B['house'+mine])||inRect(x,y,B['plot'+mine])) return go(B['house'+mine].door,()=>openHouse(DB.cur));
   if(inRect(x,y,B['house'+other])||inRect(x,y,B['plot'+other])) return go(B['house'+other].door,()=>visitOther());
   if(x>=1790&&x<=1990&&y>=740&&y<=890&&!bridgeDone()) return go([1830,850],openBridge);
-  const viaBridge=(tx,ty,fn)=>{ const east=player.x>1880, toEast=tx>1880; player.path=[]; if(east!==toEast){ player.path=east?[[1985,828],[1850,828],[tx,ty]]:[[1850,828],[1985,828],[tx,ty]]; player.tx=player.path[0][0]; player.ty=player.path[0][1]; player.path.shift(); } else { player.tx=tx; player.ty=ty; } player.act=fn||null; tapFx={x:tx,y:ty,t:0}; };
+  const viaBridge=(tx,ty,fn)=>{ if(fn) return go([tx,ty],fn); andarA(player,tx,ty); player.act=null; tapFx={x:tx,y:ty,t:0}; }; // el camino ya cruza por el puente
   if(x>=1870){
     if(!bridgeDone()) return go([1850,clamp(y,120,1540)],()=>say({face:'🦦',name:NPCS.lia.n,text:'Para cruzar el río hace falta un puente. ¡Estoy construyéndolo! Tócame o toca la obra del puente para ayudarme con botones.'}));
     if(inRect(x,y,B.huerto)) return viaBridge(B.huerto.x+B.huerto.w/2,B.huerto.y+B.huerto.h+20,()=>zoneMsg('huerto'));
@@ -312,7 +313,7 @@ function handleWorldTap(x,y){
   if(player.x>1880){ return viaBridge(clamp(x,30,1860),clamp(y,60,1580)); }
   let tx=clamp(x,30,1860), ty=clamp(y,60,1580);
   if(inPond(tx,ty)){ const a=Math.atan2((ty-POND.y)/POND.ry,(tx-POND.x)/POND.rx); tx=POND.x+Math.cos(a)*(POND.rx+24); ty=POND.y+Math.sin(a)*(POND.ry+24); }
-  player.tx=tx; player.ty=ty; player.act=null; tapFx={x:tx,y:ty,t:0};
+  andarA(player,tx,ty); player.act=null; tapFx={x:tx,y:ty,t:0};
 }
 /* ---------- mapa ---------- */
 function openMap(){

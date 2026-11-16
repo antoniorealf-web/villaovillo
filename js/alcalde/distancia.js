@@ -52,7 +52,8 @@ function aplicaOrden(o){
     case 'recAdd': {
       if(!['casa','deberes'].includes(d.tipo)) return false; const texto=ordTexto(d.texto,300).trim(); if(!texto) return false;
       const para=d.para==='todas'?'todas':String(d.para||''); if(para!=='todas'&&!DB.profiles.some(q=>q&&q.id===para)) return null;
-      DB.recTasks=DB.recTasks||[]; if(!DB.recTasks.some(r=>r.rid===o.id)) DB.recTasks.push({rid:o.id,para,tipo:d.tipo,texto,premio:ordNum(d.premio,1,100,10)});
+      DB.recTasks=DB.recTasks||[]; if(!DB.recTasks.some(r=>r.rid===o.id)) { const dias=Array.isArray(d.dias)?[...new Set(d.dias.map(Number).filter(x=>x>=0&&x<=6&&Number.isInteger(x)))]:[];
+        DB.recTasks.push(Object.assign({rid:o.id,para,tipo:d.tipo,texto,premio:ordNum(d.premio,1,100,10)},dias.length&&dias.length<7?{dias}:{})); }
       if(!REMOTO) DB.profiles.filter(Boolean).forEach(ensureRecurring);
       return true;
     }

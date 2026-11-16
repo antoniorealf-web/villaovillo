@@ -39,7 +39,7 @@ function drawMayorPlayer(c){
 function visitTap(x,y){
   const p=P();
   for(const n of npcs){ if(Math.hypot(n.x-x,n.y-38-y)<44){ const info=NPCS[n.k]; npcVoice(n.k); say({face:info.e,name:info.n,text:`¡Hola, señor alcalde! ${pick(info.hi)}`,speak:false}); return; } }
-  const go=(door,fn)=>{ player.tx=door[0]; player.ty=door[1]; player.path=[]; player.act=fn; tapFx={x:door[0],y:door[1],t:0}; };
+  const go=(door,fn)=>{ tapFx={x:door[0],y:door[1],t:0}; if(andarA(player,door[0],door[1])<5){ player.act=null; fn(); } else player.act=fn; };
   if(inRect(x,y,B.taller)) return go(B.taller.door,openVTaller);
   if(inRect(x,y,{x:B.tablon.x-16,y:B.tablon.y-10,w:B.tablon.w+32,h:B.tablon.h+10})) return go(B.tablon.door,openBoard);
   if(inRect(x,y,B.ayto)) return go(B.ayto.door,openFicha);
@@ -50,10 +50,10 @@ function visitTap(x,y){
   for(const [k,i] of [['A',0],['B',1]]){ if(inRect(x,y,B['house'+k])||inRect(x,y,B['plot'+k])) return go(B['house'+k].door,()=>{ if(DB.profiles[i]) openHouse(i); else toast('Casa vacía'); }); }
   if(x>=1790&&x<=1990&&y>=740&&y<=890) return go([1830,850],()=>say({face:'🦦',name:NPCS.lia.n,text:`El puente va por ${bridgeTotal()} de ${BRIDGE_GOAL} botones. ${DB.profiles.filter(Boolean).map(q=>q.name+' ha puesto '+(q.bridge||0)).join(' y ')}.`,speak:false}));
   if(x>=1870){ toast('Al otro lado del río están el Huerto y el Laboratorio (todavía cerrados)'); return; }
-  if(player.x>1880){ player.x=1850; }
+  if(player.x>1880){ player.x=1850; player.path=[]; }
   let tx=clamp(x,30,1860), ty=clamp(y,60,1580);
   if(inPond(tx,ty)){ const a=Math.atan2((ty-POND.y)/POND.ry,(tx-POND.x)/POND.rx); tx=POND.x+Math.cos(a)*(POND.rx+24); ty=POND.y+Math.sin(a)*(POND.ry+24); }
-  player.tx=tx; player.ty=ty; player.path=[]; player.act=null; tapFx={x:tx,y:ty,t:0};
+  andarA(player,tx,ty); player.act=null; tapFx={x:tx,y:ty,t:0};
 }
 
 /* ---- fichas ---- */

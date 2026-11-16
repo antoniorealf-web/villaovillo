@@ -9,8 +9,10 @@ function taskCount(){ const p=P(); if(!p) return 0; return myTasks().filter(m=>m
 function ensureRecurring(p){
   const t=today(); DB.recTasks=DB.recTasks||[];
   localMsgs().forEach(m=>{ if(m.rid&&m.day&&m.day<t&&['nuevo','aceptada'].includes(m.estado)) m.estado='caducada'; });
+  const wd=new Date(now()).getDay();
   DB.recTasks.forEach(r=>{
     if(r.para!=='todas'&&r.para!==p.id) return;
+    if(r.dias&&r.dias.length&&!r.dias.includes(wd)) return; // hoy no toca
     if(localMsgs().some(m=>m.rid===r.rid&&m.para===p.id&&m.day===t)) return;
     localMsgs().push({id:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),rid:r.rid,day:t,para:p.id,tipo:r.tipo,texto:r.texto,premio:r.premio,estado:'nuevo'});
   });
@@ -65,22 +67,17 @@ function renderAlcalde(){
     const a=el('div','ma'); const v=el('button','btn green','✅ Validar'); v.onclick=async()=>{ await validateMsg(m); renderAlcalde(); }; a.append(v); r.append(a); b1.append(r); });
   // nueva tarea
   const b2=box('📌 Nueva tarea para el tablón');
-  const f=el('div'); f.innerHTML=`<div class="lbl">Para</div><select class="inputline" id="a-para">${profileOptions()}</select>
-    <div class="lbl">Tipo</div><select class="inputline" id="a-tipo"><option value="casa">🧹 Tarea de casa</option><option value="deberes">📚 Deberes del cole</option></select>
-    <div class="lbl">Qué hay que hacer</div><input class="inputline" id="a-texto" placeholder="Ej.: Recoger la habitación">
-    <div class="lbl">Premio (botones)</div><input class="inputline" id="a-premio" type="number" value="10" min="1" max="100">
-    <label style="display:flex;gap:8px;align-items:center;font-size:18px;margin:6px 0"><input type="checkbox" id="a-rec" style="width:24px;height:24px"> 📅 Repetir cada día</label>`;
+  const TF=tareaForm(); const f=TF.el;
   const send=el('button','btn primary','Poner en el tablón'); send.onclick=async()=>{
-    const para=$('#a-para').value, tipo=$('#a-tipo').value, texto=$('#a-texto').value.trim(), premio=Math.max(1,+$('#a-premio').value||10), rec=$('#a-rec').checked;
-    if(!texto){ toast('Escribe la tarea'); return; }
-    if(await nuevaTarea(para,tipo,texto,premio,rec)){ toast(REMOTO?'📌 Tarea enviada: saldrá en el tablón cuando se conecte la tablet':'📌 ¡Tarea puesta en el tablón!'); renderAlcalde(); }
+    const v=TF.leer(); if(!v) return;
+    if(await nuevaTarea(v.para,v.tipo,v.texto,v.premio,v.rec,v.dias)){ toast(REMOTO?'📌 Tarea enviada: saldrá en el tablón cuando se conecte la tablet':'📌 ¡Tarea puesta en el tablón!'); renderAlcalde(); }
   };
   f.append(send); b2.append(f);
   // tareas diarias
   const b3=box('📅 Tareas de cada día');
-  (DB.recTasks||[]).forEach((r,i)=>{ const pr=DB.profiles.find(p=>p&&p.id===r.para); const row=el('div','mitem'); row.innerHTML=`<div class="mi">${r.tipo==='deberes'?'📚':'🧹'}</div><div class="mt"><b>${r.para==='todas'?'Las dos':esc(pr?pr.name:'?')} · 🔘 ${r.premio}</b>${esc(r.texto)}</div>`;
+  (DB.recTasks||[]).forEach((r,i)=>{ const pr=DB.profiles.find(p=>p&&p.id===r.para); const row=el('div','mitem'); row.innerHTML=`<div class="mi">${r.tipo==='deberes'?'📚':'🧹'}</div><div class="mt"><b>${r.para==='todas'?'Las dos':esc(pr?pr.name:'?')} · 🔘 ${r.premio} · ${diasTexto(r.dias)}</b>${esc(r.texto)}</div>`;
     const a=el('div','ma'); const d=el('button','btn','🗑️ Quitar'); d.onclick=async()=>{ if(await alcHaz('pueblo','recDel',{rid:r.rid},'Quitar la tarea diaria «'+r.texto+'»')) renderAlcalde(); }; a.append(d); row.append(a); b3.append(row); });
-  if(!(DB.recTasks||[]).length) b3.append(el('div','counter','Ninguna. Marca «Repetir cada día» al crear una tarea.'));
+  if(!(DB.recTasks||[]).length) b3.append(el('div','counter','Ninguna. Marca «Repetir» al crear una tarea y elige los días.'));
   // informe
   const bi=box('📊 Informe para Claude');
   bi.append(el('div','counter','Copia el informe y pégalo en el proyecto de Villaovillo. Claude lo usa para actualizar el registro y las estadísticas.'));
@@ -132,13 +129,43 @@ function renderAlcalde(){
     const b=await say({center:true,face:'⚠️',name:'Última confirmación',text:'¿Seguro de verdad?',buttons:[{t:'Cancelar'},{t:'Borrar',cls:'primary'}],speak:false}); if(b!==1) return;
     try{ localStorage.removeItem(KEY); }catch(e){} location.reload(); };
   b7.append(rz);
-  const b6=box('🔐 Seguridad');
-  const cp=el('button','btn','Cambiar PIN'); cp.onclick=()=>{ try{ localStorage.removeItem('villaovillo.pinLocal'); }catch(e){} toast('Ahora crea un PIN nuevo'); openAlcalde(); }; b6.append(cp);
+}
+/* Días de la semana de una tarea que se repite (0 = domingo, como getDay). Sin lista: todos los días. */
+const DIAS_LETRA=['D','L','M','X','J','V','S'], DIAS_ORDEN=[1,2,3,4,5,6,0];
+function diasTexto(d){ if(!d||!d.length||d.length===7) return 'cada día'; const s=DIAS_ORDEN.filter(k=>d.includes(k));
+  if(s.join()==='1,2,3,4,5') return 'de lunes a viernes'; if(s.join()==='6,0') return 'fines de semana'; return s.map(k=>DIAS_LETRA[k]).join(' '); }
+/* Las últimas tareas distintas que puso papá, para repetirlas con un toque */
+function tareasRecientes(){
+  const seen=new Set(), out=[]; const all=(DB.recTasks||[]).slice().reverse().concat(localMsgs().slice().reverse(),(DB.msgs||[]).slice().reverse());
+  for(const m of all){ if(!['casa','deberes'].includes(m.tipo)||!m.texto) continue; const k=m.tipo+'|'+m.texto.trim().toLowerCase(); if(seen.has(k)) continue; seen.add(k); out.push({tipo:m.tipo,texto:m.texto.trim(),premio:m.premio||10}); if(out.length>=6) break; }
+  return out;
+}
+/* Formulario de tarea nueva (modo alcalde y tablón): para quién, tipo, texto, premio, repetir y días */
+function tareaForm(){
+  const w=el('div'); const rec=tareasRecientes();
+  w.innerHTML=`${rec.length?'<div class="lbl">Repetir una de las últimas</div><div class="choice tf-rec" style="justify-content:flex-start;flex-wrap:wrap;gap:6px"></div>':''}
+    <div class="lbl">Para</div><select class="inputline tf-para">${profileOptions()}</select>
+    <div class="lbl">Tipo</div><select class="inputline tf-tipo"><option value="casa">🧹 Tarea de casa</option><option value="deberes">📚 Deberes del cole</option></select>
+    <div class="lbl">Qué hay que hacer</div><input class="inputline tf-texto" maxlength="200" placeholder="Ej.: Recoger la habitación">
+    <div class="lbl">Premio (botones)</div><input class="inputline tf-premio" type="number" value="10" min="1" max="100">
+    <label style="display:flex;gap:8px;align-items:center;font-size:18px;margin:6px 0"><input type="checkbox" class="tf-rep" style="width:24px;height:24px"> 📅 Repetir</label>
+    <div class="tf-dias choice" style="display:none;justify-content:flex-start;gap:6px;flex-wrap:wrap"></div>`;
+  const q=c=>w.querySelector(c), dias=new Set([0,1,2,3,4,5,6]);
+  rec.forEach(r=>{ const b=el('button','',(r.tipo==='deberes'?'📚 ':'🧹 ')+esc(r.texto)); b.style.fontSize='16px'; b.onclick=()=>{ q('.tf-tipo').value=r.tipo; q('.tf-texto').value=r.texto; q('.tf-premio').value=r.premio; w.querySelectorAll('.tf-rec button').forEach(x=>x.classList.toggle('sel',x===b)); }; q('.tf-rec').append(b); });
+  const pintaDias=()=>{ const D=q('.tf-dias'); D.innerHTML='';
+    DIAS_ORDEN.forEach(k=>{ const b=el('button',dias.has(k)?'sel':'',DIAS_LETRA[k]); b.style.cssText='min-width:46px;font-size:18px'; b.onclick=()=>{ dias.has(k)?dias.delete(k):dias.add(k); pintaDias(); }; D.append(b); });
+    [['Todos',[0,1,2,3,4,5,6]],['L a V',[1,2,3,4,5]],['Finde',[6,0]]].forEach(([t,v])=>{ const b=el('button','',t); b.style.fontSize='16px'; b.onclick=()=>{ dias.clear(); v.forEach(x=>dias.add(x)); pintaDias(); }; D.append(b); }); };
+  q('.tf-rep').onchange=()=>{ q('.tf-dias').style.display=q('.tf-rep').checked?'flex':'none'; };
+  pintaDias();
+  return {el:w, leer(){
+    const texto=q('.tf-texto').value.trim(); if(!texto){ toast('Escribe la tarea'); return null; }
+    const r=q('.tf-rep').checked; if(r&&!dias.size){ toast('Elige al menos un día'); return null; }
+    return {para:q('.tf-para').value,tipo:q('.tf-tipo').value,texto,premio:Math.max(1,Math.min(100,+q('.tf-premio').value||10)),rec:r,dias:r&&dias.size<7?[...dias].sort():undefined}; }};
 }
 function nombreDe(para){ return para==='todas'?'las dos':((DB.profiles.find(p=>p&&p.id===para)||{}).name||'?'); }
 /* Tarea nueva (desde el modo alcalde o desde el tablón): de una vez o de cada día */
-function nuevaTarea(para,tipo,texto,premio,rec){
-  return rec ? alcHaz('pueblo','recAdd',{para,tipo,texto,premio},'Tarea de cada día para '+nombreDe(para)+': «'+texto+'»')
+function nuevaTarea(para,tipo,texto,premio,rec,dias){
+  return rec ? alcHaz('pueblo','recAdd',{para,tipo,texto,premio,dias},'Tarea ('+diasTexto(dias)+') para '+nombreDe(para)+': «'+texto+'»')
              : alcHaz(para,'tarea',{tipo,texto,premio},'Tarea para '+nombreDe(para)+': «'+texto+'»');
 }
 async function validateMsg(m){
