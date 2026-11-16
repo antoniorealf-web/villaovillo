@@ -64,7 +64,7 @@ Cada día salen tipos distintos, con más probabilidad para el concepto más nue
 ## Casas nuevas (v0.5)
 - **📌 Tablón de tareas:** tareas de casa y deberes. Ellas las aceptan, las marcan como hechas y, cuando papá las valida, recogen el premio. Se gestionan desde el **modo alcalde** de la tablet (PIN local, funciona sin nube) o desde el panel del móvil (con nube). Las tareas pueden repetirse cada día.
 - **🥐 Panadería de Bruno:** turnos de problemas de mates según la edad: contar, sumas, restas y dinero (6-7); multiplicar, repartir, cambio, recetas, fracciones y problemas de dos pasos (8-10). En el modo alcalde se elige el «foco» de clase (p. ej. la tabla del 7).
-- **🦉 Biblioteca de Sabina:** repaso de lo que dan en clase, con preguntas de opción, verdadero/falso y ordenar. Usa repaso espaciado: lo que se falla vuelve a salir al día siguiente y lo que se sabe, cada vez más tarde. El contenido está en `cuadernos.js`.
+- **🦉 Biblioteca de Sabina:** repaso de lo que dan en clase, con preguntas de opción, verdadero/falso y ordenar. Usa repaso espaciado: lo que se falla vuelve a salir al día siguiente y lo que se sabe, cada vez más tarde. El contenido está en `contenido/cuadernos.js`.
 - **Cabezal:** se ilumina la tarjeta que se ejecuta y cada «Repetir» muestra en qué vuelta va. También hay modo **👣 Paso a paso**.
 - **Ruta del día:** telar + panadería + biblioteca (si hay cuadernos) = bonus diario.
 

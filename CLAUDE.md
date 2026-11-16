@@ -25,21 +25,27 @@ Lo que cambia a menudo (temas del cole, economía, hoja de ruta, decisiones) viv
 
 | Archivo | Qué es |
 | --- | --- |
-| `index.html` | El juego entero (HTML, CSS y JS en un archivo, unos 396 KB: toca partirlo pronto) |
-| `cuadernos.js` | Cuadernos de repaso de la Biblioteca (`window.CUADERNOS`) |
+| `index.html` | Las pantallas (HTML) y la lista ordenada de archivos que se cargan |
+| `estilos.css` | El aspecto de todo el juego |
+| `js/` | El programa, un archivo por módulo: `nucleo/` (datos, guardado, perfiles, códigos, nube, música, progresión, maestrías, modo prueba, catálogo), `mundo/` (pueblo, cámara, personajes, vecinos, noche), `zonas/` (telar, panadería, biblioteca, tablón, casa), `alcalde/` (modo alcalde y paseo) e `inicio.js` |
+| `contenido/cuadernos.js` | Cuadernos de repaso de la Biblioteca (`window.CUADERNOS`) |
+| `herramientas/version.py` | Pone el número de versión en todo lo que carga `index.html` y comprueba que no falta ni sobra ningún archivo |
+| `pruebas/` | Pruebas automáticas: `equivalencia.py`, `recorrido.py` y `revision.py` |
 | `config.js` | URL del Apps Script de la nube (vacía mientras no esté instalada) |
 | `panel.html` | Panel del alcalde para el móvil (lee y escribe en la nube) |
 | `apps-script/Code.gs` | Backend en una hoja de Google (`CLAVE` y `PIN`) |
 
 - Guardado: `localStorage` con la clave `villaovillo.v1`; en el modo prueba, `villaovillo.prueba`. `DB.profiles[]` guarda un objeto por niña; `P()` devuelve la niña activa. Todo se escribe con `writeDB()`, que avisa si falla. `load()` aparta una partida ilegible en `KEY+'.danada'` y guarda una copia diaria en `KEY+'.copia'`; las dos se recuperan desde «Restaurar» (`autoCopyButtons`).
 - Nube: `apps-script/Code.gs` guarda cada partida como archivo en Drive (carpeta «Villaovillo · partidas», sin límite de tamaño) y una copia por niña y día en «copias» (60 días). La hoja «Partidas» solo tiene el resumen y `archivo:<id>`. Si cambia `Code.gs`, Antonio debe publicar una versión nueva de la implementación.
-- `index.html` está organizado en módulos con un comentario-cabecera (`/* ===== NOMBRE ===== */`). Los módulos nuevos se añaden antes del comentario «CATÁLOGO DE EJERCICIOS». Una `function` declarada más abajo sustituye a una anterior del mismo nombre: así se han ido ampliando algunas funciones. Antes de cambiar una función, busca su última definición.
+- El programa está repartido en `js/`, un archivo por módulo, y `index.html` los carga en un orden fijo. El orden importa: lo que se ejecuta nada más cargar un archivo solo puede usar cosas de archivos anteriores; dentro de las funciones se puede usar cualquier cosa. Un archivo nuevo se añade a la lista de `index.html` antes de `js/nucleo/catalogo.js`.
+- Cada función existe en un único sitio. Para ampliarla se edita en su archivo (búscala con `grep -rn "function nombre" js`); nunca se vuelve a declarar en otro archivo, porque la última versión cargada taparía a la otra sin avisar.
+- Antes de cada publicación: `python3 herramientas/version.py`. Pone un número de versión nuevo en todo lo que carga `index.html` para que la tablet no mezcle archivos viejos y nuevos.
 - Mundo de 2400×1600 con cámara, fondo prerrenderizado (`BGC`) y entidades ordenadas por profundidad. Los vecinos son sprites vectoriales en `NPC_DRAW`.
 - Zonas: telar (encargos de lógica), Panadería de Bruno (mates), Biblioteca de Sabina (repaso con repetición espaciada, `p.sr`), Tablón (tareas), Tienda de Coco (jardín y casa), casa propia (jardín `GD.mode='garden'` e interior `GD.mode='room'`, `p.room`), puente de Lía (`p.bridge`, objetivo común `BRIDGE_GOAL`).
 - Paseo del alcalde (supervisión): `VISIT` no nulo mientras papá recorre el pueblo de una niña (`startVisit`, `endVisit`). En ese modo `DB.cur` apunta a la niña visitada, `save()` no toca su partida, el reloj de juego no cuenta y los encargos se abren en modo `catalog`. Fichas visuales en `openFicha()` y taller de solo lectura en `openVTaller()`. Todo lo nuevo que pueda cambiar la partida debe comprobar `VISIT`.
 - Panadería: el grupo 9 usa una escalera de cuentas (`PAN9_LEVELS`, nivel central `p.panLv`, papá lo cambia en el modo alcalde). `genMath9` mezcla niveles como una campana: 60 % del nivel, 25 % de repaso (🌱, 1 botón), 15 % de reto (🔥, 3 botones); `q.tier` guarda cuál. Con un foco de clase elegido, el 60 % es del foco. El grupo 6 sigue con `genMath`.
 - Progresión: maestría por área (`MAST`, `p.mastery`, `addMastery`, `mLevel`), desbloqueos en `MAST_UNLOCK`, zonas al otro lado del río en `ZONE_REQ` (además del puente terminado). Medallas en `MEDALS`.
-- Ejercicios del telar: `genEncargo(p, seed, kind, id, forceType)` con los tipos `seq`, `reglas`, `rep`, `mot`, `hilo`, `cab`, `cua`, `falta` (tarjeta perdida) y `custom`. La lista diaria sale de `ensureDaily` (tipos de `tlvTypesFor`), con tipos distintos cada día. La última definición de `genEncargo` está en el módulo «NIVELES DE RETO DEL TELAR».
+- Ejercicios del telar: `genEncargo(p, seed, kind, id, forceType)` con los tipos `seq`, `reglas`, `rep`, `mot`, `hilo`, `cab`, `cua`, `falta` (tarjeta perdida) y `custom`. La lista diaria sale de `ensureDaily` (tipos de `tlvTypesFor`), con tipos distintos cada día. `genEncargo` está en `js/zonas/telar/niveles.js`.
 - Nivel de reto por tipo (`p.tlv[tipo]`, 1-10, `tlvOf`, `tlvUpdate`): sube tras 2 encargos perfectos seguidos y baja tras 2 atascos (`p.tlvRun`). El nivel cambia el tamaño, los colores, el límite de tarjetas (`v.max`), los bucles dentro de bucles del cabezal (`cabBest`), los huecos sueltos o en diagonal de «¿Qué sigue?» (`v.holes`) y los fallos de Hilo (`v.bugs`, fase `locate` para señalar dónde está). Papá lo ajusta en las fichas. En el catálogo se elige el nivel.
 - Al tejer, `animateKnit` usa `traceProg` para marcar con una flecha la tarjeta que se ejecuta y la vuelta de Repetir (`knitHL`); el cabezal usa `cabApply`.
 - Pueblo compartido: `progressStats` y los vecinos (`townLv`) se calculan con las dos niñas. Los logros se apuntan con `addNews` en `DB.news` y la otra los ve al entrar (`showNews`) o en el Ayuntamiento (`openNews`).
@@ -47,9 +53,9 @@ Lo que cambia a menudo (temas del cole, economía, hoja de ruta, decisiones) viv
 - Códigos de entrada: cada niña entra con `p.code` (4 números, lo elige ella la primera vez con `askGirlCode`); papá los ve y cambia en el modo alcalde (`renderCodesBox`). El código del alcalde (`askPin`, teclado `askKeypad`) protege además borrar partidas, la nube y las copias de seguridad.
 - Pizarra (`fu_pizarra`, pared): `p.board = {img, notes}`. La dueña dibuja; la otra niña y papá dejan notas (`openBoardView`). Al entrar, `boardNotice` avisa de mensajes nuevos.
 - Pecera (`fu_pecera`, suelo, 300 botones y 14 días jugados): `p.aqua = {fish, deco, fed}`, vista grande en `openAqua`, con peces (`FISH`) y decoración (`AQDECO`) que se desbloquean con maestrías y medallas. Dar de comer una vez al día da 1 botón.
-- Tablón de corcho (`renderBoard`, última definición en «TABLÓN DE CORCHO»): tareas del alcalde, notas de las niñas o de papá (`DB.boardMsgs`), noticias reales (`DB.news`) y noticias inventadas del día (`fakeNews`) en los huecos. En el paseo del alcalde se ven las tareas de las dos, se validan y se ponen tareas nuevas (`corkNewTask`).
-- Música y sonidos (módulo «MÚSICA Y SONIDOS»): música de fondo sintetizada con obras clásicas de dominio público (`SONGS`, cada una suena 2 veces y cambia), más baja en los ejercicios (`DUCK_SCREENS`). Pasos al andar (`stepSfx`), voz de cada vecino (`npcVoice`), compras (`sfxBuy`), logros (`sfxLevel`) y `fanfare`. `DB.sound` se cambia con el botón 🎵 del pueblo: música y sonidos, solo sonidos o silencio. `show()` tiene su última definición en este módulo.
-- Modo noche (módulo «MODO NOCHE»): `nightLevel()` (0 a 1) sigue la hora real con el amanecer y el atardecer de cada mes. Por la noche `drawNight` oscurece el pueblo, enciende farolas y ventanas (las ventanas se apuntan en `winX`), saca luciérnagas, cambia la ventana de la casa y la música elige las obras más tranquilas. Papá lo fija en el modo alcalde («Día y noche», `DB.dayMode`: auto, dia o noche) o con el botón ☀️/🌙 del paseo. Para probarlo, añade `&noche` o `&dia` a la dirección.
+- Tablón de corcho (`renderBoard`, en `js/zonas/tablon/corcho.js`): tareas del alcalde, notas de las niñas o de papá (`DB.boardMsgs`), noticias reales (`DB.news`) y noticias inventadas del día (`fakeNews`) en los huecos. En el paseo del alcalde se ven las tareas de las dos, se validan y se ponen tareas nuevas (`corkNewTask`).
+- Música y sonidos (`js/nucleo/musica.js`): música de fondo sintetizada con obras clásicas de dominio público (`SONGS`, cada una suena 2 veces y cambia), más baja en los ejercicios (`DUCK_SCREENS`). Pasos al andar (`stepSfx`), voz de cada vecino (`npcVoice`), compras (`sfxBuy`), logros (`sfxLevel`) y `fanfare`. `DB.sound` se cambia con el botón 🎵 del pueblo: música y sonidos, solo sonidos o silencio. `show()` está en este archivo.
+- Modo noche (`js/mundo/noche.js`): `nightLevel()` (0 a 1) sigue la hora real con el amanecer y el atardecer de cada mes. Por la noche `drawNight` oscurece el pueblo, enciende farolas y ventanas (las ventanas se apuntan en `winX`), saca luciérnagas, cambia la ventana de la casa y la música elige las obras más tranquilas. Papá lo fija en el modo alcalde («Día y noche», `DB.dayMode`: auto, dia o noche) o con el botón ☀️/🌙 del paseo. Para probarlo, añade `&noche` o `&dia` a la dirección.
 
 ## Registro y estadísticas
 
@@ -64,11 +70,13 @@ Lo que cambia a menudo (temas del cole, economía, hoja de ruta, decisiones) viv
 
 ## Material del cole → cuadernos
 
-Formato de `cuadernos.js`: `{id, para:'6'|'9'|'todas'|nombre, emoji, asignatura, titulo, preguntas:[…]}`. Tipos de pregunta: `{t:'opcion', q, opts, a, exp?}`, `{t:'vf', q, a:true|false, exp?}` y `{t:'ordenar', q, items}` (con los items en el orden correcto). De 6 a 10 preguntas, solo con lo que pone el material. Grupo 6: frases cortas y 3 opciones. Grupo 9: 3 o 4 opciones y alguna pregunta de «por qué». Pon una `exp` corta en las preguntas difíciles. Usa ids estables (`asignatura-tema`): si se cambia un id, se pierde la repetición espaciada de ese cuaderno.
+Formato de `contenido/cuadernos.js`: `{id, para:'6'|'9'|'todas'|nombre, emoji, asignatura, titulo, preguntas:[…]}`. Tipos de pregunta: `{t:'opcion', q, opts, a, exp?}`, `{t:'vf', q, a:true|false, exp?}` y `{t:'ordenar', q, items}` (con los items en el orden correcto). De 6 a 10 preguntas, solo con lo que pone el material. Grupo 6: frases cortas y 3 opciones. Grupo 9: 3 o 4 opciones y alguna pregunta de «por qué». Pon una `exp` corta en las preguntas difíciles. Usa ids estables (`asignatura-tema`): si se cambia un id, se pierde la repetición espaciada de ese cuaderno.
 
 ## Cómo probar
 
 - Playwright con Chromium sobre `file:///…/index.html?prueba`. Bloquea las fuentes de Google (`route('**/*googleapis*/**', abort)`), pulsa los diálogos con JS (`#dlg.on .dlgbtns button`) y llama con `void` a las funciones que esperan un diálogo.
+- Antes de publicar un cambio, ejecuta `python3 pruebas/recorrido.py` (abre todas las pantallas, de día y de noche, y falla si hay errores). `python3 pruebas/revision.py` dice qué fallos de la revisión siguen pendientes.
+- Para cambios que no deberían alterar nada (reorganizar, limpiar), `python3 pruebas/equivalencia.py index.html salida.json` juega una sesión fija con el azar y la hora fijados: compara la salida con la de la versión anterior (`cmp`) y debe ser idéntica.
 - Crea perfiles de prueba con `newProfile(nombre, edad, color)`. La barra de prueba permite saltar días y dar botones o maestría.
 - Revisa siempre que no haya `pageerror` y mira capturas de las pantallas tocadas.
 
@@ -76,5 +84,5 @@ Formato de `cuadernos.js`: `{id, para:'6'|'9'|'todas'|nombre, emoji, asignatura,
 
 - Cada zona o casa nueva es un módulo con su pantalla `<section id="scr-…">`, su apertura `open…()`, su requisito en `ZONE_REQ` o `MAST_UNLOCK` y, si da puntos, su área en `MAST` y su registro con `logAct()`.
 - Un tipo de ejercicio nuevo se añade a `genEncargo`, a `TYPE_NAMES` y al catálogo de pruebas.
-- Si `index.html` pasa de unos 400 KB, separa los módulos grandes en archivos `.js` (como `cuadernos.js`) cargados con `<script src>`, sin cambiar el formato del guardado.
+- Si un archivo de `js/` pasa de unos 40 KB, pártelo por temas dentro de su carpeta.
 - Si cambia el formato del informe, sube la versión (`v2`) y mantén la lectura de la anterior.

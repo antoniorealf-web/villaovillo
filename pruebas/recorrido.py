@@ -1,0 +1,40 @@
+"""Recorrido completo: abre todas las pantallas con el pueblo en marcha y falla si hay algún error.
+
+Uso:  python3 pruebas/recorrido.py [ruta a index.html]  (también prueba &noche)
+"""
+import asyncio, os, sys
+from playwright.async_api import async_playwright
+CHROME = os.environ.get('CHROME', '/usr/bin/google-chrome')
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PASOS = [
+ "DB.profiles[0]=newProfile('Berta',9,'#4a8fdc'); DB.profiles[1]=newProfile('Cintia',6,'#e4574f'); DB.profiles.forEach(p=>{p.met=true;p.code='1111';}); saveQuiet(); show('profiles'); renderProfiles()",
+ "enterGame(0)", "player.tx=900; player.ty=700; player.moving=true", "openWorkshop()", "openPuzzle(ENC[0])",
+ "openBakery()", "openLibrary()", "openShop()", "openHouse(DB.cur)", "openNews()",
+ "P().coins=2000; P().days.count=20; P().inv.fu_pecera=1; openAqua(P())", "openBoardView(DB.profiles[0])",
+ "renderBoard(); show('board')", "renderAlcalde(); show('alcalde')", "openFicha(DB.profiles[0])", "startVisit(1)", "endVisit()",
+ "renderCatalog(); show('catalog')", "show('village')",
+]
+async def main(path):
+    async with async_playwright() as pw:
+        b = await pw.chromium.launch(executable_path=CHROME, args=['--no-sandbox'])
+        fallos = 0
+        for extra in ['', '&noche']:
+            pg = await b.new_page(viewport={'width': 1180, 'height': 820})
+            errs = []
+            pg.on('pageerror', lambda e: errs.append(str(e)))
+            await pg.route('**/*googleapis*/**', lambda r: r.abort())
+            await pg.goto('file://' + os.path.abspath(path) + '?prueba' + extra)
+            await pg.evaluate("()=>{ window.__auto=setInterval(()=>{ const b=document.querySelectorAll('#dlg.on .dlgbtns button'); if(b.length) b[b.length-1].click(); },60); }")
+            for js in PASOS:
+                try:
+                    await pg.evaluate('()=>{ ' + js + '; return 0; }')
+                except Exception as e:
+                    errs.append(f'{js}: {e}')
+                await pg.wait_for_timeout(450)
+            await pg.screenshot(path='/tmp/recorrido' + extra.replace('&', '_') + '.png')
+            print(('noche' if extra else 'día') + ':', 'sin errores' if not errs else errs)
+            fallos += len(errs)
+            await pg.close()
+        await b.close()
+        sys.exit(1 if fallos else 0)
+asyncio.run(main(sys.argv[1] if len(sys.argv) > 1 else os.path.join(RAIZ, 'index.html')))
