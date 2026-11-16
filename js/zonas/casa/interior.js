@@ -18,7 +18,7 @@ const FURN=[
 const WALLPATS=[{k:'liso',n:'Lisa',p:0},{k:'rayas',n:'Rayas',p:30},{k:'lunares',n:'Lunares',p:40},{k:'flores',n:'Flores',p:60,m:['telar',3]},{k:'estrellas',n:'Estrellas',p:80,m:['bib',3]}];
 const FLOORS=[{k:'madera',n:'Madera',p:0},{k:'baldosas',n:'Baldosas',p:40},{k:'moqueta',n:'Moqueta',p:50},{k:'ajedrez',n:'Ajedrez',p:70,m:['telar',4]}];
 const WALLCOLS=['#fbe9d0','#fde2e4','#e2ecfb','#e4f5df','#efe4fb','#fff6c9'];
-const WALL_SLOTS=[[95,165],[205,135],[305,180],[595,180],[700,135],[810,165]];
+const WALL_SLOTS=[[122,165],[215,135],[305,180],[595,180],[690,135],[782,165]];
 const RW={W:900,H:600,gx:40,cw:90,rows:[[352,432,405,0.9],[432,505,478,1],[505,590,560,1.12]]};
 function furn(k){ return FURN.find(f=>'fu_'+f.k===k); }
 function roomOf(p){ p.room=p.room||{wall:'#fbe9d0',pat:'liso',floor:'madera',owned:{liso:1,madera:1},fl:Array(24).fill(null),wl:Array(6).fill(null)}; return p.room; }
@@ -44,9 +44,40 @@ function drawWallItem(c,f,x,y,t){
   c.font='56px serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#000';
   if(f.k==='estrella'){ c.save(); c.translate(x,y); c.rotate(Math.sin(t*1.5)*0.1); c.globalAlpha=0.85+Math.sin(t*3)*0.15; c.fillText(f.e,0,0); c.restore(); } else c.fillText(f.e,x,y);
 }
+/* ---- Paredes laterales y gente que anda dentro ----
+   La pared del fondo va de RWB.x0 a RWB.x1; el suelo es un trapecio que se abre hacia delante.
+   Dentro andan la dueña y, si hay visita, la otra niña o papá (el alcalde). Se toca el suelo para andar. */
+const RWB={x0:70,x1:830,fy:340};
+function roomBordes(y){ const k=Math.max(0,Math.min(1,(y-RWB.fy)/(RW.H-RWB.fy))); return [RWB.x0*(1-k)+26, RWB.x1+(RW.W-RWB.x1)*k-26]; }
+let RM={p:null,gente:[],last:0};
+function roomGente(){
+  const p=GD.p; if(RM.p===p&&RM.gente.length&&RM.vis===(VISIT?'alcalde':P()&&P().id)) return RM.gente;
+  RM.p=p; RM.vis=VISIT?'alcalde':P()&&P().id;
+  RM.gente=[{k:'dueña',p,x:820,y:570,tx:820,ty:570,dir:-1}];
+  if(VISIT) RM.gente.push({k:'alcalde',x:690,y:585,tx:690,ty:585,dir:1});
+  else if(P()&&P()!==p) RM.gente.push({k:'visita',p:P(),x:690,y:585,tx:690,ty:585,dir:1});
+  GD.camX=Math.max(0,RW.W-(GD.roomVW||RW.W)); return RM.gente;
+}
+function roomAndador(){ const g=roomGente(); return GD.mine?g[0]:(g[1]||null); }
+function roomAndar(x,y){
+  const a=roomAndador(); if(!a) return false;
+  const yy=Math.max(392,Math.min(RW.H-10,y)), [l,r]=roomBordes(yy);
+  a.tx=Math.max(l,Math.min(r,x)); a.ty=yy; return true;
+}
+function roomMover(dt){
+  for(const a of roomGente()){ const dx=a.tx-a.x, dy=a.ty-a.y, d=Math.hypot(dx,dy);
+    if(d>3){ const s=Math.min(d,260*dt); a.x+=dx/d*s; a.y+=dy/d*s; a.moving=true; if(Math.abs(dx)>2) a.dir=dx>0?1:-1; } else a.moving=false; }
+  const a=roomAndador()||roomGente()[0], vw=GD.roomVW||RW.W;
+  if(vw<RW.W){ const want=Math.max(0,Math.min(RW.W-vw,a.x-vw/2)); GD.camX=(GD.camX||0)+(want-(GD.camX||0))*Math.min(1,dt*5); } else GD.camX=0;
+}
+function drawGenteRoom(c,a,t){
+  if(a.k==='alcalde') drawNPCFig(c,'alcalde',a.x,a.y,{t,moving:a.moving,dir:a.dir,sc:1.9});
+  else drawHero(c,a.x,a.y,{look:lookOf(a.p),t,sc:1.9,dir:a.dir,moving:a.moving,blink:(t%3.4)>3.25,wave:!a.moving&&a.k==='dueña'&&(t%7)>5.8});
+}
 function drawRoom(t){
   const cv=$('#gcv'); if(!cv) return; const c=cv.getContext('2d'), p=GD.p, R=roomOf(p);
-  c.setTransform(GD.k,0,0,GD.k,0,0);
+  const dt=Math.min(0.05,Math.max(0,t-(RM.last||t))); RM.last=t; roomMover(dt);
+  c.setTransform(GD.k,0,0,GD.k,-(GD.camX||0)*GD.k,0);
   // pared
   c.fillStyle=R.wall; c.fillRect(0,0,RW.W,340);
   c.save(); c.beginPath(); c.rect(0,0,RW.W,330); c.clip();
@@ -73,6 +104,14 @@ function drawRoom(t){
   else if(R.floor==='moqueta'){ c.fillStyle=shade(p.color,0.55); c.fillRect(0,fy,RW.W,RW.H-fy); for(let i=0;i<500;i++){ c.fillStyle='rgba(255,255,255,.12)'; c.fillRect(seeded(i)*RW.W,fy+seeded(i+9)*(RW.H-fy),2,2); } }
   else { for(let y=fy,r=0;y<RW.H;y+=46,r++) for(let x=0,k=0;x<RW.W;x+=46,k++){ c.fillStyle=(r+k)%2?'#3e3a44':'#f3efe6'; c.fillRect(x,y,46,46); } }
   c.fillStyle='rgba(60,40,20,.12)'; c.fillRect(0,fy,RW.W,10);
+  // paredes laterales (encima del borde del suelo y de la pared del fondo)
+  for(const s of [-1,1]){ const xb=s<0?RWB.x0:RWB.x1, xe=s<0?0:RW.W;
+    c.beginPath(); c.moveTo(xe,0); c.lineTo(xb,0); c.lineTo(xb,RWB.fy); c.lineTo(xe,RW.H); c.closePath();
+    c.fillStyle=shade(R.wall,-0.16); c.fill();
+    c.save(); c.clip(); c.fillStyle='rgba(255,255,255,.08)'; for(let k=0;k<4;k++){ c.beginPath(); c.moveTo(xb+(xe-xb)*k/4,0); c.lineTo(xb+(xe-xb)*(k+0.5)/4,0); c.lineTo(xb+(xe-xb)*(k+0.5)/4,RW.H); c.lineTo(xb+(xe-xb)*k/4,RW.H); c.fill(); }
+    // zócalo inclinado
+    c.beginPath(); c.moveTo(xb,RWB.fy-28); c.lineTo(xb,RWB.fy); c.lineTo(xe,RW.H); c.lineTo(xe,RW.H-60); c.closePath(); c.fillStyle='#a86d3f'; c.fill(); c.restore();
+    c.beginPath(); c.moveTo(xb,0); c.lineTo(xb,RWB.fy); c.lineTo(xe,RW.H); c.lineWidth=3; c.strokeStyle=OUT; c.stroke(); }
   // huecos de la pared
   const sel=GD.mine&&invSel&&invSel.startsWith('fu_')?furn(invSel):null;
   WALL_SLOTS.forEach(([x,y],i)=>{ const it=R.wl[i];
@@ -84,24 +123,26 @@ function drawRoom(t){
     if(!it&&sel&&sel.z==='floor'){ c.strokeStyle=`rgba(255,255,255,${0.55+Math.sin(t*5)*0.3})`; c.lineWidth=3; c.setLineDash([8,6]); roundRect(c,RW.gx+col*RW.cw+6,y0+4,RW.cw-12,y1-y0-8,12); c.stroke(); c.setLineDash([]); }
     if(it){ const f=furn(it); if(f) items.push({f,x,by,s,rug:f.draw==='rug'}); } }
   items.filter(o=>o.rug).forEach(o=>drawFurn(c,o.f,o.x,o.by,o.s,t));
-  items.filter(o=>!o.rug).sort((a,b)=>a.by-b.by).forEach(o=>drawFurn(c,o.f,o.x,o.by,o.s,t));
-  // la dueña de la casa
-  drawHero(c,845,585,{look:lookOf(p),t,sc:1.9,dir:-1,blink:(t%3.4)>3.25,wave:(t%7)>5.8});
+  // muebles y gente, de atrás hacia delante
+  const cosas=items.filter(o=>!o.rug).map(o=>({y:o.by,d:()=>drawFurn(c,o.f,o.x,o.by,o.s,t)}))
+    .concat(roomGente().map(a=>({y:a.y,d:()=>drawGenteRoom(c,a,t)})));
+  cosas.sort((a,b)=>a.y-b.y).forEach(o=>o.d());
 }
 function roomClick(x,y){
   const hk=roomHitKey(x,y,roomOf(GD.p)); if((hk==='fu_pizarra'||hk==='fu_pecera')&&!(GD.mine&&invSel)){ beep(700,0.05); if(hk==='fu_pizarra') openBoardView(GD.p); else openAqua(GD.p); return; }
-  const p=GD.p, R=roomOf(p); if(!GD.mine){ toast('Esta casa no es tuya 😊'); return; }
+  const p=GD.p, R=roomOf(p); if(!GD.mine){ roomAndar(x,y); return; } // de visita: solo se pasea
   const sel=invSel&&invSel.startsWith('fu_')?furn(invSel):null;
   for(let i=0;i<WALL_SLOTS.length;i++){ const [sx,sy]=WALL_SLOTS[i]; if(Math.abs(x-sx)<46&&Math.abs(y-sy)<46){
     if(R.wl[i]){ p.inv[R.wl[i]]=(p.inv[R.wl[i]]||0)+1; R.wl[i]=null; beep(350,0.05); }
     else if(sel&&sel.z==='wall'){ R.wl[i]=invSel; if(!--p.inv[invSel]){ delete p.inv[invSel]; invSel=null; } beep(760,0.07,'triangle'); }
     else { toast(sel?'Eso va en el suelo':'Elige algo para la pared en tu cesta'); return; }
     save(); renderHouse(); return; } }
-  if(y<RW.rows[0][0]||x<RW.gx||x>=RW.gx+8*RW.cw) return;
+  if(y<RW.rows[0][0]||x<RW.gx||x>=RW.gx+8*RW.cw){ roomAndar(x,y); return; }
   const row=RW.rows.findIndex(r=>y>=r[0]&&y<r[1]); if(row<0) return; const i=row*8+Math.floor((x-RW.gx)/RW.cw);
   if(R.fl[i]){ p.inv[R.fl[i]]=(p.inv[R.fl[i]]||0)+1; R.fl[i]=null; beep(350,0.05); }
   else if(sel&&sel.z==='floor'){ R.fl[i]=invSel; if(!--p.inv[invSel]){ delete p.inv[invSel]; invSel=null; } beep(760,0.07,'triangle'); }
-  else { toast(sel?'Eso va en la pared':'Elige un mueble de tu cesta y toca el suelo'); return; }
+  else if(sel){ toast('Eso va en la pared'); return; }
+  else { roomAndar(x,y); return; } // suelo libre y nada elegido: andar hasta allí
   save(); renderHouse();
 }
 function renderRoomPanel(inv,p){

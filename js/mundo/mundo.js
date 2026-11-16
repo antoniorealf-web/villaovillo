@@ -200,7 +200,22 @@ function bakeryExtra(c,x,y,w,h,rh,wy,wh){ awning(c,x+18,wy+4,w-36,['#f29b38','#f
 function shopExtra(c,x,y,w,h,rh,wy,wh){ awning(c,x+18,wy+4,w-36,['#e4574f','#fffaf1']); crate(c,x+6,y+h-18,'🍎'); crate(c,x+w-36,y+h-18,'🥕'); }
 function tallerExtra(c,x,y,w,h,rh,wy,wh){ const cx=x+w/2; c.beginPath(); c.arc(cx,y+rh*0.58,20,0,Math.PI*2); c.fillStyle='#fffaf1'; c.fill(); ol(c,2.6); c.font='26px serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#000'; c.fillText('🧶',cx,y+rh*0.58+1);
   roundRect(c,x+18,y+h-26,36,22,6); c.fillStyle='#c98f5a'; c.fill(); ol(c,2.2); ['#e4574f','#4a8fdc','#f4c430'].forEach((col,i)=>{ c.beginPath(); c.arc(x+26+i*10,y+h-28,6,0,Math.PI*2); c.fillStyle=col; c.fill(); ol(c,1.6); }); }
-function houseExtra(c,x,y,w,h){ const mx=x+w-8, my=y+h+4; c.strokeStyle=OUT; c.lineWidth=4; c.beginPath(); c.moveTo(mx,my); c.lineTo(mx,my-30); c.stroke(); roundRect(c,mx-12,my-44,24,16,6); c.fillStyle='#4a8fdc'; c.fill(); ol(c,2.2); }
+function houseExtra(c,x,y,w,h){} // el buzón ya no va pegado a la casa: es un objeto aparte (drawBuzon)
+/* Buzón de cada casa, al lado de la puerta. Con carta nueva, la banderita roja sube y sale un sobre. */
+function buzonPos(k){ const b=B['house'+k]; return [b.x+b.w+30,b.y+b.h+14]; }
+function drawBuzon(c,x,y,col,lleno,t){
+  c.fillStyle='rgba(60,40,20,.18)'; c.beginPath(); c.ellipse(x,y+2,16,5,0,0,Math.PI*2); c.fill();
+  roundRect(c,x-4,y-46,8,48,3); c.fillStyle='#9a6338'; c.fill(); ol(c,2.2); // poste
+  roundRect(c,x-20,y-70,40,28,13); c.fillStyle=col; c.fill(); ol(c,2.6); // caja
+  roundRect(c,x-20,y-58,40,16,4); c.fillStyle=shade(col,-0.12); c.fill();
+  roundRect(c,x-14,y-64,10,3,1.5); c.fillStyle='rgba(0,0,0,.35)'; c.fill(); // ranura
+  // banderita: de pie con carta, tumbada sin carta
+  c.save(); c.translate(x+20,y-58); c.rotate(lleno?-Math.PI/2+Math.sin(t*5)*0.08:0);
+  c.fillStyle='#7a5a3a'; c.fillRect(0,-2,22,4); roundRect(c,14,-10,14,11,2); c.fillStyle='#e4574f'; c.fill(); ol(c,2); c.restore();
+  if(lleno){ const by=y-94+Math.sin(t*3)*3; roundRect(c,x-15,by-10,30,20,5); c.fillStyle='#fffaf1'; c.fill(); ol(c,2.2);
+    c.beginPath(); c.moveTo(x-15,by-10); c.lineTo(x,by+2); c.lineTo(x+15,by-10); c.strokeStyle=OUT; c.lineWidth=2; c.stroke(); }
+}
+function mailCountOf(p){ if(!p) return 0; return (DB.msgs||[]).concat(DB.localMsgs||[]).filter(m=>m.para===p.id&&m.estado!=='borrada'&&!isTask(m)&&(m.estado==='nuevo'||(m.estado==='validada'&&!p.rewarded[m.id]))).length; }
 
 /* ---------- escena ---------- */
 function vis(x,y,m=180){ return x>cam.x-m&&x<cam.x+viewW+m&&y>cam.y-m&&y<cam.y+viewH+m*1.5; }
@@ -238,6 +253,7 @@ function drawVillage(){
   addB(B.biblio,()=>bldgX(c,B.biblio,{wall:'#e4ecf7',roof:'#3f6aa8',label:'🦉 Biblioteca',extra:biblioExtra,kind:'nowin',acc:'#a678d6'}));
   for(const [k,pp] of [['houseA',pA],['houseB',pB]]) addB(B[k],()=>bldgX(c,B[k],{wall:shade(pp?pp.color:'#c9b89c',0.72),roof:pp?shade(pp.color,-0.05):'#a89a86',label:pp?'🏡 Casa de '+pp.name:'🏚️ Casa vacía',chimney:true,smoke:!!pp,extra:houseExtra,acc:pp?pp.color:'#ccc'}));
   if(vis(B.tablon.x,B.tablon.y)) E.push({y:B.tablon.y+B.tablon.h,d:()=>drawTablon(c,B.tablon)});
+  [['A',pA],['B',pB]].forEach(([k,pp])=>{ const [bx,by]=buzonPos(k); if(vis(bx,by)) E.push({y:by,d:()=>drawBuzon(c,bx,by,pp?pp.color:'#a89a86',!!pp&&mailCountOf(pp)>0,tGlobal)}); });
   if(vis(B.tend.x+100,B.tend.y)) E.push({y:B.tend.y+B.tend.h,d:()=>tendX(c,B.tend,p)});
   E.push({y:B.plaza.y+20,d:()=>fountainX(c,B.plaza.x,B.plaza.y+10,st.lv)});
   FOREST.forEach(t=>{ if(vis(t.x,t.y)) E.push({y:t.y,d:()=>t.k==='pine'?treePine(c,t.x,t.y,t.s,t.i):treeRound(c,t.x,t.y,t.s,t.i)}); });
@@ -292,6 +308,10 @@ function handleWorldTap(x,y){
   if(VISIT) return visitTap(x,y);
   for(const n of npcs){ if(Math.hypot(n.x-x,n.y-38-y)<44){ talkNPC(n); return; } }
   const mine=DB.cur===0?'A':'B', other=mine==='A'?'B':'A';
+  for(const k of ['A','B']){ const [bx,by]=buzonPos(k); if(Math.abs(x-bx)<30&&y>by-110&&y<by+12){ // el buzón: hay que ir hasta él
+    const go2=fn=>{ tapFx={x:bx,y:by,t:0}; if(andarA(player,bx-34,by+10)<5){ player.act=null; fn(); } else player.act=fn; };
+    if(k===mine) return go2(openMail);
+    const o=DB.profiles[k==='A'?0:1]; return go2(()=>say({face:'📬',name:o?'Buzón de '+o.name:'Buzón vacío',text:o?'Es el buzón de '+o.name+'. Las cartas de cada una solo las abre su dueña.':'Esta casa espera a una nueva vecina.'})); } }
   const go=(door,fn)=>{ tapFx={x:door[0],y:door[1],t:0}; if(andarA(player,door[0],door[1])<5){ player.act=null; fn(); } else player.act=fn; };
   if(inRect(x,y,B.taller)) return go(B.taller.door,openWorkshop);
   if(inRect(x,y,{x:B.tablon.x-16,y:B.tablon.y-10,w:B.tablon.w+32,h:B.tablon.h+10})) return go(B.tablon.door,openBoard);

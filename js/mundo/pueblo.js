@@ -181,8 +181,8 @@ async function talkNPC(n){
   if(n.k==='alcalde'){
     const tc=taskCount(); if(tc&&!mailCount()){ const r2=await say({face:'🧔',name:info.n,text:`¡Hola, ${p.name}! Hay ${tc===1?'una tarea nueva':tc+' tareas'} en el tablón.`,buttons:[{t:'Luego'},{t:'📌 Ver tablón',cls:'primary'}]}); if(r2===1) openBoard(); return; }
     const c=mailCount();
-    const r=await say({face:'🧔',name:info.n,text:c?`¡Hola, ${p.name}! Tienes ${c===1?'algo nuevo':c+' cosas nuevas'} en tu buzón.`:pick(info.hi),buttons:c?[{t:'Luego'},{t:'📬 Abrir buzón',cls:'primary'}]:[{t:'¡Adiós, papá!',cls:'primary'}]});
-    if(c&&r===1) openMail(); return;
+    const r=await say({face:'🧔',name:info.n,text:c?`¡Hola, ${p.name}! Tienes ${c===1?'algo nuevo':c+' cosas nuevas'} en tu buzón. ¡Mira la banderita!`:pick(info.hi),buttons:c?[{t:'Luego'},{t:'📬 Ir al buzón',cls:'primary'}]:[{t:'¡Adiós, papá!',cls:'primary'}]});
+    if(c&&r===1){ const [bx,by]=buzonPos(DB.cur===0?'A':'B'); andarA(player,bx-34,by+10); player.act=openMail; } return; // se va andando hasta su buzón
   }
   let text=pick(info.hi);
   if(hasEncargo(n.k)) text='¡Hola, '+p.name+'! Tengo un encargo para ti en el taller. ¿Vamos?';

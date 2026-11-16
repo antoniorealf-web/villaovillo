@@ -3,15 +3,15 @@
    JARDÍN DE CASA (escena grande animada)
    ========================================================= */
 let GD={p:null,mine:false,raf:null,rain:0,spark:[],last:0,k:1};
-function gardenDims(p){ if(GD.mode==='room') return {W:RW.W,H:RW.H,rows:3,cs:90,gx:0,gy:0}; const rows=p.gardenRows||4, cs=92; return {W:900,H:262+rows*cs,rows,cs,gx:(900-8*cs)/2,gy:232}; }
+function gardenDims(p){ if(GD.mode==='room') return {W:GD.roomVW||RW.W,H:RW.H,rows:3,cs:90,gx:0,gy:0}; /* en pantallas estrechas se ve una parte del cuarto y la vista sigue a quien anda */ const rows=p.gardenRows||4, cs=92; return {W:900,H:262+rows*cs,rows,cs,gx:(900-8*cs)/2,gy:232}; }
 function setupGardenCanvas(p,mine){
   GD.p=p; GD.mine=mine; const cv=$('#gcv');
   cv.onclick=ev=>{ const r=cv.getBoundingClientRect(), d=gardenDims(GD.p); const x=(ev.clientX-r.left)*d.W/r.width, y=(ev.clientY-r.top)*d.H/r.height;
-    if(GD.mode==='room'){ roomClick(x,y); return; }
+    if(GD.mode==='room'){ roomClick(x+(GD.camX||0),y); return; }
     const col=Math.floor((x-d.gx)/d.cs), row=Math.floor((y-d.gy)/d.cs); if(col<0||col>7||row<0||row>=d.rows) return; gardenCellClick(row*8+col); };
   sizeGarden(); if(!GD.raf){ GD.last=performance.now(); GD.raf=requestAnimationFrame(gardenLoop); }
 }
-function sizeGarden(){ const cv=$('#gcv'); if(!cv||!GD.p) return; const d=gardenDims(GD.p); const w=Math.max(280,cv.parentElement.clientWidth||600); const dpr=window.devicePixelRatio||1; cv.width=Math.round(w*dpr); cv.height=Math.round(w*d.H/d.W*dpr); cv.style.height=(w*d.H/d.W)+'px'; GD.k=w*dpr/d.W; }
+function sizeGarden(){ const cv=$('#gcv'); if(!cv||!GD.p) return; const w=Math.max(280,cv.parentElement.clientWidth||600); GD.roomVW=w<620?600:RW.W; GD.camX=Math.min(GD.camX||0,RW.W-GD.roomVW); const d=gardenDims(GD.p); const dpr=window.devicePixelRatio||1; cv.width=Math.round(w*dpr); cv.height=Math.round(w*d.H/d.W*dpr); cv.style.height=(w*d.H/d.W)+'px'; GD.k=w*dpr/d.W; }
 window.addEventListener('resize',()=>{ if(curScreen==='house') sizeGarden(); });
 function gardenLoop(t){ if(curScreen!=='house'){ GD.raf=null; return; } const dt=Math.min(0.05,(t-GD.last)/1000); GD.last=t; if(GD.rain>0) GD.rain-=dt; GD.spark.forEach(s=>s.t+=dt); GD.spark=GD.spark.filter(s=>s.t<1.2); if(GD.mode==='room') drawRoom(t/1000); else drawGarden(t/1000); GD.raf=requestAnimationFrame(gardenLoop); }
 function gardenCellClick(i){

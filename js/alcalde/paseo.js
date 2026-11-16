@@ -53,6 +53,7 @@ function visitTap(x,y){
   if(inRect(x,y,B.biblio)) return go(B.biblio.door,()=>openFicha('bib'));
   if(inRect(x,y,B.tienda)) return go(B.tienda.door,()=>say({face:'🐔',name:NPCS.coco.n,text:'¡Hola, alcalde! '+DB.profiles.filter(Boolean).map(q=>q.name+' tiene '+q.coins+' botones').join(' y ')+' para gastar aquí.',speak:false}));
   if(inRect(x,y,{x:B.tend.x,y:B.tend.y-20,w:B.tend.w,h:B.tend.h+40})) return go(B.tend.door,()=>openBook('telas'));
+  for(const [k,i] of [['A',0],['B',1]]){ const [bx,by]=buzonPos(k); if(Math.abs(x-bx)<30&&y>by-110&&y<by+12){ const q=DB.profiles[i]; return go([bx-34,by+10],()=>{ if(!q){ toast('Buzón vacío'); return; } const n=mailCountOf(q); say({face:'📬',name:'Buzón de '+q.name,text:n?`Tiene ${n===1?'una carta o un reto sin abrir':n+' cartas o retos sin abrir'}.`:'No tiene nada sin abrir.',speak:false}); }); } }
   for(const [k,i] of [['A',0],['B',1]]){ if(inRect(x,y,B['house'+k])||inRect(x,y,B['plot'+k])) return go(B['house'+k].door,()=>{ if(DB.profiles[i]) openHouse(i); else toast('Casa vacía'); }); }
   if(x>=1790&&x<=1990&&y>=740&&y<=890) return go([1830,850],()=>say({face:'🦦',name:NPCS.lia.n,text:`El puente va por ${bridgeTotal()} de ${BRIDGE_GOAL} botones. ${DB.profiles.filter(Boolean).map(q=>q.name+' ha puesto '+(q.bridge||0)).join(' y ')}.`,speak:false}));
   if(x>=1870){ toast('Al otro lado del río están el Huerto y el Laboratorio (todavía cerrados)'); return; }
