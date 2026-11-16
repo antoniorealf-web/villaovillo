@@ -11,7 +11,7 @@ PASOS = [
  "enterGame(0)", "player.tx=900; player.ty=700; player.moving=true", "openWorkshop()", "openPuzzle(ENC[0])",
  "openBakery()", "openLibrary()", "openShop()", "openHouse(DB.cur)", "openNews()",
  "P().coins=2000; P().days.count=20; P().inv.fu_pecera=1; openAqua(P())", "openBoardView(DB.profiles[0])",
- "renderBoard(); show('board')", "renderAlcalde(); show('alcalde')", "openFicha(DB.profiles[0])", "startVisit(1)", "endVisit()",
+ "renderBoard(); show('board')", "boardCards().forEach(c=>{ openPaper(c); closePaper(); }); openPaper(boardCards()[0])", "closePaper()", "renderAlcalde(); show('alcalde')", "openFicha(DB.profiles[0])", "startVisit(1)", "endVisit()",
  "renderCatalog(); show('catalog')", "show('village')",
 ]
 async def main(path):

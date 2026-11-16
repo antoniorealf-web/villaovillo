@@ -16,7 +16,7 @@ html2, n = re.subn(r'\?v=[0-9A-Za-z\-]+"', f'?v={v}"', html)
 cargados = re.findall(r'(?:src|href)="([^"?]+\.(?:js|css))\?v=', html2)
 faltan = [c for c in cargados if not os.path.exists(os.path.join(RAIZ, c))]
 en_disco = []
-for base, _, files in os.walk(os.path.join(RAIZ, 'js')):
+for base, _, files in [w for d in ('js', 'paquetes') for w in os.walk(os.path.join(RAIZ, d))]:
     for f in files:
         if f.endswith('.js'):
             en_disco.append(os.path.relpath(os.path.join(base, f), RAIZ).replace(os.sep, '/'))

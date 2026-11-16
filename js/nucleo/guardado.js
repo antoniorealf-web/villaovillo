@@ -1,3 +1,4 @@
+"use strict";
 /* =========================================================
    GUARDADO
    ========================================================= */
@@ -10,6 +11,7 @@ function uid(){ return 'p'+Date.now().toString(36)+Math.random().toString(36).sl
 function migrate(p){
   if(!p) return p;
   p.id=p.id||uid(); p.stats=p.stats||{}; p.play=p.play||{}; p.rewarded=p.rewarded||{}; p.pendingMsg=p.pendingMsg||{}; p.updatedAt=p.updatedAt||Date.now();
+  p.paq=p.paq||{}; // datos de cada niña dentro de cada paquete (paqDatosNina); nunca se borran
   p.xp=p.xp||0; p.rank=p.rank||0; p.days=p.days||{last:null,streak:0,best:0,count:0};
   p.counters=Object.assign({encargos:Object.keys(p.done||{}).length,firstTry:0,hiloRight:0,bloomed:0,water:0,tasks:0,designs:0,earned:p.coins||0,retos:0},p.counters||{});
   p.medals=p.medals||{}; p.bloomedKinds=p.bloomedKinds||{}; p.gardenRows=p.gardenRows||4;
@@ -46,7 +48,10 @@ function save(evento){
 }
 function saveQuiet(){ writeDB(); }
 function P(){ return DB.profiles[DB.cur]; }
-function now(){ return Date.now() + (DB.dayOffset||0)*864e5; }
+/* Solo en el modo prueba: ?prueba&fecha=2026-12-20 hace que el juego crea que es ese día (para probar paquetes de temporada). */
+const FECHA_PRUEBA_MS = (()=>{ if(!TEST) return 0; try{ const f=new URLSearchParams(location.search).get('fecha'); if(!f) return 0;
+  const t=new Date(f+'T12:00:00').getTime(); if(isNaN(t)) return 0; const d=new Date(); d.setHours(12,0,0,0); return Math.round((t-d.getTime())/864e5)*864e5; }catch(e){ return 0; } })();
+function now(){ return Date.now() + FECHA_PRUEBA_MS + (DB.dayOffset||0)*864e5; }
 function today(){ const d=new Date(now()); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function newProfile(name, age, color){
   return migrate({name, age, color, unlocked:1, done:{}, coins:0, inv:{}, garden:Array(32).fill(null),

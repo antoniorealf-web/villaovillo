@@ -1,85 +1,105 @@
+"use strict";
 /* =========================================================
    TABLÓN DE CORCHO (tareas, notas de las niñas y noticias)
    ========================================================= */
-/* DB.boardMsgs = notas pinchadas por las niñas o papá, visibles para todos. Las noticias inventadas cambian cada día. */
+/* DB.boardMsgs = notas pinchadas por las niñas o papá, visibles para todos. Noticias, chistes y adivinanzas: paquete paquetes/gaceta.js. */
 const PAPER_COLS=['#fff3a8','#ffd1dc','#d6ecff','#dff5d8','#ffe2c2'];
 function corkMsgs(){ DB.boardMsgs=DB.boardMsgs||[]; return DB.boardMsgs; }
-function fakeNews(n){
-  const d=new Date(now()), mes=d.getMonth(), dia=d.getDay(), R=rng(today()+'|corcho');
-  const pr=Math.round(Math.min(1,bridgeTotal()/BRIDGE_GOAL)*100), st=progressStats(P()||{});
-  const tiempo=[mes>=11||mes<=1?'Hace frío: Rosa recomienda bufanda doble y chocolate caliente.':mes<=4?'Llega la primavera: las flores del pueblo están a punto de abrirse.':mes<=8?'¡Calor! Lía avisa de que el río está perfecto para chapotear.':'Otoño en Villaovillo: las hojas cubren los caminos de colores.'];
-  const pool=[
-    ['🐑','Récord de lana','Rosa la oveja ha tejido una bufanda tan larga que da tres vueltas a la fuente de la plaza.'],
-    ['🦔','Se busca','Tomás el erizo ha perdido una bellota dorada. Si la encuentras, devuélvela a su casa. Habrá recompensa: ¡un abrazo sin pinchos!'],
-    ['🐔','Oferta en la tienda','Coco dice que esta semana sus farolillos brillan más que nunca. ¿Será verdad?'],
-    ['🐻','La receta de Bruno','Pan de miel: harina, miel, agua y mucha paciencia. Bruno dice que el secreto es contar bien los minutos.'],
-    ['🦦','Noticias del río','Lía ha visto un pez que salta haciendo piruetas. Dice que se llama Chispa.'],
-    ['🐰','Nube cuenta saltos','Nube ha saltado 100 veces seguidas. «Es como un bucle», explica, «salto y repito».'],
-    ['🤖','Chiste de Hilo','¿Qué le dice un robot a otro? «Bip». Y el otro contesta: «Bip bip». Hilo se ha reído durante 3 minutos.'],
-    ['🦉','Sabina recomienda','Leer un ratito antes de dormir ayuda a recordar lo aprendido. ¡Palabra de lechuza!'],
-    ['🌦️','El tiempo',tiempo[0]],
-    ['🌉','Obras del puente',pr>=100?'¡El puente ya está terminado! Lía da las gracias a las vecinas que pusieron botones.':`El puente de Lía va por el ${pr}%. Cada botón cuenta.`],
-    ['🌳','El pueblo crece',`Ya hay ${st.trees} árboles en Villaovillo. Dicen que cada encargo terminado hace brotar uno nuevo.`],
-    ['🧶','Dato curioso','Un buen jersey puede llevar más de 50.000 puntos. ¡Menos mal que existen los bucles!'],
-    ['🐝','Dato curioso','Las abejas bailan para contarse dónde hay flores. Es su forma de mandar mensajes.'],
-    ['🐙','Dato curioso','Los pulpos tienen tres corazones y la sangre azul. ¿Habrá alguno en tu pecera?'],
-    ['🔤','Adivinanza','Tengo agujas y no sé coser, tengo números y no sé leer. ¿Qué soy? (Respuesta: el reloj)'],
-    ['🔢','Adivinanza','Si Bruno hornea 3 bandejas de 4 bollos, ¿cuántos bollos hay? Piensa… ¡12!'],
-    ['🎨','Concurso','El ayuntamiento busca la tela más bonita del pueblo. ¡Cuelga tus diseños en el tendedero!'],
-    ['📮','Correo','El cartero dice que el buzón del alcalde está lleno de cartas bonitas. ¿Has mirado el tuyo?'],
-    ['🎵','Música en la plaza','Esta tarde, Tomás tocará la flauta junto a la fuente. Se aceptan aplausos.'],
-    ['🐞','Visita inesperada','Una mariquita se ha paseado por el tablón. Contó 7 puntos en su espalda.'],
-    ['🗓️','Hoy es '+['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][dia],dia===0||dia===6?'¡Fin de semana! Buen día para regar el jardín y decorar la casa.':'Día de cole. Después de los deberes, el telar te espera.']
-  ];
-  return shuffle(pool,R).slice(0,n);
+/* ---------- Carteles ----------
+   El tablón es un corcho con carteles pequeños (no se leen); al tocar uno, sale en grande como una hoja de papel.
+   Un cartel es un objeto:
+   { key, tipo, emoji, titulo, texto, firma?, estilo: 'rayas'|'cuadros'|'posit'|'kraft'|'periodico'|'tarjeta'|'pergamino',
+     color? (papel), sello? (pegatina en la miniatura: '¡Nuevo!', '❓', '🎁'…), leer? (texto para 🔊),
+     prio? (más alto = se queda si no caben todos), extra?(cont) (contenido especial en grande), acciones?(cont) (botones) }
+   Los paquetes añaden carteles con el enchufe «tablon» (ver js/nucleo/paquetes.js). */
+const CORK_COLS=4, CORK_ROWS=3;
+function boardCards(){
+  const alc=!!VISIT, p=P(), cards=[];
+  const all=(DB.msgs||[]).concat(localMsgs()).filter(m=>isTask(m)&&!['borrada','caducada'].includes(m.estado));
+  const tasks=alc?all.filter(m=>!(m.estado==='validada'&&(DB.profiles.find(q=>q&&q.id===m.para)||{rewarded:{}}).rewarded[m.id])):myTasks().filter(m=>!(m.estado==='validada'&&p.rewarded[m.id]));
+  tasks.slice().reverse().forEach(m=>{
+    const who=DB.profiles.find(q=>q&&q.id===m.para);
+    const sello=alc?(m.estado==='hecha'?'✅ ¿Hecha?':''):(m.estado==='nuevo'?'¡Nueva!':m.estado==='hecha'?'⏳':m.estado==='validada'?'🎁':'');
+    cards.push({key:'t'+m.id, tipo:'tarea', estilo:'rayas', emoji:m.tipo==='deberes'?'📚':'🧹', titulo:m.tipo==='deberes'?'Deberes':'Tarea de casa',
+      texto:m.texto||'', firma:(alc&&who?'Para '+who.name+' · ':'')+'Premio: 🔘 '+(m.premio||10)+(m.rid?' · 📅 cada día':''), punto:alc&&who?who.color:null,
+      sello, prio:100+(m.estado==='hecha'?5:0), leer:m.texto||'',
+      acciones(a){
+        const B=(t,cls,fn)=>{ const b=el('button','btn '+(cls||''),t); b.onclick=fn; a.append(b); };
+        const again=()=>{ closePaper(); renderBoard(); };
+        if(alc){
+          if(m.estado==='hecha') B('✅ Validar','green',()=>{ validateMsg(m); again(); });
+          else a.append(el('span','pstate',m.estado==='nuevo'?'Sin empezar':m.estado==='aceptada'?'Aceptada':m.estado==='validada'?'Validada · falta recoger':''));
+          if(String(m.id).startsWith('L')) B('🗑️ Quitar','',()=>{ m.estado='borrada'; saveQuiet(); again(); });
+        } else {
+          if(m.estado==='nuevo') B('✋ Aceptar','primary',()=>{ setMsgState(m,'aceptada'); beep(700,0.08,'triangle'); toast('📌 ¡Tarea aceptada! Cuando la termines, márcala.'); again(); });
+          else if(m.estado==='aceptada') B('✅ ¡Ya la hice!','green',()=>{ closePaper(); doneTask(m).then(renderBoard); });
+          else if(m.estado==='hecha') a.append(el('span','pstate','⏳ Papá lo comprobará'));
+          else if(m.estado==='validada') B('🎁 Recoger premio','primary',()=>{ closePaper(); collectTask(m).then(renderBoard); });
+        }
+      }});
+  });
+  corkMsgs().slice(-4).reverse().forEach((n,i)=>{
+    const dt=new Date(n.t), me=alc?'alcalde':(p&&p.id);
+    const st=(String(n.text).match(/\p{Extended_Pictographic}/u)||['✏️'])[0];
+    cards.push({key:'n'+(n.id||n.t), tipo:'nota', estilo:'posit', color:n.col||PAPER_COLS[i%PAPER_COLS.length], emoji:st, titulo:'Nota de '+n.from,
+      texto:n.text, firma:n.from+' · '+dt.getDate()+'/'+(dt.getMonth()+1), prio:60-i, leer:n.from+' dice: '+n.text,
+      acciones:(alc||n.fromId===me)?(a=>{ const x=el('button','btn','🗑️ Quitar la nota'); x.onclick=()=>{ const k=corkMsgs().indexOf(n); if(k>=0) corkMsgs().splice(k,1); saveQuiet(); closePaper(); renderBoard(); }; a.append(x); }):null});
+  });
+  (DB.news||[]).slice(-2).reverse().forEach((n,i)=>cards.push({key:'g'+n.t, tipo:'logro', estilo:'periodico', emoji:n.e, titulo:'¡Bien por '+n.name+'!',
+    texto:n.name+' '+n.txt+'.', firma:'La Gaceta de Villaovillo · Última hora', prio:50-i}));
+  enchufe('tablon',{alcalde:alc,p}).forEach(c=>{ if(c&&c.titulo) cards.push(Object.assign({prio:10},c)); });
+  return cards;
 }
-function pinEl(cls,rot){ const d=el('div','paper '+cls); d.style.transform=`rotate(${rot}deg)`; d.append(el('span','pin')); return d; }
 function renderBoard(){
   const alc=!!VISIT, p=P(); $('#board-coins').textContent=alc?'🎩 Alcalde':'🔘 '+p.coins; $('#board-coins').style.display='';
   $('#board-alc').style.display=alc?'none':'';
-  const L=$('#blist'); L.innerHTML=''; L.className='cork';
-  const R=rng(today()+'|rot'); const rot=()=>Math.round((R()*6-3)*10)/10;
-  const all=(DB.msgs||[]).concat(localMsgs()).filter(m=>isTask(m)&&!['borrada','caducada'].includes(m.estado));
-  const tasks=alc?all.filter(m=>!(m.estado==='validada'&&(DB.profiles.find(q=>q&&q.id===m.para)||{rewarded:{}}).rewarded[m.id])):myTasks().filter(m=>!(m.estado==='validada'&&p.rewarded[m.id]));
-  const items=[];
-  // tareas
-  tasks.slice().reverse().forEach(m=>{
-    const d=pinEl('ptask',rot()); const who=DB.profiles.find(q=>q&&q.id===m.para);
-    d.innerHTML+=`<div class="phead">${m.tipo==='deberes'?'📚 Deberes':'🧹 Tarea de casa'}${m.rid?' · 📅 hoy':''}</div>${alc&&who?`<div class="pwho" style="color:${who.color}">Para ${esc(who.name)}</div>`:''}<div class="ptext">${esc(m.texto||'')}</div><div class="pprize">🔘 ${m.premio||10}</div>`;
-    const a=el('div','pacts'); const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(m.texto||''); a.append(sp);
-    const B=(t,cls,fn)=>{ const b=el('button','btn '+(cls||''),t); b.onclick=fn; a.append(b); };
-    if(alc){
-      if(m.estado==='hecha') B('✅ Validar','green',()=>{ validateMsg(m); renderBoard(); });
-      else a.append(el('span','pstate',m.estado==='nuevo'?'Sin empezar':m.estado==='aceptada'?'Aceptada':m.estado==='validada'?'Validada · falta recoger':''));
-      if(String(m.id).startsWith('L')) B('🗑️','',()=>{ m.estado='borrada'; saveQuiet(); renderBoard(); });
-    } else {
-      if(m.estado==='nuevo') B('✋ Aceptar','primary',()=>{ setMsgState(m,'aceptada'); beep(700,0.08,'triangle'); toast('📌 ¡Tarea aceptada! Cuando la termines, márcala.'); renderBoard(); });
-      else if(m.estado==='aceptada') B('✅ ¡Ya la hice!','green',()=>doneTask(m).then(renderBoard));
-      else if(m.estado==='hecha') a.append(el('span','pstate','⏳ Papá lo comprobará'));
-      else if(m.estado==='validada') B('🎁 Recoger premio','primary',()=>collectTask(m).then(renderBoard));
-    }
-    d.append(a); if(m.estado==='nuevo'&&!alc) d.classList.add('pnew'); items.push(d);
-  });
-  // notas de las niñas y de papá
-  corkMsgs().slice(-12).reverse().forEach((n,i)=>{
-    const d=pinEl('pnote',rot()); d.style.background=n.col||PAPER_COLS[i%PAPER_COLS.length];
-    const dt=new Date(n.t); d.innerHTML+=`<div class="pfrom">✏️ ${esc(n.from)} · ${dt.getDate()}/${dt.getMonth()+1}</div><div class="ptext hand">${esc(n.text)}</div>`;
-    const a=el('div','pacts'); const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(n.from+' dice: '+n.text); a.append(sp);
-    const me=alc?'alcalde':p.id; if(alc||n.fromId===me){ const x=el('button','btn','🗑️'); x.onclick=()=>{ const k=corkMsgs().indexOf(n); if(k>=0) corkMsgs().splice(k,1); saveQuiet(); renderBoard(); }; a.append(x); }
-    d.append(a); items.push(d);
-  });
-  // noticias reales del pueblo
-  (DB.news||[]).slice(-3).reverse().forEach(n=>{ const d=pinEl('pnews',rot()); d.innerHTML+=`<div class="pmast">📰 EL OVILLO · Última hora</div><div class="ptitle">${n.e} ¡Bien por ${esc(n.name)}!</div><div class="ptext">${esc(n.name)} ${esc(n.txt)}.</div>`; d.append(speakBtn(`¡Bien por ${n.name}! ${n.name} ${n.txt}.`)); items.push(d); });
-  // noticias inventadas en los huecos libres
-  fakeNews(Math.max(3,10-items.length)).forEach(([e,t,x])=>{ const d=pinEl('pnews',rot()); d.innerHTML+=`<div class="pmast">📰 EL OVILLO</div><div class="ptitle">${e} ${esc(t)}</div><div class="ptext">${esc(x)}</div>`; d.append(speakBtn(t+'. '+x)); items.push(d); });
-  // mezclar: tareas primero, luego el resto intercalado
-  const nT=tasks.length, rest=shuffle(items.slice(nT),rng(today()+'|mix'));
-  // papel en blanco para escribir
-  const blank=pinEl('pblank',rot()); blank.innerHTML+=`<div class="ptitle">${alc?'➕ Poner una tarea':'✏️ Dejar una nota'}</div><div class="ptext">${alc?'Para una de las niñas o para las dos':'Escribe algo para todo el pueblo'}</div>`;
-  blank.onclick=()=>alc?corkNewTask():corkNewNote();
-  const final=items.slice(0,nT).concat([blank]).concat(rest);
-  if(alc){ const nb=pinEl('pblank',rot()); nb.innerHTML+='<div class="ptitle">✏️ Nota del alcalde</div><div class="ptext">Un mensaje para las dos</div>'; nb.onclick=corkNewNote; final.splice(nT+1,0,nb); }
-  final.forEach(x=>L.append(x));
+  const L=$('#blist'); L.innerHTML=''; L.className='corkboard';
+  const portrait=innerHeight>innerWidth, C=portrait?3:CORK_COLS, Rw=portrait?4:CORK_ROWS;
+  L.style.gridTemplateColumns=`repeat(${C},1fr)`; L.style.gridTemplateRows=`repeat(${Rw},1fr)`;
+  const R=rng(today()+'|corcho'), slots=[];
+  for(let r=0;r<Rw;r++) for(let c=0;c<C;c++) slots.push([r,c]);
+  const pad=slots.pop(); // la libreta siempre abajo a la derecha
+  let cards=boardCards();
+  if(cards.length>slots.length) cards=cards.slice().sort((a,b)=>b.prio-a.prio).slice(0,slots.length);
+  // tareas primero, en las primeras casillas; el resto, repartido por el corcho
+  const nT=cards.filter(c=>c.tipo==='tarea').length;
+  const free=slots.slice(nT); shuffle(free,R);
+  const pos=slots.slice(0,nT).concat(free);
+  cards.forEach((c,i)=>L.append(miniCard(c,pos[i],R)));
+  const blank={key:'pad',tipo:'libreta',estilo:'libreta',emoji:alc?'➕':'✏️',sello:''};
+  const d=miniCard(blank,pad,R); d.classList.add('mpad'); d.innerHTML+=`<div class="mpadt">${alc?'Poner tarea':'Dejar nota'}</div>`;
+  d.onclick=()=>alc?corkPadMenu():corkNewNote(); L.append(d);
+}
+function miniCard(c,[r,col],R){
+  const d=el('div','mini pap-'+c.estilo); d.style.gridRow=String(r+1); d.style.gridColumn=String(col+1);
+  const rot=Math.round((R()*8-4)*10)/10, dx=Math.round(R()*16-8), dy=Math.round(R()*12-6);
+  d.style.transform=`translate(${dx}px,${dy}px) rotate(${rot}deg)`; if(c.color) d.style.background=c.color;
+  const fix=(c.estilo==='tarjeta'||c.estilo==='kraft')?'<span class="tape"></span>':'<span class="pin"></span>';
+  d.innerHTML=`${fix}<div class="me">${c.emoji||'📄'}</div>${c.tipo==='libreta'?'':'<div class="scrib"></div><div class="scrib s2"></div><div class="scrib s3"></div>'}${c.punto?`<span class="mdot" style="background:${c.punto}"></span>`:''}${c.sello?`<span class="msello">${esc(c.sello)}</span>`:''}`;
+  if(c.tipo!=='libreta') d.onclick=()=>openPaper(c);
+  return d;
+}
+function openPaper(c){
+  closePaper(); beep(520,0.05,'triangle');
+  const ov=el('div','paperview'); ov.id='paperview';
+  const sh=el('div','bigpaper pap-'+c.estilo); if(c.color) sh.style.background=c.color;
+  sh.style.setProperty('--rot',(((c.key||'').length%5)-2)*0.6+'deg');
+  sh.innerHTML=`${c.estilo==='tarjeta'||c.estilo==='kraft'?'<span class="tape"></span>':'<span class="pin"></span>'}`;
+  const bin=el('div','bin'); sh.append(bin); // el contenido va dentro para que la chincheta no se corte al hacer scroll
+  bin.innerHTML=(c.estilo==='periodico'?`<div class="bmast">LA GACETA DE VILLAOVILLO</div>`:'')+
+    `<div class="btitle">${c.emoji?c.emoji+' ':''}${esc(c.titulo||'')}</div><div class="btext">${esc(c.texto||'').replace(/\n/g,'<br>')}</div>`;
+  if(c.extra){ const x=el('div','bextra'); c.extra(x); bin.append(x); }
+  if(c.firma) bin.append(el('div','bfirma',esc(c.firma)));
+  const a=el('div','bacts'); const sp=el('button','speak','🔊'); sp.onclick=ev=>{ ev.stopPropagation(); speakNow(c.leer||((c.titulo||'')+'. '+(c.texto||''))); }; a.append(sp);
+  if(c.acciones) c.acciones(a); bin.append(a);
+  const x=el('button','bclose','✕'); x.onclick=closePaper;
+  ov.append(sh,x); ov.onclick=ev=>{ if(ev.target===ov) closePaper(); };
+  $('#scr-board').append(ov); requestAnimationFrame(()=>ov.classList.add('on'));
+}
+function closePaper(){ const o=document.getElementById('paperview'); if(o) o.remove(); }
+async function corkPadMenu(){
+  const r=await say({face:'📌',name:'Tablón',speak:false,text:'¿Qué quieres pinchar?',buttons:[{t:'Cancelar'},{t:'✏️ Nota del alcalde'},{t:'➕ Poner una tarea',cls:'primary'}]});
+  if(r===2) corkNewTask(); else if(r===1) corkNewNote();
 }
 function speakBtn(t){ const a=el('div','pacts'); const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(t); a.append(sp); return a; }
 async function corkNewNote(){
@@ -110,3 +130,4 @@ async function corkNewTask(){
   else { const targets=para==='todas'?DB.profiles.filter(Boolean).map(q=>q.id):[para]; targets.forEach(pid=>localMsgs().push({id:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),para:pid,tipo,texto,premio,estado:'nuevo'})); }
   saveQuiet(); toast('📌 ¡Tarea puesta en el tablón!'); renderBoard();
 }
+addEventListener('resize',()=>{ if(curScreen==='board') renderBoard(); });

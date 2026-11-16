@@ -1,3 +1,4 @@
+"use strict";
 /* =========================================================
    TABLÓN DE TAREAS + MODO ALCALDE (local, con PIN)
    ========================================================= */
@@ -54,6 +55,7 @@ function renderAlcalde(){
   const bf=el('button','btn blue','📊 Fichas de las niñas'); bf.onclick=()=>openFicha(); r0.append(bf);
   b0.append(r0);
   renderCodesBox(V,box);
+  renderPaquetesBox(box);
   const bn=box('🌙 Día y noche');
   bn.append(el('div','counter','Normalmente el pueblo sigue la hora real. Aquí puedes dejarlo fijo de día o de noche.'));
   const rn=el('div','choice'); rn.style.cssText='justify-content:flex-start;margin-top:8px';
