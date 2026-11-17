@@ -103,9 +103,21 @@ function pieSVG(n,eaten){ let s='<svg viewBox="-52 -52 104 104" width="120" heig
 function openBakery(age){
   const p=P(); const src=age?{age,mathFocus:'',panLv:CAT_PAN}:p;
   MZ={qs:Array.from({length:src.age<=7?5:6},()=>genMath(src)),i:0,ok:0,tries:0,input:'',catalog:!!age};
-  show('bakery'); renderBakery();
-  if(!age && !p._bakeryHi){ p._bakeryHi=true; saveQuiet(); say({face:'🐻',name:'Bruno el panadero',text:'¡Bienvenida a mi panadería! Necesito ayuda con las cuentas. Cada día puedes hacer un turno de problemas.'}); }
+  if(age){ empezarTurno(); return; } // catálogo de pruebas: directo a las cuentas
+  // al entrar: el obrador con Bruno detrás del mostrador
+  $('#bk-hall').style.display=''; $('#bk-body').style.display='none'; $('#bk-prog').innerHTML=''; $('#bk-coins').textContent='🔘 '+p.coins;
+  const hecho=!!(p.daily&&p.daily.math);
+  const txt=saludoHora()+', '+p.name+'! '+(p._bakeryHi?'':'Soy Bruno. ')+(hecho?'Ya me has ayudado hoy, ¡gracias! ¿Hacemos otro turno para practicar?':'Hoy tengo muchos encargos. ¿Me ayudas con las cuentas?');
+  if(!p._bakeryHi){ p._bakeryHi=true; saveQuiet(); }
+  const O=$('#bk-opc'); O.innerHTML='';
+  const box=el('div','panel bk-start');
+  box.append(el('div','counter',hecho?'🥐 Turno de hoy hecho. Los turnos de práctica dan menos botones.':`🥐 Un turno son ${MZ.qs.length} cuentas. Las 🌱 son de repaso y las 🔥 de reto (dan más botones).`));
+  const go=el('button','btn primary',hecho?'🧮 Otro turno de práctica':'🧮 Empezar el turno'); go.style.fontSize='24px'; go.onclick=empezarTurno;
+  const out=el('button','btn','← Volver al pueblo'); out.onclick=()=>show('village');
+  box.append(go,out); O.append(box);
+  show('bakery'); lugarEscena('bakery',$('#bk-esc'),txt);
 }
+function empezarTurno(){ $('#bk-hall').style.display='none'; $('#bk-body').style.display=''; show('bakery'); renderBakery(); }
 function renderBakery(){
   const p=P(), q=MZ.qs[MZ.i]; $('#bk-coins').textContent='🔘 '+p.coins;
   $('#bk-prog').innerHTML=MZ.qs.map((_,i)=>`<span class="mdot ${i<MZ.i?(MZ.qs[i].good?'ok':'ko'):i===MZ.i?'cur':''}"></span>`).join('');
@@ -153,5 +165,5 @@ async function nextMath(){
   await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:26px;font-weight:800">¡Turno terminado! ${ok} de ${n} a la primera</div><div class="rw-items">${coins?`<div class="rw-item">🔘 +${coins} botones</div>`:''}${xp?`<div class="rw-item">✨ +${xp} experiencia</div>`:''}</div><div style="font-size:18px">🐻 «¡Gracias por ayudarme con las cuentas!»</div>${first?'':'<div class="counter">Los turnos extra dan menos premio. ¡Mañana hay turno nuevo!</div>'}</div>`});
   await dailyBonusCheck(p); await afterRewards();
   const r=await say({face:'🐻',name:'Bruno',text:'¿Otro turno?',buttons:[{t:'Volver al pueblo'},{t:'¡Otro turno!',cls:'primary'}],speak:false});
-  if(r===1) openBakery(); else show('village');
+  if(r===1){ openBakery(); empezarTurno(); } else show('village');
 }

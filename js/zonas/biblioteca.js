@@ -6,7 +6,11 @@ let LQ=null;
 const SR_DAYS=[1,2,4,7,14];
 function cuadernosFor(p){ const C=window.CUADERNOS||[]; return C.filter(c=>c.para==='todas'||c.para===(p.age<=7?'6':'9')||String(c.para).toLowerCase()===p.name.toLowerCase()); }
 function dueQuestions(p,c){ const t=dayNum(today()); p.sr=p.sr||{}; return c.preguntas.map((q,i)=>({q,key:c.id+':'+i})).filter(x=>{ const s=p.sr[x.key]; return !s||s.n<=t; }); }
-function openLibrary(){ renderLibrary(); show('library'); const p=P(); if(!p._libHi){ p._libHi=true; saveQuiet(); say({face:'🦉',name:'Sabina la lechuza',text:'¡Hola! Soy Sabina. Aquí repasamos lo que aprendes en el cole. Lo que te cueste lo volveremos a ver otro día, ¡así se queda en la memoria!'}); } }
+function openLibrary(){ renderLibrary(); show('library'); const p=P();
+  const due=cuadernosFor(p).reduce((n,c)=>n+(dueQuestions(p,c).length?1:0),0);
+  const txt=saludoHora()+', '+p.name+'! '+(p._libHi?'':'Soy Sabina. Aquí repasamos lo que aprendes en el cole; lo que cueste lo volveremos a ver otro día. ')+(cuadernosFor(p).length?(due?'¿Qué tema quieres repasar hoy?':'Hoy lo tienes todo repasado. ¿Quieres practicar alguno?'):'Todavía no tengo cuadernos para ti. ¡Pronto llegarán!');
+  if(!p._libHi){ p._libHi=true; saveQuiet(); }
+  lugarEscena('library',$('#lib-esc'),txt); }
 function renderLibrary(){
   const p=P(); $('#lib-coins').textContent='🔘 '+p.coins;
   const L=$('#lib-list'); L.innerHTML='';

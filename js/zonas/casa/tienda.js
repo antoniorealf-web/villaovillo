@@ -2,7 +2,10 @@
 /* =========================================================
    TIENDA
    ========================================================= */
-function openShop(){ renderShop(); show('shop'); const p=P(); if(!p._shopHi){ p._shopHi=true; say({face:'🐔',name:NPCS.coco.n,text:'¡Bienvenida a mi tienda! Aquí puedes cambiar tus botones por cosas bonitas para tu jardín y para tu casa.'}); } }
+function openShop(){ renderShop(); show('shop'); const p=P();
+  const txt=saludoHora()+', '+p.name+'! '+(p._shopHi?'¿Qué deseas comprar hoy?':'Bienvenida a mi tienda. Aquí cambias tus botones por cosas bonitas para tu jardín y tu casa. ¿Qué deseas comprar hoy?');
+  if(!p._shopHi){ p._shopHi=true; saveQuiet(); }
+  lugarEscena('shop',$('#shop-esc'),txt); }
 let shopTab='jardin';
 function renderShop(){
   const p=P(); $('#shop-coins').textContent='🔘 '+p.coins;
