@@ -36,9 +36,8 @@ function drawHero(c,x,y,o){
     c.fillStyle=front?skin:shade(skin,-0.08); c.beginPath(); c.arc(0,13,3.3,0,Math.PI*2); c.fill(); ol(c,1.8);
     c.restore();
   };
-  /* El cuerpo (brazos y piernas) va girado respecto a la cabeza: así, al andar, el paso va hacia donde mira. */
-  c.save(); c.scale(-1,1);
-  arm(-9, armL, false);
+  /* Los brazos van girados respecto a la cabeza; las piernas y los pies apuntan hacia donde se anda. */
+  c.save(); c.scale(-1,1); arm(-9, armL, false); c.restore(); // brazos girados respecto a la cabeza; piernas y pies sin girar
   // ---- piernas y zapatos
   const leg=(sx,lift)=>{
     c.save(); c.translate(sx,-15-lift);
@@ -48,7 +47,6 @@ function drawHero(c,x,y,o){
     c.restore();
   };
   leg(-4.5,liftL); leg(4.5,liftR);
-  c.restore();
   // ---- vestido
   const g=c.createLinearGradient(0,-36,0,-12); g.addColorStop(0,shade(dress,0.12)); g.addColorStop(1,dressD);
   c.fillStyle=g; c.beginPath();
