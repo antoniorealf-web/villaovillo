@@ -15,7 +15,7 @@ function nightLevel(){
   let v=0; if(h>=set+0.75||h<rise-0.5) v=1; else if(h>=set) v=(h-set)/0.75; else if(h<rise) v=(rise-h)/0.5;
   nightCache={t:Date.now(),v}; return v;
 }
-function setDayMode(k){ DB.dayMode=k; nightCache.t=0; saveQuiet(); toast(k==='dia'?'☀️ El pueblo se queda de día':k==='noche'?'🌙 El pueblo se queda de noche':'🕐 El pueblo sigue la hora real'); const b=$('#vb-night'); if(b) b.textContent=nightLevel()>0.5?'☀️':'🌙'; if(curScreen==='alcalde') renderAlcalde(); }
+function setDayMode(k){ DB.dayMode=k; DB.ajT=Date.now(); nightCache.t=0; saveQuiet(); toast(k==='dia'?'☀️ El pueblo se queda de día':k==='noche'?'🌙 El pueblo se queda de noche':'🕐 El pueblo sigue la hora real'); const b=$('#vb-night'); if(b) b.textContent=nightLevel()>0.5?'☀️':'🌙'; if(curScreen==='alcalde') renderAlcalde(); }
 function drawNight(c,st){
   const n=NIGHTN; $('#scr-village').classList.toggle('night',n>0.5); if(n<=0) return;
   const W=vcanvas.width, H=vcanvas.height, k=vDpr*vScale;

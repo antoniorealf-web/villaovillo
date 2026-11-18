@@ -77,7 +77,8 @@ async function alcHaz(para,tipo,dato,txt){
     try{ const r=await api('addOrden',{pin:remPin(),orden:o}); o.id=r.id; }
     catch(e){ toast(e.message==='accion'?'⚠️ Falta actualizar el programa de Google (mira las instrucciones)':e.message==='pin'?'⚠️ El PIN del alcalde no es correcto':'⚠️ Sin conexión: no se ha enviado. Prueba otra vez.',4500); return false; }
     o.estado='pendiente'; o.fecha=new Date().toISOString(); REM.ordenes.push(o);
-  } else o.id='x'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  } else { o.id='x'+Date.now().toString(36)+Math.random().toString(36).slice(2,5); o.fecha=new Date().toISOString(); }
+  if(!REMOTO){ const x=ordAplicaAqui(o); if(x.r===false){ toast('No se ha podido hacer'); return false; } if(x.subir) scheduleCloud(); saveQuiet(); return true; }
   const r=aplicaOrden(o);
   if(r===false&&!REMOTO){ toast('No se ha podido hacer'); return false; }
   saveQuiet(); return true;
@@ -85,18 +86,20 @@ async function alcHaz(para,tipo,dato,txt){
 /* Tablet: aplica las órdenes que llegan de la nube, sube las partidas cambiadas y avisa de que están hechas. */
 async function aplicaOrdenesNube(list){
   if(REMOTO||TEST||VISIT) return;
-  const res=[], tocadas=new Set();
-  for(const o of list){
-    let r=null; try{ r=aplicaOrden(o); }catch(e){ r=false; }
-    if(r===null) continue;
-    res.push({id:o.id,estado:r?'aplicada':'rechazada'});
-    if(r){ const p=DB.profiles.find(q=>q&&q.id===o.para); if(p) tocadas.add(p); if(o.para==='todas') DB.profiles.filter(Boolean).forEach(q=>tocadas.add(q)); }
+  const res=[], tocadas=new Set(), pend=new Set(list.map(o=>o.id));
+  // las pendientes de la nube y las que ya aplicó otra tablet (DB.ordHechas), por orden de fecha
+  const todas=list.concat((DB.ordHechas||[]).filter(o=>!pend.has(o.id))).sort((a,b)=>String(a.fecha||'').localeCompare(String(b.fecha||'')));
+  let hay=false;
+  for(const o of todas){
+    const x=ordAplicaAqui(o); if(x.r===null) continue; if(!x.ya) hay=true;
+    if(pend.has(o.id)) res.push({id:o.id,estado:x.r?'aplicada':'rechazada'});
+    if(x.subir) tocadas.add(x.subir);
   }
-  if(!res.length) return;
+  if(!res.length&&!hay) return;
   saveQuiet();
   for(const p of tocadas){ p.updatedAt=Date.now(); try{ await api('save',{profile:p,sum:summary(p),evento:''}); }catch(e){ return; } }
   if(!(await pushPueblo())) return;
-  try{ await api('ordenHecha',{res}); }catch(e){}
+  if(res.length) try{ await api('ordenHecha',{res}); }catch(e){}
   saveQuiet();
   if(curScreen==='village') updateHUD(); else if(curScreen==='board') renderBoard(); else if(curScreen==='mail') renderMail();
 }

@@ -14,7 +14,7 @@ function ensureRecurring(p){
     if(r.para!=='todas'&&r.para!==p.id) return;
     if(r.dias&&r.dias.length&&!r.dias.includes(wd)) return; // hoy no toca
     if(localMsgs().some(m=>m.rid===r.rid&&m.para===p.id&&m.day===t)) return;
-    localMsgs().push({id:'L'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),rid:r.rid,day:t,para:p.id,tipo:r.tipo,texto:r.texto,premio:r.premio,estado:'nuevo'});
+    localMsgs().push({id:'R'+r.rid+'-'+t+'-'+p.id,t:Date.now(),rid:r.rid,day:t,para:p.id,tipo:r.tipo,texto:r.texto,premio:r.premio,estado:'nuevo'});
   });
   saveQuiet();
 }

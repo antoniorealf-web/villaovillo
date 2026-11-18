@@ -14,6 +14,7 @@ function scheduleCloud(){ if(!cloudReady()) return; clearTimeout(cloudTimer); cl
 async function pushCloud(){
   const p=P(); if(!p||!cloudReady()) return;
   const ev=lastEvent; setCloud('sync');
+  p.dev=devId();
   try{ await api('save',{profile:p,sum:summary(p),evento:ev}); if(lastEvent===ev) lastEvent=''; else lastEvent=lastEvent.slice(ev.length).replace(/^ · /,''); setCloud('ok'); await flushPending(); await pushPueblo(); }
   catch(e){ setCloud(e.message==='clave'?'clave':'err'); }
 }
@@ -39,7 +40,8 @@ async function cloudPull(mergeProfiles=true){
     DB.msgs=(j.msgs||[]);
     for(const p of DB.profiles){ if(!p) continue; for(const [id,est] of Object.entries(p.pendingMsg||{})){ const m=DB.msgs.find(m=>m.id===id); if(m) m.estado=est; } }
     saveQuiet(); setCloud('ok'); await flushPending();
-    if(j.ordenes&&j.ordenes.length) await aplicaOrdenesNube(j.ordenes);
+    if(j.pueblo&&mezclaPueblo(j.pueblo)) saveQuiet();
+    await aplicaOrdenesNube(j.ordenes||[]);
     await pushPueblo();
     if(curScreen==='village') updateHUD(); if(curScreen==='mail') renderMail();
     return true;
@@ -48,7 +50,7 @@ async function cloudPull(mergeProfiles=true){
 }
 /* Lo común del pueblo (tablón, tareas, ajustes) se sube para que papá lo vea desde el móvil. Solo si ha cambiado. */
 let puebloSubido='';
-function puebloDatos(){ return {news:(DB.news||[]).slice(-40),boardMsgs:DB.boardMsgs||[],notasHist:(DB.notasHist||[]).slice(-120),recTasks:DB.recTasks||[],localMsgs:(DB.localMsgs||[]).filter(m=>!['borrada','caducada'].includes(m.estado)).slice(-120),dayMode:DB.dayMode||'auto',paqForce:DB.paqForce||{},paq:DB.paq||{},sugs:(DB.sugs||[]).slice(-60),en:Date.now()}; }
+function puebloDatos(){ return {news:(DB.news||[]).slice(-40),boardMsgs:DB.boardMsgs||[],notasHist:(DB.notasHist||[]).slice(-120),recTasks:DB.recTasks||[],localMsgs:(DB.localMsgs||[]).slice(-200),dayMode:DB.dayMode||'auto',paqForce:DB.paqForce||{},ajT:DB.ajT||0,paq:DB.paq||{},sugs:(DB.sugs||[]).slice(-100),recBorradas:DB.recBorradas||[],ordHechas:(DB.ordHechas||[]).slice(-150),en:Date.now()}; }
 async function pushPueblo(){
   if(!cloudReady()) return true;
   const d=puebloDatos(), h=JSON.stringify(Object.assign({},d,{en:0}));

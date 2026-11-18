@@ -37,7 +37,7 @@ function paqDatos(id){ DB.paq=DB.paq||{}; return DB.paq[id]=DB.paq[id]||{}; }
 function paqDatosNina(p,id){ if(!p) return {}; p.paq=p.paq||{}; return p.paq[id]=p.paq[id]||{}; }
 /* papá puede forzar un paquete: true (encendido), false (apagado) o sin valor (automático) */
 function paqForzado(id){ const f=(DB.paqForce||{})[id]; return f===true||f===false?f:null; }
-function setPaqForzado(id,v){ DB.paqForce=DB.paqForce||{}; if(v===null) delete DB.paqForce[id]; else DB.paqForce[id]=v; saveQuiet(); }
+function setPaqForzado(id,v){ DB.ajT=Date.now(); DB.paqForce=DB.paqForce||{}; if(v===null) delete DB.paqForce[id]; else DB.paqForce[id]=v; saveQuiet(); }
 function enFechas(c,t){ // t = 'AAAA-MM-DD'
   const d=c.desde, h=c.hasta; if(!d||!h) return false;
   if(d.length===10) return t>=d&&t<=h;
