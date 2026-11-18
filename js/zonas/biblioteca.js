@@ -56,7 +56,7 @@ async function answerQuiz(v){
   const right = q.t==='ordenar' ? JSON.stringify(v)===JSON.stringify(q.items) : q.t==='vf' ? v===q.a : v===q.a;
   if(right){
     if(LQ.tries===0){ LQ.ok++; x.good=true;
-      if(x.due&&!LQ.catalog){ const s=p.sr[x.key]||{b:-1}; s.b=Math.min(4,s.b+1); s.n=dayNum(today())+SR_DAYS[s.b]; p.sr[x.key]=s; addMastery(p,'bib',1); } }
+      if(x.due&&!LQ.catalog){ const s=p.sr[x.key]||{b:-1}; s.b=Math.min(4,s.b+1); s.n=dayNum(today())+SR_DAYS[s.b]; p.sr[x.key]=s; if(!(p.daily&&p.daily.read)) addMastery(p,'bib',1); /* los repasos extra del mismo día no suman maestría */ } }
     fanfare(); $('#qz-msg').textContent='¡Correcto! '+(q.exp||''); $('#qz-msg').className='good';
     await new Promise(r=>setTimeout(r,1500)); nextQuiz();
   } else {
