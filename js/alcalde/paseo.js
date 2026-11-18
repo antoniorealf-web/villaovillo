@@ -2,7 +2,7 @@
 /* =========================================================
    PASEO DEL ALCALDE (supervisión: el pueblo visto por papá)
    ========================================================= */
-const MATH_NAMES={suma3:'Sumas de 3 cifras',resta2:'Restas de 2 cifras llevando',mult21:'2 cifras × 1',resta3a:'Restas de 3 cifras (una llevada)',mult21b:'2 cifras × 1 llevando',resta3:'Restas de 3 cifras llevando',mult31:'3 cifras × 1',resta0:'Restas con ceros',mult41:'4 cifras × 1',dospasos3:'Dos pasos (grandes)',mult22:'Multiplicar por 2 cifras',resto:'Repartos con resto',contar:'Contar',sumas:'Sumas',restas:'Restas',dinero:'Dinero',multi:'Multiplicar',suma100:'Sumas grandes',receta:'Recetas (doble y mitad)',reparto:'Repartos',cambio:'Cambio',dospasos:'Problemas de dos pasos',fraccion:'Fracciones'};
+const MATH_NAMES={divgrid:'Divisiones con dibujo',suma3:'Sumas de 3 cifras',resta2:'Restas de 2 cifras llevando',mult21:'2 cifras × 1',resta3a:'Restas de 3 cifras (una llevada)',mult21b:'2 cifras × 1 llevando',resta3:'Restas de 3 cifras llevando',mult31:'3 cifras × 1',resta0:'Restas con ceros',mult41:'4 cifras × 1',dospasos3:'Dos pasos (grandes)',mult22:'Multiplicar por 2 cifras',resto:'Repartos con resto',contar:'Contar',sumas:'Sumas',restas:'Restas',dinero:'Dinero',multi:'Multiplicar',suma100:'Sumas grandes',receta:'Recetas (doble y mitad)',reparto:'Repartos',cambio:'Cambio',dospasos:'Problemas de dos pasos',fraccion:'Fracciones'};
 function girlsIdx(){ return DB.profiles.map((p,i)=>p?i:-1).filter(i=>i>=0); }
 /* El pueblo es uno solo: se pasea sin elegir niña. Solo al mirar algo que es de cada una (sus encargos, sus botones)
    se pregunta de quién (elegirNina) o se enseñan las dos (fichas). */

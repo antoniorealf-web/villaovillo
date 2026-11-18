@@ -15,6 +15,7 @@ function migrate(p){
   if(!p) return p;
   p.id=p.id||uid(); p.stats=p.stats||{}; p.play=p.play||{}; p.rewarded=p.rewarded||{}; p.pendingMsg=p.pendingMsg||{}; p.updatedAt=p.updatedAt||Date.now();
   p.readExtra=p.readExtra||{date:'',coins:0}; // botones de repasos extra de la biblioteca hoy (tope 6)
+  p.lec=p.lec||{}; p.lec.t=p.lec.t||{}; p.lec.rep=p.lec.rep||{date:'',n:0}; p.lec.cap=p.lec.cap||{date:'',coins:0}; // lecciones de la Biblioteca (temas, repasos y tope diario)
   p.paq=p.paq||{}; // datos de cada niña dentro de cada paquete (paqDatosNina); nunca se borran
   p.xp=p.xp||0; p.rank=p.rank||0; p.days=p.days||{last:null,streak:0,best:0,count:0};
   p.counters=Object.assign({encargos:Object.keys(p.done||{}).length,firstTry:0,hiloRight:0,bloomed:0,water:0,tasks:0,designs:0,earned:p.coins||0,retos:0},p.counters||{});

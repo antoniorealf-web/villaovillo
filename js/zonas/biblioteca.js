@@ -8,14 +8,15 @@ function cuadernosFor(p){ const C=window.CUADERNOS||[]; return C.filter(c=>c.par
 function dueQuestions(p,c){ const t=dayNum(today()); p.sr=p.sr||{}; return c.preguntas.map((q,i)=>({q,key:c.id+':'+i})).filter(x=>{ const s=p.sr[x.key]; return !s||s.n<=t; }); }
 function openLibrary(){ renderLibrary(); show('library'); const p=P();
   const due=cuadernosFor(p).reduce((n,c)=>n+(dueQuestions(p,c).length?1:0),0);
-  const txt=saludoHora()+', '+p.name+'! '+(p._libHi?'':'Soy Sabina. Aquí repasamos lo que aprendes en el cole; lo que cueste lo volveremos a ver otro día. ')+(cuadernosFor(p).length?(due?'¿Qué tema quieres repasar hoy?':'Hoy lo tienes todo repasado. ¿Quieres practicar alguno?'):'Todavía no tengo cuadernos para ti. ¡Pronto llegarán!');
+  const txt=saludoHora()+', '+p.name+'! '+(p._libHi?'':'Soy Sabina. Aquí repasamos lo que aprendes en el cole; lo que cueste lo volveremos a ver otro día. ')+((cuadernosFor(p).length||temasFor(p).length)?(due||temasFor(p).some(t=>lecEstado(p,t).ok)?'¿Qué tema quieres estudiar hoy?':'Hoy lo tienes todo hecho. ¿Quieres leer algún libro o practicar?'):'Todavía no tengo cuadernos para ti. ¡Pronto llegarán!');
   if(!p._libHi){ p._libHi=true; saveQuiet(); }
   lugarEscena('library',$('#lib-esc'),txt); }
 function renderLibrary(){
   const p=P(); $('#lib-coins').textContent='🔘 '+p.coins;
   const L=$('#lib-list'); L.innerHTML='';
+  renderTemas(L);
   const cs=cuadernosFor(p);
-  if(!cs.length){ L.append(el('div','wnote','🦉 Todavía no hay cuadernos para ti. Papá puede mandar a Claude una foto de los deberes para crear uno.')); return; }
+  if(!cs.length&&!temasFor(p).length){ L.append(el('div','wnote','🦉 Todavía no hay cuadernos para ti. Papá puede mandar a Claude una foto de los deberes para crear uno.')); return; }
   cs.forEach(c=>{
     const due=dueQuestions(p,c).length, tot=c.preguntas.length;
     const known=c.preguntas.filter((_,i)=>{ const s=(p.sr||{})[c.id+':'+i]; return s&&s.b>=2; }).length;
@@ -38,6 +39,7 @@ function renderQuiz(){
   $('#qz-prog').innerHTML=LQ.qs.map((_,i)=>`<span class="mdot ${i<LQ.i?(LQ.qs[i].good?'ok':'ko'):i===LQ.i?'cur':''}"></span>`).join('');
   const B=$('#qz-body'); B.innerHTML='';
   const head=el('div','npcline'); head.innerHTML=`<div class="face"></div><div class="ask">${esc(q.q)}</div>`; head.querySelector('.face').append(npcIcon('sabina',64)); const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(q.q+(q.opts?'. '+q.opts.join('. '):'')); head.append(sp); B.append(head);
+  if(q.vis){ const v=el('div','qvis'); v.innerHTML=typeof q.vis==='function'?q.vis():q.vis; v.style.textAlign='center'; B.append(v); }
   const A=el('div','mchoices');
   if(q.t==='vf') ['Verdadero','Falso'].forEach(o=>{ const b=el('button','btn',o==='Verdadero'?'✅ Verdadero':'❌ Falso'); b.onclick=()=>answerQuiz(o==='Verdadero'); A.append(b); });
   else if(q.t==='ordenar'){
@@ -62,14 +64,15 @@ async function answerQuiz(v){
   } else {
     LQ.tries++; LQ.order=[];
     if(LQ.tries===1&&q.t!=='vf'){ beep(220,0.2,'sawtooth',0.03); $('#qz-msg').textContent='Mmm, no es esa. ¡Piensa otra vez!'; $('#qz-msg').className='bad'; if(q.t==='ordenar') renderQuiz(); return; }
-    p.sr[x.key]={b:0,n:dayNum(today())+1,f:((p.sr[x.key]||{}).f||0)+1}; x.good=false;
+    if(!LQ.mode) p.sr[x.key]={b:0,n:dayNum(today())+1,f:((p.sr[x.key]||{}).f||0)+1}; x.good=false;
     const sol=q.t==='ordenar'?q.items.join(' → '):q.t==='vf'?(q.a?'Verdadero':'Falso'):q.a;
-    await say({face:'🦉',name:'Sabina',text:`La respuesta es: ${sol}. ${q.exp||''} Mañana la repasamos otra vez.`}); nextQuiz();
+    await say({face:'🦉',name:'Sabina',text:`La respuesta es: ${sol}. ${q.exp||''}${LQ.mode?'':' Mañana la repasamos otra vez.'}`}); nextQuiz();
   }
 }
 async function nextQuiz(){
   LQ.i++; LQ.tries=0; LQ.order=[]; LQ.shuffled=null; LQ.optsShuffled=null;
   if(LQ.i<LQ.qs.length){ renderQuiz(); return; }
+  if(LQ.mode){ await finRonda(); return; }
   const p=P(), n=LQ.qs.length, ok=LQ.ok, stars=ok>=n?3:ok>=n-2?2:1;
   if(LQ.catalog){ await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:24px;font-weight:800">${ok} de ${n}</div></div>`}); openCatalog(); return; }
   const first=!(p.daily&&p.daily.read);

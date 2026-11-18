@@ -12,12 +12,13 @@ function genMath(p){
     const pl=(p.mastery?mLevel(p,'pan'):1)||1;
     if(small){ if(f&&Math.random()<0.6) return f; const ks=['contar','sumas','sumas'].concat(pl>=2?['restas','restas']:[]).concat(pl>=3?['dinero']:[]).concat(pl>=4?['sumas','restas']:[]); return ks[rr(0,ks.length-1)]; }
     if(f.startsWith('tabla')&&Math.random()<0.6) return 'multi';
-    if(f&&!f.startsWith('tabla')&&Math.random()<0.6) return {division:'reparto',dinero:'cambio',fracciones:'fraccion',problemas:'dospasos'}[f];
+    if(f&&!f.startsWith('tabla')&&Math.random()<0.6) return {division:'divgrid',dinero:'cambio',fracciones:'fraccion',problemas:'dospasos'}[f];
     return 'escalera';
     const ks=['multi','multi','suma100','receta'].concat(pl>=2?['reparto','cambio']:[]).concat(pl>=4?['dospasos','fraccion']:[]); return ks[rr(0,ks.length-1)];
   };
   const k=pickKind();
   if(k==='escalera') return genMath9(p);
+  if(k==='divgrid'){ const q=genDivGrid(); q.k=k; q.tier=0; return q; }
   if(k==='contar'){ const n=rr(5,15); return {k,q:`¿Cuántos ${e} hay en la bandeja?`,vis:emojis(e,n),a:n,exp:`Hay ${n}. Cuenta de 5 en 5: cada fila tiene 5.`}; }
   if(k==='sumas'){ const a=rr(2,10), b=rr(1,Math.min(10,20-a)); return {k,q:`En una bandeja hay ${a} ${e} y en otra ${b}. ¿Cuántos hay en total?`,vis:emojis(e,a)+'<div class="mplus">+</div>'+emojis(e,b),a:a+b,exp:`${a} + ${b} = ${a+b}`}; }
   if(k==='restas'){ const a=rr(6,18), b=rr(1,a-2); return {k,q:`Bruno tenía ${a} ${e}. Ha vendido ${b}. ¿Cuántos le quedan?`,vis:`<div class="mvis">${Array.from({length:a},(_,i)=>`<span style="${i<b?'opacity:.25':''}">${e}</span>${(i+1)%5===0?'<br>':''}`).join('')}</div>`,a:a-b,exp:`${a} − ${b} = ${a-b}`}; }
@@ -41,10 +42,10 @@ function genMath(p){
    Cada turno mezcla niveles como una campana: la mayoría del nivel actual, algunos de repaso (menos premio)
    y alguno de reto (más premio). q.tier: -2/-1 repaso, 0 actual, 1 reto. */
 const PAN9_LEVELS=[
-  {n:'Tablas y sumas de dos cifras',ks:['multi','suma100','reparto']},
-  {n:'Sumas de 3 cifras y restas de 2 cifras llevando',ks:['suma3','resta2','mult21']},
-  {n:'Restas de 3 cifras (una llevada) y 2 cifras × 1',ks:['resta3a','mult21b','cambio','receta']},
-  {n:'Restas de 3 cifras llevando y 3 cifras × 1',ks:['resta3','resta3','resta3','mult31','mult31','mult31','fraccion']},
+  {n:'Tablas y sumas de dos cifras',ks:['multi','suma100','reparto','divgrid']},
+  {n:'Sumas de 3 cifras y restas de 2 cifras llevando',ks:['suma3','resta2','mult21','divgrid']},
+  {n:'Restas de 3 cifras (una llevada) y 2 cifras × 1',ks:['resta3a','mult21b','cambio','receta','divgrid']},
+  {n:'Restas de 3 cifras llevando y 3 cifras × 1',ks:['resta3','resta3','resta3','mult31','mult31','mult31','fraccion','divgrid']},
   {n:'Restas con ceros (503 − 278), 4 cifras × 1 y dos pasos',ks:['resta0','mult41','dospasos3']},
   {n:'Multiplicar por 2 cifras y repartos con resto',ks:['mult22','resto','dospasos3']}
 ];
@@ -90,6 +91,7 @@ function genMath9(p){
   else if(k==='mult31'){ const [a,b]=carryMul(3); q=Object.assign(mul(a,b),{a:a*b,exp:`${a} × ${b} = ${a*b}`}); }
   else if(k==='mult41'){ const [a,b]=carryMul(4); q=Object.assign(mul(a,b),{a:a*b,exp:`${a} × ${b} = ${a*b}`}); }
   else if(k==='mult22'){ const a=rr(12,49), b=rr(11,19); q=Object.assign(bare?{q:`Haz la cuenta: ${a} × ${b}`,vis:colOp(a,b,'×'),say:`${a} por ${b}`}:{q:`En la panadería hay ${b} estantes con ${a} ${e} cada uno. ¿Cuántos ${e} hay?`},{a:a*b,exp:`${a} × ${b} = ${a*b}`}); }
+  else if(k==='divgrid'){ q=genDivGrid(); }
   else if(k==='resto'){ const b=rr(3,9), c=rr(4,12), s=rr(1,b-1), n=b*c+s; q={q:`Bruno reparte ${n} ${e} en bolsas de ${b}. Llena todas las bolsas que puede. ¿Cuántos ${e} le sobran?`,a:s,exp:`${b} × ${c} = ${b*c}; ${n} − ${b*c} = ${s}. Sobran ${s}.`}; }
   else if(k==='dospasos3'){ const a=rr(105,248), b=rr(3,4), c=rr(120,a*b-60); q={q:`Bruno hornea ${b} bandejas de ${a} ${e}. Vende ${c}. ¿Cuántos le quedan?`,a:a*b-c,exp:`${a} × ${b} = ${a*b}; ${a*b} − ${c} = ${a*b-c}`}; }
   else if(k==='cambio'){ const n=rr(2,5), pr=rr(2,9), tot=n*pr, pay=tot<20?20:50; q={q:`Compras ${n} barras de pan a ${pr} botones cada una y pagas con ${pay}. ¿Cuánto te devuelven?`,vis:`<div class="mvis">${'🥖'.repeat(n)}</div>`,a:pay-tot,exp:`${n} × ${pr} = ${tot}; ${pay} − ${tot} = ${pay-tot}`}; }
@@ -97,6 +99,24 @@ function genMath9(p){
   else { const n=[4,6,8][rr(0,2)], c=rr(1,n-1); const opts=shuffle([`${n-c}/${n}`,`${c}/${n}`,`${n}/${n-c}`,`${n-c}/${c}`].filter((x,i,a)=>a.indexOf(x)===i),Math.random);
     q={q:`La tarta tenía ${n} trozos iguales y se han comido ${c}. ¿Qué parte de la tarta queda?`,vis:pieSVG(n,c),a:`${n-c}/${n}`,choices:opts,exp:`Quedan ${n-c} trozos de ${n}: ${n-c}/${n}`}; }
   q.k=k; q.tier=tier; q.vis=q.vis||''; return q;
+}
+/* Divisiones con dibujo: cuadraditos que se agrupan por colores (reparto, agrupar y sobrantes) */
+const DIV_COLS=['#f29b38','#5fb3e6','#7bc96f','#e57a9b','#b58be0','#f2cf3d'];
+function divGridHTML(groups,size,rest){
+  const cols=size<=3?size:size<=6?3:5, cell=30, box=(n,col,dash)=>{ const rows=Math.ceil(n/cols), w=Math.min(n,cols)*cell+8, h=rows*cell+8; let r='';
+    for(let i=0;i<n;i++) r+=`<rect x="${4+(i%cols)*cell}" y="${4+Math.floor(i/cols)*cell}" width="${cell-3}" height="${cell-3}" rx="4" fill="${col}"/>`;
+    return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="margin:5px;border:3px ${dash?'dashed #9a9a9a':'solid '+col};border-radius:12px;background:#fff">${r}</svg>`; };
+  let s='<div class="mvis" style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center">';
+  for(let g=0;g<groups;g++) s+=box(size,DIV_COLS[g%DIV_COLS.length],false);
+  if(rest) s+=box(rest,'#bdbdbd',true);
+  return s+'</div>';
+}
+function genDivGrid(){
+  const m=pick(['reparto','agrupar','resto']), b=rr(2,6), c=rr(2,6);
+  if(m==='reparto'){ const t=b*c; return {q:`Hay ${t} cuadraditos repartidos en ${b} grupos iguales, uno de cada color. ¿Cuántos cuadraditos hay en cada grupo?`,say:`Hay ${t} cuadraditos repartidos en ${b} grupos iguales. ¿Cuántos hay en cada grupo?`,vis:divGridHTML(b,c,0),a:c,exp:`${t} : ${b} = ${c}, porque ${b} × ${c} = ${t}`}; }
+  if(m==='agrupar'){ const t=b*c; return {q:`Hay ${t} cuadraditos y los juntamos de ${c} en ${c}. ¿Cuántos grupos salen?`,vis:divGridHTML(b,c,0),a:b,exp:`${t} : ${c} = ${b}, porque ${c} × ${b} = ${t}`}; }
+  const cc=rr(3,6), s=rr(1,cc-1), g=rr(2,5), t=cc*g+s;
+  return {q:`Hay ${t} cuadraditos y los juntamos de ${cc} en ${cc}. Los grises no llegan a formar un grupo. ¿Cuántos sobran?`,say:`Hay ${t} cuadraditos y los juntamos de ${cc} en ${cc}. ¿Cuántos sobran?`,vis:divGridHTML(g,cc,s),a:s,exp:`${t} : ${cc} = ${g} y sobran ${s}, porque ${cc} × ${g} = ${cc*g} y ${t} − ${cc*g} = ${s}`};
 }
 function pieSVG(n,eaten){ let s='<svg viewBox="-52 -52 104 104" width="120" height="120">'; for(let i=0;i<n;i++){ const a0=i/n*Math.PI*2-Math.PI/2, a1=(i+1)/n*Math.PI*2-Math.PI/2; const x0=Math.cos(a0)*48,y0=Math.sin(a0)*48,x1=Math.cos(a1)*48,y1=Math.sin(a1)*48;
   s+=`<path d="M0,0 L${x0.toFixed(1)},${y0.toFixed(1)} A48,48 0 0,1 ${x1.toFixed(1)},${y1.toFixed(1)} Z" fill="${i<eaten?'#f3ead9':'#f29b38'}" stroke="#8a5a36" stroke-width="2"/>`; } return s+'</svg>'; }
