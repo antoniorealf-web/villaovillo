@@ -72,7 +72,7 @@ async function answerQuiz(v){
 async function nextQuiz(){
   LQ.i++; LQ.tries=0; LQ.order=[]; LQ.shuffled=null; LQ.optsShuffled=null;
   if(LQ.i<LQ.qs.length){ renderQuiz(); return; }
-  if(LQ.mode){ await finRonda(); return; }
+  if(LQ.mode&&!LQ.catalog){ await finRonda(); return; }
   const p=P(), n=LQ.qs.length, ok=LQ.ok, stars=ok>=n?3:ok>=n-2?2:1;
   if(LQ.catalog){ await say({center:true,html:`<div class="reward"><div class="stars">${starsHTML(stars)}</div><div style="font-size:24px;font-weight:800">${ok} de ${n}</div></div>`}); openCatalog(); return; }
   const first=!(p.daily&&p.daily.read);

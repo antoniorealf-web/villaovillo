@@ -137,6 +137,7 @@ function openBakery(age){
   box.append(go,out); O.append(box);
   show('bakery'); lugarEscena('bakery',$('#bk-esc'),txt);
 }
+function openBakeryDiv(){ MZ={qs:Array.from({length:6},()=>{ const q=genDivGrid(); q.k="divgrid"; q.tier=0; return q; }),i:0,ok:0,tries:0,input:"",catalog:true}; empezarTurno(); }
 function empezarTurno(){ $('#bk-hall').style.display='none'; $('#bk-body').style.display=''; show('bakery'); renderBakery(); }
 function renderBakery(){
   const p=P(), q=MZ.qs[MZ.i]; $('#bk-coins').textContent='🔘 '+p.coins;
