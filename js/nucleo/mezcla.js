@@ -10,6 +10,17 @@
    Lo que cambia la partida de una niña (ajustes, notas de su pizarra) solo lo sube a la nube
    la tablet donde esa niña jugó por última vez (p.dev), para no pisar su progreso con una copia vieja.
    ========================================================= */
+/* Fallos del juego: se apuntan (una vez cada uno) para verlos en el modo alcalde, también desde el móvil. */
+function apuntaFallo(e,donde){ try{
+  const msg=String(e&&e.message||e).slice(0,160), st=String(e&&e.stack||'').split('\n').slice(1,4).map(x=>x.trim().replace(/^.*\/(js|paquetes)\//,'$1/').replace(/\?v=[^:]*/,'')).join(' · ').slice(0,300);
+  DB.errores=DB.errores||[]; const k=donde+'|'+msg, ya=DB.errores.find(x=>x.k===k);
+  if(ya){ ya.n=(ya.n||1)+1; ya.ult=Date.now(); return; }
+  const v=(document.querySelector('meta[name="villa-version"]')||{}).content||'';
+  DB.errores.push({k,donde,msg,st,t:Date.now(),ult:Date.now(),n:1,v,nina:(P()||{}).name||'',dev:devId()}); if(DB.errores.length>20) DB.errores.splice(0,DB.errores.length-20);
+  console.error('[Villaovillo]',donde,e); saveQuiet();
+}catch(x){} }
+window.addEventListener('error',e=>{ const f=String(e.filename||''); if(f.includes('/paquetes/')) return; apuntaFallo(e.error||e.message,'general'); });
+window.addEventListener('unhandledrejection',e=>apuntaFallo(e.reason,'general'));
 function devId(){ try{ let d=localStorage.getItem('villaovillo.dispositivo'); if(!d){ d='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); localStorage.setItem('villaovillo.dispositivo',d); } return d; }catch(e){ return 'd0'; } }
 const MSG_RANGO={nuevo:0,pendiente:0,aceptada:1,hecha:2,validada:3,leida:4,cobrada:4,completado:4,caducada:5,borrada:6};
 function unePorId(loc,rem,key,elige){ const m=new Map(); (loc||[]).forEach(x=>{ if(x&&x[key]!=null) m.set(x[key],x); }); (Array.isArray(rem)?rem:[]).forEach(x=>{ if(!x||x[key]==null) return; const a=m.get(x[key]); m.set(x[key],a?elige(a,x):x); }); return [...m.values()]; }
@@ -42,6 +53,7 @@ function mezclaPueblo(pu){
   DB.recTasks=unePorId(DB.recTasks,pu.recTasks,'rid',a=>a).filter(r=>!rb.has(r.rid));
   // ajustes del pueblo: gana el cambio más reciente
   if((+pu.ajT||0)>(+DB.ajT||0)){ if(pu.dayMode) DB.dayMode=pu.dayMode; DB.paqForce=pu.paqForce||{}; DB.ajT=+pu.ajT; try{ nightCache.t=0; }catch(e){} }
+  DB.errores=unePorId(DB.errores,pu.errores,'k',(a,b)=>(b.ult||0)>(a.ult||0)?b:a).sort((a,b)=>(a.ult||0)-(b.ult||0)).slice(-30);
   // órdenes ya aplicadas en otra tablet
   DB.ordHechas=unePorId(DB.ordHechas,pu.ordHechas,'id',a=>a).sort((a,b)=>String(a.fecha||'').localeCompare(String(b.fecha||''))).slice(-150);
   return JSON.stringify(puebloDatos())!==antes;

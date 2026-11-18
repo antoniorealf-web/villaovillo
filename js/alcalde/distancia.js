@@ -140,7 +140,7 @@ async function remCargar(){
   const i=DB.profiles.findIndex(p=>p&&p.id===cur); DB.cur=i>=0?i:0;
   DB.msgs=j.msgs||[];
   const pu=j.pueblo||{};
-  ['news','boardMsgs','notasHist','recTasks','localMsgs','paq','sugs'].forEach(k=>{ DB[k]=pu[k]||(k==='paq'?{}:[]); });
+  ['news','boardMsgs','notasHist','recTasks','localMsgs','paq','sugs','errores'].forEach(k=>{ DB[k]=pu[k]||(k==='paq'?{}:[]); });
   DB.dayMode=pu.dayMode||'auto'; DB.paqForce=pu.paqForce||{};
   REM.puebloEn=pu.en||0; REM.sinPueblo=!j.pueblo; REM.version=j.version||1;
   // las órdenes que la tablet aún no ha recogido se vuelven a aplicar a lo que se ve

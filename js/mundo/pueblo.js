@@ -33,7 +33,9 @@ function startLoop(){ setupNPCs(); lastT=performance.now(); if(!rafId) rafId=req
 function stopLoop(){ if(rafId) cancelAnimationFrame(rafId); rafId=null; }
 function loop(t){
   const dt=Math.min(0.05,(t-lastT)/1000); lastT=t; tGlobal+=dt;
-  update(dt); drawVillage(); rafId=requestAnimationFrame(loop);
+  rafId=requestAnimationFrame(loop); // primero: si algo falla, el pueblo sigue moviéndose
+  try{ update(dt); }catch(e){ apuntaFallo(e,'pueblo:mover'); }
+  try{ drawVillage(); }catch(e){ apuntaFallo(e,'pueblo:dibujar'); }
 }
 function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
 function inRect(x,y,r){ return x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h; }

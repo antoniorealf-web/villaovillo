@@ -264,7 +264,7 @@ function drawVillage(){
   if(st.lv>=2) LAMPS.forEach(([x,y])=>{ if(vis(x,y)) E.push({y,d:()=>lampX(c,x,y)}); });
   npcs.forEach(n=>{ if(vis(n.x,n.y)) E.push({y:n.y,d:()=>drawNPC(c,n)}); });
   E.push({y:player.y,d:()=>drawPlayer(c)});
-  E.sort((a,b)=>a.y-b.y).forEach(e=>e.d());
+  E.sort((a,b)=>a.y-b.y).forEach(e=>{ try{ e.d(); }catch(err){ apuntaFallo(err,'pueblo:dibujo'); } });
   if(st.lv>=3) drawBuntingX(c);
   c.fillStyle='#000'; if(NIGHTN<0.5) butterflies.forEach(b=>{ if(vis(b.x,b.y)){ c.font='22px serif'; c.textAlign='center'; c.fillText('🦋',b.x,b.y); } });
   if(tapFx){ c.strokeStyle=`rgba(255,255,255,${1-tapFx.t*2})`; c.lineWidth=4; c.beginPath(); c.ellipse(tapFx.x,tapFx.y,10+tapFx.t*40,5+tapFx.t*20,0,0,Math.PI*2); c.stroke(); }

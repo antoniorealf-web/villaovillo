@@ -51,6 +51,11 @@ function renderAlcalde(){
   const box=(title)=>{ const d=el('div','panel'); d.style.marginBottom='14px'; d.append(el('div','wsec',title)); V.append(d); return d; };
   // supervisión
   if(REMOTO){ renderRemotoBox(V,box); renderNovedadesBox(box); }
+  const errs=(DB.errores||[]).filter(x=>Date.now()-(x.ult||0)<7*864e5);
+  if(errs.length){ const be=box('⚠️ Fallos del juego (últimos 7 días)'); be.append(el('div','counter','Si algo se queda bloqueado, copia esto y pégaselo a Claude.'));
+    const txt='VILLAOVILLO-FALLOS\n'+errs.slice().reverse().map(x=>`${new Date(x.ult).toLocaleString('es-ES')} · ${x.nina||'-'} · ${x.dev} · v${x.v} · ${x.donde} · ×${x.n}\n  ${x.msg}\n  ${x.st}`).join('\n');
+    const pre=el('pre'); pre.textContent=txt; pre.style.cssText='white-space:pre-wrap;font-size:13px;max-height:220px;overflow:auto;background:#fff;border-radius:10px;padding:8px'; be.append(pre);
+    const bc=el('button','btn','📋 Copiar fallos'); bc.onclick=async()=>toast(await copyText(txt)?'📋 Copiado':'No se pudo copiar'); be.append(bc); }
   const b0=box(VISIT?'🚶 Estás paseando por el pueblo':'👀 Ver el juego por dentro');
   b0.append(el('div','counter',VISIT?'Vuelve al pueblo cuando quieras o sal del paseo.':'Pasea por el pueblo de las dos: entra en sus casas, mira los encargos de cada una y cómo crece el pueblo, sin tocar sus partidas.'));
   const r0=el('div'); r0.style.cssText='display:flex;gap:10px;flex-wrap:wrap;margin-top:8px';

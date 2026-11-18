@@ -50,7 +50,7 @@ async function cloudPull(mergeProfiles=true){
 }
 /* Lo común del pueblo (tablón, tareas, ajustes) se sube para que papá lo vea desde el móvil. Solo si ha cambiado. */
 let puebloSubido='';
-function puebloDatos(){ return {news:(DB.news||[]).slice(-40),boardMsgs:DB.boardMsgs||[],notasHist:(DB.notasHist||[]).slice(-120),recTasks:DB.recTasks||[],localMsgs:(DB.localMsgs||[]).slice(-200),dayMode:DB.dayMode||'auto',paqForce:DB.paqForce||{},ajT:DB.ajT||0,paq:DB.paq||{},sugs:(DB.sugs||[]).slice(-100),recBorradas:DB.recBorradas||[],ordHechas:(DB.ordHechas||[]).slice(-150),en:Date.now()}; }
+function puebloDatos(){ return {news:(DB.news||[]).slice(-40),boardMsgs:DB.boardMsgs||[],notasHist:(DB.notasHist||[]).slice(-120),recTasks:DB.recTasks||[],localMsgs:(DB.localMsgs||[]).slice(-200),dayMode:DB.dayMode||'auto',paqForce:DB.paqForce||{},ajT:DB.ajT||0,paq:DB.paq||{},sugs:(DB.sugs||[]).slice(-100),recBorradas:DB.recBorradas||[],errores:(DB.errores||[]).slice(-20),ordHechas:(DB.ordHechas||[]).slice(-150),en:Date.now()}; }
 async function pushPueblo(){
   if(!cloudReady()) return true;
   const d=puebloDatos(), h=JSON.stringify(Object.assign({},d,{en:0}));
