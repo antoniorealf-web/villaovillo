@@ -88,6 +88,11 @@ function renderAlcalde(){
   rowI.append(bc);
   if(navigator.share){ const bs=el('button','btn','📤 Enviar'); bs.onclick=()=>{ navigator.share({title:'Informe Villaovillo '+today(),text:buildReport()}).catch(()=>{}); }; rowI.append(bs); }
   bi.append(rowI);
+  // modo prueba: enlace (se abre aparte, con su propio guardado)
+  const bp=box('🧪 Modo prueba');
+  bp.append(el('div','counter','Para probar cosas sin tocar las partidas de las niñas (guarda aparte).'));
+  const lp=el('a','btn','🧪 Abrir el modo prueba'); lp.href=location.pathname+'?prueba'; lp.target='_blank'; lp.rel='noopener'; lp.style.cssText='display:inline-block;margin-top:8px;text-decoration:none'; bp.append(lp);
+  const lc=el('a','btn','📚 Catálogo de ejercicios'); lc.href=location.pathname+'?prueba#catalogo'; lc.target='_blank'; lc.rel='noopener'; lc.style.cssText='display:inline-block;margin:8px 0 0 8px;text-decoration:none'; bp.append(lc);
   // carta
   const b4=box('✉️ Escribir una carta');
   const fc=el('div'); fc.innerHTML=`<select class="inputline" id="c-para">${profileOptions()}</select><input class="inputline" id="c-texto" placeholder="¡Estoy muy orgulloso de ti!"><div class="lbl">Regalo (botones, opcional)</div><input class="inputline" id="c-premio" type="number" value="0" min="0" max="50">`;
