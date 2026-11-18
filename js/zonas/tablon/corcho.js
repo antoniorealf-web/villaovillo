@@ -7,7 +7,12 @@ const PAPER_COLS=['#fff3a8','#ffd1dc','#d6ecff','#dff5d8','#ffe2c2'];
 function corkMsgs(){ DB.boardMsgs=DB.boardMsgs||[]; return DB.boardMsgs; }
 /* Una nota por persona (cada niña y el alcalde): la última que escribe sustituye a la anterior y se queda colgada. */
 function corkNotasVivas(){ const L=corkMsgs(), seen=new Set(), out=[]; for(let i=L.length-1;i>=0;i--){ const k=L[i].fromId||L[i].from; if(seen.has(k)) continue; seen.add(k); out.push(L[i]); } return out; }
-function corkPonNota(n){ const L=corkMsgs(); if(L.some(x=>x.id===n.id)) return; for(let i=L.length-1;i>=0;i--) if((L[i].fromId||L[i].from)===n.fromId) L.splice(i,1); L.push(n); }
+/* Historial de notas (DB.notasHist): cada nota que se pincha se apunta aquí y, cuando deja de estar colgada, se marca cómo (sustituida, quitada por ella o por papá). Solo lo ve papá en el modo alcalde. */
+function corkHist(){ DB.notasHist=DB.notasHist||[]; return DB.notasHist; }
+function corkHistMarca(n,causa){ const H=corkHist(); let h=H.find(x=>x.id===n.id); if(!h){ h={id:n.id,from:n.from,fromId:n.fromId,text:n.text,t:n.t}; H.push(h); } if(!h.fin){ h.fin=Date.now(); h.causa=causa; } }
+function corkPonNota(n){ const L=corkMsgs(); if(L.some(x=>x.id===n.id)) return;
+  for(let i=L.length-1;i>=0;i--) if((L[i].fromId||L[i].from)===n.fromId){ corkHistMarca(L[i],'sustituida'); L.splice(i,1); }
+  L.push(n); const H=corkHist(); if(!H.some(x=>x.id===n.id)) H.push({id:n.id,from:n.from,fromId:n.fromId,text:n.text,t:n.t}); if(H.length>300) H.splice(0,H.length-300); }
 /* ---------- Carteles ----------
    El tablón es un corcho con carteles pequeños (no se leen); al tocar uno, sale en grande como una hoja de papel.
    Un cartel es un objeto:
@@ -45,12 +50,12 @@ function boardCards(){
     const st=(String(n.text).match(/\p{Extended_Pictographic}/u)||['✏️'])[0];
     const dueña=DB.profiles.find(q=>q&&q.id===n.fromId);
     cards.push({key:'n'+(n.id||n.t), tipo:'nota', fromId:n.fromId, punto:dueña?dueña.color:null, estilo:'posit', color:n.col||PAPER_COLS[i%PAPER_COLS.length], emoji:st, titulo:'Nota de '+n.from,
-      texto:n.text, firma:n.from+' · '+dt.getDate()+'/'+(dt.getMonth()+1), prio:120-i, leer:n.from+' dice: '+n.text,
-      acciones:(alc||n.fromId===me)?(a=>{ const x=el('button','btn','🗑️ Quitar la nota'); x.onclick=async()=>{ if(alc){ if(!(await alcHaz('pueblo','notaDel',{id:n.id},'Quitar la nota «'+n.text+'»'))) return; } else { const k=corkMsgs().indexOf(n); if(k>=0) corkMsgs().splice(k,1); saveQuiet(); } closePaper(); renderBoard(); }; a.append(x); }):null});
+      texto:n.text, firma:n.from+' · '+dt.getDate()+'/'+(dt.getMonth()+1), prio:120-i, rotulo:String(n.from).replace(/^Papá, el alcalde$/,'Papá'), leer:n.from+' dice: '+n.text,
+      acciones:(alc||n.fromId===me)?(a=>{ const x=el('button','btn','🗑️ Quitar la nota'); x.onclick=async()=>{ if(alc){ if(!(await alcHaz('pueblo','notaDel',{id:n.id},'Quitar la nota «'+n.text+'»'))) return; } else { const k=corkMsgs().indexOf(n); if(k>=0){ corkHistMarca(n,'quitada'); corkMsgs().splice(k,1); } saveQuiet(); } closePaper(); renderBoard(); }; a.append(x); }):null});
   });
   (DB.news||[]).slice(-2).reverse().forEach((n,i)=>cards.push({key:'g'+n.t, tipo:'logro', estilo:'periodico', emoji:n.e, titulo:'¡Bien por '+n.name+'!',
-    texto:n.name+' '+n.txt+'.', firma:'La Gaceta de Villaovillo · Última hora', prio:50-i}));
-  enchufe('tablon',{alcalde:alc,p}).forEach(c=>{ if(c&&c.titulo) cards.push(Object.assign({prio:10},c)); });
+    texto:n.name+' '+n.txt+'.', firma:'La Gaceta de Villaovillo · Última hora', prio:50-i, rotulo:alc?'Del juego':''}));
+  enchufe('tablon',{alcalde:alc,p}).forEach(c=>{ if(c&&c.titulo) cards.push(Object.assign({prio:10,rotulo:alc?'Del juego':''},c)); });
   return cards;
 }
 function renderBoard(){
@@ -89,7 +94,7 @@ function miniCard(c,[r,col],R){
   const rot=Math.round((R()*8-4)*10)/10, dx=Math.round(R()*16-8), dy=Math.round(R()*12-6);
   d.style.transform=`translate(${dx}px,${dy}px) rotate(${rot}deg)`; if(c.color) d.style.background=c.color;
   const fix=(c.estilo==='tarjeta'||c.estilo==='kraft')?'<span class="tape"></span>':'<span class="pin"></span>';
-  d.innerHTML=`${fix}<div class="me">${c.emoji||'📄'}</div>${c.tipo==='libreta'?'':'<div class="scrib"></div><div class="scrib s2"></div><div class="scrib s3"></div>'}${c.punto?`<span class="mdot" style="background:${c.punto}"></span>`:''}${c.sello?`<span class="msello">${esc(c.sello)}</span>`:''}`;
+  d.innerHTML=`${fix}<div class="me">${c.emoji||'📄'}</div>${c.tipo==='libreta'?'':'<div class="scrib"></div><div class="scrib s2"></div><div class="scrib s3"></div>'}${c.punto?`<span class="mdot" style="background:${c.punto}"></span>`:''}${c.sello?`<span class="msello">${esc(c.sello)}</span>`:''}${c.rotulo?`<div class="hname">${esc(c.rotulo)}</div>`:''}`;
   if(c.tipo!=='libreta') d.onclick=()=>openPaper(c);
   return d;
 }
@@ -140,3 +145,18 @@ async function corkNewTask(){
   toast(REMOTO?'📌 Tarea enviada: saldrá en la tablet cuando se conecte':'📌 ¡Tarea puesta en el tablón!'); renderBoard();
 }
 addEventListener('resize',()=>{ if(curScreen==='board') renderBoard(); });
+
+/* Modo alcalde: las notas del tablón (de las niñas y tuyas) y su historial. Las noticias, chistes y adivinanzas de La Gaceta son del juego y no salen aquí. */
+function renderNotasBox(box){
+  const vivas=corkNotasVivas(), H=(DB.notasHist||[]).slice().reverse();
+  const f=t=>{ const d=new Date(t); return d.getDate()+'/'+(d.getMonth()+1)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+  const quien=n=>{ const q=DB.profiles.find(p=>p&&p.id===n.fromId); return n.fromId==='alcalde'?'🎩 Papá (tuya)':'<span class="mdot" style="position:static;display:inline-block;background:'+(q?q.color:'#bbb')+'"></span> '+esc(n.from)+' (niña)'; };
+  const b=box('🗒️ Notas del tablón');
+  b.append(el('div','counter','Aquí solo salen las notas escritas por las niñas y por ti. Las noticias, chistes y adivinanzas del tablón son de La Gaceta y las pone el juego.'));
+  if(!vivas.length) b.append(el('div','counter','Ahora mismo no hay ninguna nota colgada.'));
+  vivas.forEach(n=>{ const r=el('div','msgrow'); r.innerHTML=`<div class="mt"><b>${quien(n)} · colgada · ${f(n.t)}</b><br>${esc(n.text)}</div>`; b.append(r); });
+  const old=H.filter(h=>h.fin);
+  if(old.length){ b.append(el('div','counter','Historial: notas que ya no están colgadas.'));
+    old.slice(0,15).forEach(h=>{ const r=el('div','msgrow'); const como=h.causa==='sustituida'?'sustituida':h.causa==='quitada'?'quitada por ella':h.causa==='papa'?'quitada por ti':'retirada';
+      r.innerHTML=`<div class="mt"><b>${quien(h)} · ${f(h.t)} · ${como} el ${f(h.fin)}</b><br>${esc(h.text)}</div>`; b.append(r); }); }
+}

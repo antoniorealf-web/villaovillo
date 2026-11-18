@@ -48,7 +48,7 @@ async function cloudPull(mergeProfiles=true){
 }
 /* Lo común del pueblo (tablón, tareas, ajustes) se sube para que papá lo vea desde el móvil. Solo si ha cambiado. */
 let puebloSubido='';
-function puebloDatos(){ return {news:(DB.news||[]).slice(-40),boardMsgs:DB.boardMsgs||[],recTasks:DB.recTasks||[],localMsgs:(DB.localMsgs||[]).filter(m=>!['borrada','caducada'].includes(m.estado)).slice(-120),dayMode:DB.dayMode||'auto',paqForce:DB.paqForce||{},paq:DB.paq||{},sugs:(DB.sugs||[]).slice(-60),en:Date.now()}; }
+function puebloDatos(){ return {news:(DB.news||[]).slice(-40),boardMsgs:DB.boardMsgs||[],notasHist:(DB.notasHist||[]).slice(-120),recTasks:DB.recTasks||[],localMsgs:(DB.localMsgs||[]).filter(m=>!['borrada','caducada'].includes(m.estado)).slice(-120),dayMode:DB.dayMode||'auto',paqForce:DB.paqForce||{},paq:DB.paq||{},sugs:(DB.sugs||[]).slice(-60),en:Date.now()}; }
 async function pushPueblo(){
   if(!cloudReady()) return true;
   const d=puebloDatos(), h=JSON.stringify(Object.assign({},d,{en:0}));

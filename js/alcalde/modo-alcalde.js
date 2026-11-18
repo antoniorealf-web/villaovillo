@@ -66,6 +66,7 @@ function renderAlcalde(){
   pend.forEach(m=>{ const pr=DB.profiles.find(p=>p&&p.id===m.para); const r=el('div','mitem'); r.innerHTML=`<div class="mi">${m.tipo==='deberes'?'📚':'🧹'}</div><div class="mt"><b>${esc(pr?pr.name:'?')} · ${m.estado==='hecha'?'dice que la ha hecho':'la ha aceptado'}</b>${esc(m.texto)}</div>`;
     const a=el('div','ma'); const v=el('button','btn green','✅ Validar'); v.onclick=async()=>{ await validateMsg(m); renderAlcalde(); }; a.append(v); r.append(a); b1.append(r); });
   renderSugBox(box);
+  renderNotasBox(box);
   // nueva tarea
   const b2=box('📌 Nueva tarea para el tablón');
   const TF=tareaForm(); const f=TF.el;
