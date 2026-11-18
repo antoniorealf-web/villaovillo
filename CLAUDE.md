@@ -31,7 +31,8 @@ Lo que cambia a menudo (temas del cole, economía, hoja de ruta, decisiones) viv
 | `paquetes/` | Paquetes: temporadas, eventos y zonas nuevas (`gaceta.js`: noticias, chistes y adivinanzas del tablón) |
 | `fuentes/` | Tipografías guardadas en el juego (Baloo 2, Patrick Hand y Caveat, licencia OFL) para que no dependan de internet |
 | `sw.js`, `manifest.webmanifest`, `iconos/` | Juego instalable y sin wifi: copia de todas las piezas en la tablet, ficha del juego e icono (dibujo en `iconos/icono-fuente.html`; se redibuja con `herramientas/iconos.py`) |
-| `contenido/cuadernos.js` | Cuadernos de repaso de la Biblioteca (`window.CUADERNOS`) |
+| `contenido/cuadernos.js` | Cuadernos de repaso antiguos de la Biblioteca (`window.CUADERNOS`) |
+| `contenido/temas/` | Temas de la Biblioteca con libro y lecciones (`window.TEMAS`, uno por archivo) |
 | `herramientas/version.py` | Pone el número de versión en todo lo que carga `index.html` y comprueba que no falta ni sobra ningún archivo |
 | `pruebas/` | Pruebas automáticas: `equivalencia.py`, `recorrido.py`, `revision.py` y `sin_conexion.py` |
 | `config.js` | URL del Apps Script de la nube (vacía mientras no esté instalada) |
@@ -92,6 +93,17 @@ Lo que cambia a menudo (temas del cole, economía, hoja de ruta, decisiones) viv
   3. Actualiza la pestaña Cuadernos con `sabidas` y con las preguntas que se le resisten (`flojas`).
   4. Resume la semana en 4-6 líneas: tiempo, áreas fuertes y flojas, lo que se le atasca y una sugerencia (tipo de reto, cuaderno nuevo, ajuste de economía).
 - Las semanas de la pestaña Semanal llegan hasta mayo de 2027: amplíalas copiando la última fila cuando haga falta.
+
+## Temas de la Biblioteca (lecciones) — el formato para todo tema nuevo
+
+Todo tema nuevo de la Biblioteca es una **lección** (no un cuaderno): un archivo por tema en `contenido/temas/<asignatura-tema>.js` que hace `window.TEMAS.push({...})`, cargado en `index.html` después de `contenido/cuadernos.js` (ejemplos: `figuras.js`, `democracia.js`, `egipcios.js`). El motor está en `js/zonas/lecciones.js`.
+
+- Formato: `{id:'asignatura-tema', para:'6'|'9'|nombre, lang?:'ca', emoji, asignatura, titulo, libro:[{h, html}], preguntas:[{v:[3 formas]}]}`. Cada forma es una pregunta normal (`opcion`, `vf`, `ordenar`), con `exp` y `vis` (dibujo SVG) opcionales. El `id` no se cambia nunca.
+- **10 preguntas × 3 formas** (la misma pregunta dicha de otra manera, para que no se aprenda la frase de memoria). El **libro** explica todo lo que se pregunta, con dibujos hechos por código cuando ayuden.
+- Reglas (decididas el 18 nov 2026): ronda de 6 preguntas distintas; acierto = a la primera. 6/6 → 12 botones; 4-5 → 4; ≤3 → nada, se le enseñan los fallos y se le ofrece el libro. Si no hace 6/6, un segundo intento ese día; con 6/6 no hay más ese día. **Aprendido** = 2 rondas perfectas en días distintos (se acumulan); después solo sale en los **repasos** (6 preguntas de los temas aprendidos; 6/6 → 3, 4-5 → 1; 2 repasos al día). Tope de 24 botones al día en la Biblioteca. Maestría: 1 por acierto, solo en el primer intento del día de cada tema.
+- **Idioma: español siempre**, salvo que Antonio diga expresamente otro. En valenciano se pone `lang:'ca'` (los botones Verdadero/Falso y la voz pasan a valenciano/catalán si la tablet tiene esa voz).
+- Grupo 6: frases cortas, 3 opciones. Grupo 9: 3-4 opciones y alguna pregunta de «por qué».
+- Antes de subirlo: comprueba que cada respuesta está entre sus opciones y prueba el libro y una ronda en el catálogo (`?prueba#catalogo`).
 
 ## Material del cole → cuadernos
 

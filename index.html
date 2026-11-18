@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Villaovillo · El Taller del Telar</title>
-<meta name="villa-version" content="20261118-223621">
+<meta name="villa-version" content="20261118-224742">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="iconos/favicon-64.png">
 <link rel="apple-touch-icon" href="iconos/apple-touch-icon.png">
@@ -14,8 +14,8 @@
 <meta name="apple-mobile-web-app-title" content="Villaovillo">
 <script>/* ?alcalde: el móvil de papá se instala como «Alcalde» */ if(/[?&]alcalde/.test(location.search)){ document.querySelector('link[rel="manifest"]').href='manifest-alcalde.webmanifest'; document.querySelector('meta[name="apple-mobile-web-app-title"]').content='Alcalde'; document.title='Villaovillo · Alcalde'; }</script>
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="stylesheet" href="fuentes/fuentes.css?v=20261118-223621">
-<link rel="stylesheet" href="estilos.css?v=20261118-223621">
+<link rel="stylesheet" href="fuentes/fuentes.css?v=20261118-224742">
+<link rel="stylesheet" href="estilos.css?v=20261118-224742">
 </head>
 <body>
 
@@ -169,61 +169,63 @@
 <div id="dlg"><div class="dlgbox" id="dlgbox"></div></div>
 <div id="testflag">🧪 MODO PRUEBA · no afecta a las partidas reales</div>
 <div id="testbar"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>🧪 Prueba <span id="tb-day"></span></b><button id="tb-min">–</button></div><div class="tb" id="tb-btns"></div></div>
-<script src="config.js?v=20261118-223621"></script>
-<script src="contenido/cuadernos.js?v=20261118-223621"></script>
-<script src="contenido/temas/figuras.js?v=20261118-223621"></script>
+<script src="config.js?v=20261118-224742"></script>
+<script src="contenido/cuadernos.js?v=20261118-224742"></script>
+<script src="contenido/temas/figuras.js?v=20261118-224742"></script>
+<script src="contenido/temas/democracia.js?v=20261118-224742"></script>
+<script src="contenido/temas/egipcios.js?v=20261118-224742"></script>
 
 <!-- El juego, por partes. Se cargan en este orden: no lo cambies sin mirar CLAUDE.md. -->
-<script src="js/nucleo/datos.js?v=20261118-223621"></script>
-<script src="js/nucleo/guardado.js?v=20261118-223621"></script>
-<script src="js/nucleo/utilidades.js?v=20261118-223621"></script>
-<script src="js/zonas/telar/tela.js?v=20261118-223621"></script>
-<script src="js/nucleo/navegacion.js?v=20261118-223621"></script>
-<script src="js/nucleo/perfiles.js?v=20261118-223621"></script>
-<script src="js/mundo/pueblo.js?v=20261118-223621"></script>
-<script src="js/zonas/telar/taller.js?v=20261118-223621"></script>
-<script src="js/zonas/telar/puzle.js?v=20261118-223621"></script>
-<script src="js/zonas/casa/casa.js?v=20261118-223621"></script>
-<script src="js/zonas/casa/tienda.js?v=20261118-223621"></script>
-<script src="js/zonas/telar/libro.js?v=20261118-223621"></script>
-<script src="js/zonas/telar/diseno-libre.js?v=20261118-223621"></script>
-<script src="js/nucleo/estadisticas.js?v=20261118-223621"></script>
-<script src="js/nucleo/nube.js?v=20261118-223621"></script>
-<script src="js/nucleo/copias.js?v=20261118-223621"></script>
-<script src="js/zonas/tablon/buzon.js?v=20261118-223621"></script>
-<script src="js/nucleo/modo-prueba.js?v=20261118-223621"></script>
-<script src="js/nucleo/progresion.js?v=20261118-223621"></script>
-<script src="js/zonas/telar/retos-cabezal-cuadro.js?v=20261118-223621"></script>
-<script src="js/alcalde/modo-alcalde.js?v=20261118-223621"></script>
-<script src="js/zonas/panaderia.js?v=20261118-223621"></script>
-<script src="js/zonas/biblioteca.js?v=20261118-223621"></script>
-<script src="js/zonas/lecciones.js?v=20261118-223621"></script>
-<script src="js/mundo/personaje.js?v=20261118-223621"></script>
-<script src="js/mundo/vecinos.js?v=20261118-223621"></script>
-<script src="js/mundo/mundo.js?v=20261118-223621"></script>
-<script src="js/mundo/caminos.js?v=20261118-223621"></script>
-<script src="js/zonas/casa/jardin.js?v=20261118-223621"></script>
-<script src="js/nucleo/maestrias.js?v=20261118-223621"></script>
-<script src="js/zonas/casa/interior.js?v=20261118-223621"></script>
-<script src="js/zonas/telar/niveles.js?v=20261118-223621"></script>
-<script src="js/mundo/pueblo-compartido.js?v=20261118-223621"></script>
-<script src="js/nucleo/codigos.js?v=20261118-223621"></script>
-<script src="js/zonas/casa/pizarra.js?v=20261118-223621"></script>
-<script src="js/zonas/casa/pecera.js?v=20261118-223621"></script>
-<script src="js/zonas/tablon/corcho.js?v=20261118-223621"></script>
-<script src="js/zonas/sugerencias.js?v=20261118-223621"></script>
-<script src="js/zonas/recintos.js?v=20261118-223621"></script>
-<script src="js/nucleo/musica.js?v=20261118-223621"></script>
-<script src="js/mundo/noche.js?v=20261118-223621"></script>
-<script src="js/alcalde/paseo.js?v=20261118-223621"></script>
-<script src="js/alcalde/distancia.js?v=20261118-223621"></script>
-<script src="js/nucleo/instalacion.js?v=20261118-223621"></script>
-<script src="js/nucleo/mezcla.js?v=20261118-223621"></script>
-<script src="js/nucleo/paquetes.js?v=20261118-223621"></script>
+<script src="js/nucleo/datos.js?v=20261118-224742"></script>
+<script src="js/nucleo/guardado.js?v=20261118-224742"></script>
+<script src="js/nucleo/utilidades.js?v=20261118-224742"></script>
+<script src="js/zonas/telar/tela.js?v=20261118-224742"></script>
+<script src="js/nucleo/navegacion.js?v=20261118-224742"></script>
+<script src="js/nucleo/perfiles.js?v=20261118-224742"></script>
+<script src="js/mundo/pueblo.js?v=20261118-224742"></script>
+<script src="js/zonas/telar/taller.js?v=20261118-224742"></script>
+<script src="js/zonas/telar/puzle.js?v=20261118-224742"></script>
+<script src="js/zonas/casa/casa.js?v=20261118-224742"></script>
+<script src="js/zonas/casa/tienda.js?v=20261118-224742"></script>
+<script src="js/zonas/telar/libro.js?v=20261118-224742"></script>
+<script src="js/zonas/telar/diseno-libre.js?v=20261118-224742"></script>
+<script src="js/nucleo/estadisticas.js?v=20261118-224742"></script>
+<script src="js/nucleo/nube.js?v=20261118-224742"></script>
+<script src="js/nucleo/copias.js?v=20261118-224742"></script>
+<script src="js/zonas/tablon/buzon.js?v=20261118-224742"></script>
+<script src="js/nucleo/modo-prueba.js?v=20261118-224742"></script>
+<script src="js/nucleo/progresion.js?v=20261118-224742"></script>
+<script src="js/zonas/telar/retos-cabezal-cuadro.js?v=20261118-224742"></script>
+<script src="js/alcalde/modo-alcalde.js?v=20261118-224742"></script>
+<script src="js/zonas/panaderia.js?v=20261118-224742"></script>
+<script src="js/zonas/biblioteca.js?v=20261118-224742"></script>
+<script src="js/zonas/lecciones.js?v=20261118-224742"></script>
+<script src="js/mundo/personaje.js?v=20261118-224742"></script>
+<script src="js/mundo/vecinos.js?v=20261118-224742"></script>
+<script src="js/mundo/mundo.js?v=20261118-224742"></script>
+<script src="js/mundo/caminos.js?v=20261118-224742"></script>
+<script src="js/zonas/casa/jardin.js?v=20261118-224742"></script>
+<script src="js/nucleo/maestrias.js?v=20261118-224742"></script>
+<script src="js/zonas/casa/interior.js?v=20261118-224742"></script>
+<script src="js/zonas/telar/niveles.js?v=20261118-224742"></script>
+<script src="js/mundo/pueblo-compartido.js?v=20261118-224742"></script>
+<script src="js/nucleo/codigos.js?v=20261118-224742"></script>
+<script src="js/zonas/casa/pizarra.js?v=20261118-224742"></script>
+<script src="js/zonas/casa/pecera.js?v=20261118-224742"></script>
+<script src="js/zonas/tablon/corcho.js?v=20261118-224742"></script>
+<script src="js/zonas/sugerencias.js?v=20261118-224742"></script>
+<script src="js/zonas/recintos.js?v=20261118-224742"></script>
+<script src="js/nucleo/musica.js?v=20261118-224742"></script>
+<script src="js/mundo/noche.js?v=20261118-224742"></script>
+<script src="js/alcalde/paseo.js?v=20261118-224742"></script>
+<script src="js/alcalde/distancia.js?v=20261118-224742"></script>
+<script src="js/nucleo/instalacion.js?v=20261118-224742"></script>
+<script src="js/nucleo/mezcla.js?v=20261118-224742"></script>
+<script src="js/nucleo/paquetes.js?v=20261118-224742"></script>
 <!-- Paquetes: temporadas, eventos y zonas nuevas (ver js/nucleo/paquetes.js) -->
-<script src="paquetes/gaceta.js?v=20261118-223621"></script>
-<script src="js/nucleo/catalogo.js?v=20261118-223621"></script>
-<script src="js/inicio.js?v=20261118-223621"></script>
+<script src="paquetes/gaceta.js?v=20261118-224742"></script>
+<script src="js/nucleo/catalogo.js?v=20261118-224742"></script>
+<script src="js/inicio.js?v=20261118-224742"></script>
 
 </body>
 </html>

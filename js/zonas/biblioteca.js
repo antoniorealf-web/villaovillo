@@ -34,24 +34,24 @@ function startQuiz(c){
   LQ={c,qs:pool,i:0,ok:0,tries:0,order:[]}; show('quiz'); renderQuiz();
 }
 function renderQuiz(){
-  const x=LQ.qs[LQ.i], q=x.q;
+  const x=LQ.qs[LQ.i], q=x.q, lg=x.lang||LQ.c.lang, VAL=lg==='ca';
   $('#qz-title').textContent=LQ.c.titulo;
   $('#qz-prog').innerHTML=LQ.qs.map((_,i)=>`<span class="mdot ${i<LQ.i?(LQ.qs[i].good?'ok':'ko'):i===LQ.i?'cur':''}"></span>`).join('');
   const B=$('#qz-body'); B.innerHTML='';
-  const head=el('div','npcline'); head.innerHTML=`<div class="face"></div><div class="ask">${esc(q.q)}</div>`; head.querySelector('.face').append(npcIcon('sabina',64)); const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(q.q+(q.opts?'. '+q.opts.join('. '):'')); head.append(sp); B.append(head);
+  const head=el('div','npcline'); head.innerHTML=`<div class="face"></div><div class="ask">${esc(q.q)}</div>`; head.querySelector('.face').append(npcIcon('sabina',64)); const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(q.q+(q.opts?'. '+q.opts.join('. '):''),lg); head.append(sp); B.append(head);
   if(q.vis){ const v=el('div','qvis'); v.innerHTML=typeof q.vis==='function'?q.vis():q.vis; v.style.textAlign='center'; B.append(v); }
   const A=el('div','mchoices');
-  if(q.t==='vf') ['Verdadero','Falso'].forEach(o=>{ const b=el('button','btn',o==='Verdadero'?'✅ Verdadero':'❌ Falso'); b.onclick=()=>answerQuiz(o==='Verdadero'); A.append(b); });
+  if(q.t==='vf') ['Verdadero','Falso'].forEach(o=>{ const b=el('button','btn',o==='Verdadero'?(VAL?'✅ Vertader':'✅ Verdadero'):(VAL?'❌ Fals':'❌ Falso')); b.onclick=()=>answerQuiz(o==='Verdadero'); A.append(b); });
   else if(q.t==='ordenar'){
     if(!LQ.order.length&&!LQ.shuffled) LQ.shuffled=shuffle(q.items.slice(),Math.random);
-    const chosen=el('div','qorder'); chosen.innerHTML=LQ.order.length?LQ.order.map((o,i)=>`<span class="qchip">${i+1}. ${esc(o)}</span>`).join(''):'<span class="counter">Toca en orden…</span>'; B.append(chosen);
+    const chosen=el('div','qorder'); chosen.innerHTML=LQ.order.length?LQ.order.map((o,i)=>`<span class="qchip">${i+1}. ${esc(o)}</span>`).join(''):(VAL?'<span class="counter">Toca en ordre…</span>':'<span class="counter">Toca en orden…</span>'); B.append(chosen);
     LQ.shuffled.filter(o=>!LQ.order.includes(o)).forEach(o=>{ const b=el('button','btn',esc(o)); b.onclick=()=>{ LQ.order.push(o); beep(600,0.04); if(LQ.order.length===q.items.length) answerQuiz(LQ.order.slice()); else renderQuiz(); }; A.append(b); });
     if(LQ.order.length){ const u=el('button','btn','↺ Empezar de nuevo'); u.onclick=()=>{ LQ.order=[]; renderQuiz(); }; A.append(u); }
   }
   else (LQ.optsShuffled=LQ.optsShuffled||shuffle(q.opts.slice(),Math.random)).forEach(o=>{ const b=el('button','btn',esc(o)); b.onclick=()=>answerQuiz(o); A.append(b); });
   B.append(A);
   $('#qz-msg').textContent=''; $('#qz-msg').className='';
-  speakAuto(q.q);
+  speakAuto(q.q,lg);
 }
 async function answerQuiz(v){
   const x=LQ.qs[LQ.i], q=x.q, p=P(); p.sr=p.sr||{};

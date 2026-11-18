@@ -37,13 +37,13 @@ function openLibro(t,cat){ LIBRO_CAT=!!cat;
   $('#lb-title').textContent='📖 '+t.titulo; const B=$('#lb-body'); B.innerHTML='';
   (t.libro||[]).forEach(pg=>{ const d=el('div','panel'); d.style.cssText='margin:12px 0;font-size:21px;line-height:1.5';
     d.innerHTML=(pg.h?`<h3 style="margin:0 0 6px;font-size:26px">${esc(pg.h)}</h3>`:'')+(typeof pg.html==='function'?pg.html():pg.html||'');
-    const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(d.textContent.replace('🔊','')); d.prepend(sp); B.append(d); });
-  if(!LIBRO_CAT){ const go=el('button','btn primary','✏️ ¡A por la ronda!'); go.style.fontSize='22px'; go.onclick=()=>{ const e=lecEstado(P(),t); if(e.ok) startLeccion(t); else { toast(e.txt); openLibrary(); } }; B.append(go); }
+    const sp=el('button','speak','🔊'); sp.onclick=()=>speakNow(d.textContent.replace('🔊',''),t.lang); d.prepend(sp); B.append(d); });
+  if(!LIBRO_CAT){ const go=el('button','btn primary',t.lang==='ca'?'✏️ Som-hi, a la ronda!':'✏️ ¡A por la ronda!'); go.style.fontSize='22px'; go.onclick=()=>{ const e=lecEstado(P(),t); if(e.ok) startLeccion(t); else { toast(e.txt); openLibrary(); } }; B.append(go); }
   show('libro');
 }
 $('#lb-back').onclick=()=>{ if(LIBRO_CAT){ LIBRO_CAT=false; openCatalog(); } else openLibrary(); };
 function lecSeleccion(lista,n){ // lista: [{t, i}] preguntas distintas; una forma al azar de cada una
-  return shuffle(lista.slice(),Math.random).slice(0,n).map(x=>{ const pr=x.t.preguntas[x.i]; return {q:pr.v[rr(0,pr.v.length-1)],key:x.t.id+':'+x.i,tema:x.t.titulo}; });
+  return shuffle(lista.slice(),Math.random).slice(0,n).map(x=>{ const pr=x.t.preguntas[x.i]; return {q:pr.v[rr(0,pr.v.length-1)],key:x.t.id+':'+x.i,tema:x.t.titulo,lang:x.t.lang}; });
 }
 function startLeccion(t){
   const p=P(), e=lecEstado(p,t); if(!e.ok){ toast(e.txt); return; }

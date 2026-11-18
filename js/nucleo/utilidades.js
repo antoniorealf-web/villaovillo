@@ -19,16 +19,17 @@ let AC=null;
 
 /* ---------- voz ---------- */
 function stripEmoji(t){ return t.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/[«»]/g,''); }
-function speakNow(text){
+function speakNow(text,lang){
   try{
     if(!('speechSynthesis' in window)) return;
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(stripEmoji(text));
-    u.lang='es-ES'; u.rate=0.95;
-    const v=speechSynthesis.getVoices().find(v=>/^es(-|_)ES/i.test(v.lang)) || speechSynthesis.getVoices().find(v=>/^es/i.test(v.lang));
+    const V=speechSynthesis.getVoices(), ca=lang==='ca'&&V.find(v=>/^(ca|va)/i.test(v.lang)); // valenciano: voz catalana si la tablet la tiene
+    u.lang=ca?ca.lang:'es-ES'; u.rate=0.95;
+    const v=ca || V.find(v=>/^es(-|_)ES/i.test(v.lang)) || V.find(v=>/^es/i.test(v.lang));
     if(v) u.voice=v;
     speechSynthesis.speak(u);
   }catch(e){}
 }
-function speakAuto(text){ const p=P(); if(p&&p.voice) speakNow(text); }
+function speakAuto(text,lang){ const p=P(); if(p&&p.voice) speakNow(text,lang); }
 function stopSpeak(){ try{ speechSynthesis.cancel(); }catch(e){} }
