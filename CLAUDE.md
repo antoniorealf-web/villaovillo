@@ -10,8 +10,9 @@ Juego educativo para las dos hijas de Antonio: Berta (9 años, grupo «9») y Ci
 - Alcalde a distancia, para el móvil o el ordenador de papá (necesita la nube): https://antoniorealf-web.github.io/villaovillo/?alcalde (`panel.html` solo redirige aquí)
 - Instrucciones vivas (doc editable): https://claude.ai/artifact/Bq5jDtQdVyTyu2wmVdu2YL
 - Registro y estadísticas (hoja): https://claude.ai/artifact/MWN7Cmeky4eZqGc3Li6bhJ
+- Cuaderno de mejoras (doc): https://claude.ai/artifact/48tKRmZC1pvs9KCrZrLVQK — lo pendiente («Siguiente»), ideas, fallos conocidos, pruebas y lo hecho. Léelo al empezar una sesión de mejoras y actualízalo al terminar: lo hecho pasa a «Hecho» con la fecha, y se apuntan las ideas nuevas (también las del buzón de ideas de los informes) y los fallos encontrados. La «Revisión global» (16 nov) es solo archivo.
 
-Lo que cambia a menudo (temas del cole, economía, hoja de ruta, decisiones) vive en el doc de Instrucciones vivas, no aquí. Léelo al empezar una tarea de contenido o de diseño.
+Lo que cambia a menudo vive en dos docs, no aquí: las reglas y decisiones (temas del cole, economía, calendario de paquetes) en las Instrucciones vivas, y lo que falta por hacer en el Cuaderno de mejoras. Léelos al empezar una tarea de contenido o de diseño.
 
 ## Reglas fijas
 
