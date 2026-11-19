@@ -112,7 +112,7 @@ Para un libro que una niña lee en papel: un archivo por libro en `contenido/tem
 - Siempre hay `abiertos` capítulos sin aprender a la vista (los primeros en orden); al aprender uno (1 ronda perfecta) se abre el siguiente. No se guarda nada nuevo: sale de lo aprendido.
 - Los aprendidos entran en los repasos como cualquier tema. Si falla, Sabina le dice que vuelva a leer el capítulo en su libro (no hay libro en el juego).
 - Preguntas escritas con nuestras palabras a partir del capítulo (nunca se copia el texto del libro): qué pasa, por qué, ordenar hechos, alguna palabra. 10 × 3 formas, como todo tema.
-- Ve preparando capítulos por delante: cuando le queden 2 o 3 por abrir, avisa a Antonio y escribe los siguientes (Antonio vuelve a subir el libro en el chat; hecho hasta ahora: capítulos 1-6).
+- Ve preparando capítulos por delante: cuando le queden 2 o 3 por abrir, avisa a Antonio y escribe los siguientes (Antonio vuelve a subir el libro en el chat; hecho hasta ahora: capítulos 1-12).
 
 ## Material del cole → cuadernos
 
