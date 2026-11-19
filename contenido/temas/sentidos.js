@@ -35,6 +35,12 @@ window.SENT=window.SENT||(function(){
       <rect x="24" y="74" width="17" height="50" rx="8.5" transform="rotate(-40 32 120)"/>
       <rect x="34" y="34" width="16" height="60" rx="8"/><rect x="52" y="20" width="16" height="74" rx="8"/><rect x="70" y="22" width="16" height="72" rx="8"/><rect x="88" y="34" width="15" height="60" rx="7.5"/>
       <rect x="30" y="76" width="76" height="58" rx="22"/></g>`,140,140),
+    // Ojo de cerca: pupila pequeña (mucha luz) o grande (poca luz)
+    ojo:(grande)=>svg(`<rect x="0" y="0" width="120" height="80" rx="12" fill="${grande?'#3b4a63':'#fff4c2'}"/>
+      <ellipse cx="60" cy="42" rx="46" ry="26" fill="#fff" stroke="#555" stroke-width="2.5"/>
+      <circle cx="60" cy="42" r="20" fill="#3d6b9c"/><circle cx="60" cy="42" r="${grande?14:5}" fill="#111"/><circle cx="66" cy="36" r="3" fill="#fff"/>
+      <path d="M14 42 Q60 0 106 42" fill="none" stroke="#555" stroke-width="2.5"/>`,120,80),
+    pie:(dib,txt)=>`<div style="text-align:center;font-size:15px;line-height:1.2">${dib}<br>${txt}</div>`,
     fila:(...a)=>`<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center">${a.join('')}</div>`
   };
   return S;
@@ -47,50 +53,61 @@ window.TEMAS.push({
   id:'naturales-sentidos', para:'6', emoji:'👀', asignatura:'Ciencias de la Naturaleza', titulo:'Los cinco sentidos',
   libro:[
     {h:'Tenemos cinco sentidos', html:()=>`${SENT.fila(SENT.etiquetas(),SENT.mano())}
-      <p>Los <b>sentidos</b> nos dicen cómo es todo lo que hay a nuestro alrededor. Tenemos <b>cinco</b>:</p>
-      <p>👀 <b>Vista</b>, con los <b>ojos</b>.<br>👂 <b>Oído</b>, con las <b>orejas</b>.<br>👃 <b>Olfato</b>, con la <b>nariz</b>.<br>👅 <b>Gusto</b>, con la <b>lengua</b>.<br>✋ <b>Tacto</b>, con la <b>piel</b>.</p>`},
-    {h:'La vista y el oído', html:()=>`<p>👀 Con la <b>vista</b> vemos los <b>colores</b>, las <b>formas</b> y si algo es grande o pequeño. Para ver hace falta <b>luz</b>: a oscuras no vemos nada.</p>
-      <p>👂 Con el <b>oído</b> oímos los <b>sonidos</b>: la música, el timbre, un perro que ladra, la voz de mamá y papá. Hay sonidos <b>fuertes</b> 🥁 y sonidos <b>suaves</b> 🎐.</p>`},
-    {h:'El olfato y el gusto', html:()=>`<p>👃 Con el <b>olfato</b> notamos los <b>olores</b>. Hay olores agradables, como el del pan recién hecho 🥖 o las flores 🌸, y olores desagradables, como el de la basura.</p>
-      <p>👅 Con el <b>gusto</b> notamos los <b>sabores</b> de la comida:<br>🍬 El azúcar es <b>dulce</b>. 🧂 La sal es <b>salada</b>.<br>🍋 El limón es <b>ácido</b>. ☕ El café es <b>amargo</b>.</p>`},
-    {h:'El tacto', html:()=>`<p>✋ Con el <b>tacto</b> notamos las cosas al tocarlas. El tacto está en <b>toda la piel</b>, aunque usamos sobre todo las manos.</p>
-      <p>Al tocar sabemos si algo está <b>frío</b> 🧊 o <b>caliente</b> 🔥, si es <b>suave</b> 🧸 o <b>áspero</b> 🪵, y si es <b>blando</b> 🧽 o <b>duro</b> 🪨.</p>`},
-    {h:'Cuidamos los sentidos', html:()=>`<p>😎 No miramos nunca directamente al <b>sol</b>: hace daño a los ojos.<br>
-      📺 Vemos la tele y la tablet a una buena distancia y con luz.<br>
-      🎧 No ponemos la música muy alta: los ruidos fuertes dañan el oído.<br>
-      🔥 No tocamos cosas muy calientes: nos podemos quemar.</p>`},
-    {h:'Para recordar', html:()=>`<p>• Vista ➜ ojos ➜ colores y formas.<br>• Oído ➜ orejas ➜ sonidos.<br>• Olfato ➜ nariz ➜ olores.<br>• Gusto ➜ lengua ➜ dulce, salado, ácido, amargo.<br>• Tacto ➜ piel ➜ frío, caliente, suave, áspero.</p>`}
+      <p>Los <b>sentidos</b> nos dicen cómo es el mundo que nos rodea. Tenemos <b>cinco</b>, y cada uno tiene su <b>órgano</b>:</p>
+      <p>👀 <b>Vista</b> ➜ los <b>ojos</b>.<br>👂 <b>Oído</b> ➜ los <b>oídos</b> (las orejas son la parte de fuera).<br>👃 <b>Olfato</b> ➜ la <b>nariz</b>.<br>👅 <b>Gusto</b> ➜ la <b>lengua</b>.<br>✋ <b>Tacto</b> ➜ la <b>piel</b>.</p>`},
+    {h:'El jefe es el cerebro', html:()=>`<p>🧠 Los sentidos funcionan como <b>mensajeros</b>. Cuando ves, oyes o tocas algo, el órgano manda un mensaje al <b>cerebro</b> por unos hilos finísimos que se llaman <b>nervios</b>.</p>
+      <p>El cerebro recibe el mensaje y entiende qué es: «esto es una naranja», «eso que suena es mi perro», «¡cuidado, quema!».</p>
+      <p>Y todo pasa muy, muy deprisa: ¡en menos de un parpadeo! ⚡</p>`},
+    {h:'La vista', html:()=>`${SENT.fila(SENT.pie(SENT.ojo(false),'Con mucha luz'),SENT.pie(SENT.ojo(true),'Con poca luz'))}
+      <p>👀 Con la vista vemos <b>colores</b>, <b>formas</b>, <b>tamaños</b> y si algo está cerca o lejos. Para ver hace falta <b>luz</b>.</p>
+      <p>El círculo negro del centro del ojo es la <b>pupila</b>: es un agujerito por donde entra la luz. Con mucha luz se hace <b>pequeña</b>, y a oscuras se hace <b>grande</b> para que entre más luz.</p>
+      <p>El ojo tiene sus protectores: los <b>párpados</b> y las <b>pestañas</b> paran el polvo, las <b>cejas</b> paran el sudor y las <b>lágrimas</b> lo limpian y lo mantienen húmedo.</p>`},
+    {h:'El oído', html:()=>`<p>👂 Los sonidos viajan por el <b>aire</b>, como las olas en el agua. La oreja los recoge y los lleva hacia dentro.</p>
+      <p>Dentro del oído hay una piel muy fina que se llama <b>tímpano</b>. Cuando le llega un sonido, <b>vibra</b> como la piel de un tambor 🥁 y manda el mensaje al cerebro.</p>
+      <p>¿Sabías que el oído también nos ayuda a mantener el <b>equilibrio</b>? Por eso, si das muchas vueltas, te mareas. 🌀</p>`},
+    {h:'El olfato y el gusto, un equipo', html:()=>`<p>👅 La lengua está llena de bultitos llamados <b>papilas gustativas</b>. Con ellas notamos los sabores: <b>dulce</b> (azúcar 🍬), <b>salado</b> (sal 🧂), <b>ácido</b> (limón 🍋) y <b>amargo</b> (café ☕).</p>
+      <p>👃 La nariz nota los <b>olores</b>. Los olores también nos avisan de peligros: el humo de un fuego o la comida estropeada.</p>
+      <p>El olfato y el gusto trabajan <b>juntos</b>. Cuando estamos resfriados y tenemos la nariz tapada, la comida sabe a muy poco. ¡Haz la prueba: tápate la nariz y come una manzana! 🍎</p>`},
+    {h:'El tacto', html:()=>`<p>✋ El tacto está en <b>toda la piel</b>. Con él notamos si algo está <b>frío</b> o <b>caliente</b>, si es <b>suave</b> o <b>áspero</b>, <b>blando</b> o <b>duro</b>, <b>seco</b> o <b>mojado</b>.</p>
+      <p>Las partes más sensibles son las <b>yemas de los dedos</b>, los labios y la lengua. Por eso las personas ciegas pueden leer con los dedos: tocan unos puntitos en relieve que forman letras. Esa escritura se llama <b>braille</b>. ⠃⠗⠁⠊⠇⠇⠑</p>
+      <p>El <b>dolor</b> también es del tacto: es una alarma que nos avisa de que algo nos hace daño.</p>`},
+    {h:'Animales con supersentidos', html:()=>`<p>🐶 El <b>perro</b> tiene un olfato muchísimo mejor que el nuestro: por eso ayuda a buscar personas perdidas.<br>
+      🦉 El <b>búho</b> y el <b>gato</b> ven muy bien de noche: sus pupilas se hacen enormes.<br>
+      🦇 El <b>murciélago</b> «ve» con el oído: lanza grititos y escucha el eco que rebota en las cosas.<br>
+      🦈 El <b>tiburón</b> huele una gota de sangre muy lejos en el mar.</p>`},
+    {h:'Cuidamos los sentidos', html:()=>`<p>😎 No miramos nunca directamente al sol, ni siquiera con gafas de sol.<br>📺 Vemos la tablet y la tele a buena distancia y con luz.<br>🎧 No ponemos la música muy alta: los ruidos fuertes dañan el tímpano.<br>✋ Lavamos las manos y la piel, y nos ponemos crema al sol.</p>`},
+    {h:'Para recordar', html:()=>`<p>• Vista ➜ ojos · Oído ➜ oídos · Olfato ➜ nariz · Gusto ➜ lengua · Tacto ➜ piel.<br>• Los sentidos mandan mensajes al <b>cerebro</b> por los <b>nervios</b>.<br>• La <b>pupila</b> se hace pequeña con mucha luz y grande a oscuras.<br>• El <b>tímpano</b> vibra con los sonidos. El oído también da el <b>equilibrio</b>.<br>• Con la nariz tapada, la comida sabe a poco.<br>• <b>Braille</b>: leer con los dedos.</p>`}
   ],
   preguntas:[
-    {v:[_o('¿Cuántos sentidos tenemos?',['3','5','10'],'5','Vista, oído, olfato, gusto y tacto.'),
-        _v('Tenemos cinco sentidos.',true,'Vista, oído, olfato, gusto y tacto.'),
-        _o('¿Cuál de estos es un sentido?',['El olfato','El pelo','La rodilla'],'El olfato')]},
-    {v:[_o('¿Qué parte señala la flecha?',['Los ojos','La nariz','La lengua'],'Los ojos','Con los ojos vemos.',()=>SENT.marca('ojo')),
-        _o('¿Con qué parte del cuerpo vemos?',['Con los ojos','Con la nariz','Con las orejas'],'Con los ojos'),
-        _o('¿Qué sentido usamos con los ojos?',['La vista','El oído','El gusto'],'La vista')]},
-    {v:[_o('¿Qué parte señala la flecha?',['La oreja','El ojo','La lengua'],'La oreja','Con las orejas oímos.',()=>SENT.marca('oreja')),
-        _o('¿Con qué parte del cuerpo oímos?',['Con las orejas','Con las manos','Con la lengua'],'Con las orejas'),
-        _o('¿Qué sentido usamos para escuchar música?',['El oído','El olfato','El tacto'],'El oído')]},
-    {v:[_o('¿Qué parte señala la flecha?',['La nariz','La oreja','El ojo'],'La nariz','Con la nariz olemos.',()=>SENT.marca('nariz')),
-        _o('¿Qué sentido usamos para oler una flor?',['El olfato','La vista','El oído'],'El olfato'),
-        _v('Olemos el pan recién hecho con la nariz.',true,'Sí: es el sentido del olfato.')]},
-    {v:[_o('¿Qué parte señala la flecha?',['La lengua','La nariz','El ojo'],'La lengua','Con la lengua notamos los sabores.',()=>SENT.marca('lengua')),
-        _o('¿Con qué parte del cuerpo notamos los sabores?',['Con la lengua','Con las orejas','Con los ojos'],'Con la lengua'),
-        _o('¿Qué sentido usamos para saber si la sopa está salada?',['El gusto','El oído','La vista'],'El gusto')]},
-    {v:[_o('¿Qué sentido usamos al tocar las cosas?',['El tacto','El olfato','El oído'],'El tacto','El tacto está en la piel.',()=>SENT.mano()),
-        _o('¿Dónde está el sentido del tacto?',['En toda la piel','Solo en la nariz','Solo en los ojos'],'En toda la piel'),
-        _v('El tacto solo está en las manos.',false,'El tacto está en toda la piel, aunque usamos sobre todo las manos.')]},
-    {v:[_o('¿A qué sabe el limón?',['Ácido','Dulce','Salado'],'Ácido'),
-        _o('¿Qué sabor tiene el azúcar?',['Dulce','Amargo','Ácido'],'Dulce'),
-        _o('¿Qué comida es salada?',['Las patatas fritas','Un caramelo','Un limón'],'Las patatas fritas','Las patatas fritas llevan sal.')]},
-    {v:[_o('Tocas un cubito de hielo. ¿Cómo está?',['Frío','Caliente','Áspero'],'Frío','Lo notamos con el tacto.'),
-        _o('Un osito de peluche, al tocarlo, es…',['Suave','Áspero','Duro'],'Suave'),
-        _o('¿Con qué sentido sabemos si el agua está caliente?',['Con el tacto','Con el oído','Con la vista'],'Con el tacto')]},
-    {v:[_o('Estás con los ojos cerrados y oyes «¡guau!». ¿Qué sentido te dice que hay un perro?',['El oído','El gusto','El tacto'],'El oído'),
-        _o('¿Qué sentido te dice de qué color es una pelota?',['La vista','El olfato','El gusto'],'La vista'),
-        _v('A oscuras, sin nada de luz, podemos ver los colores.',false,'Para ver hace falta luz.')]},
+    {v:[_o('¿Qué parte señala la flecha?',['Los ojos','La nariz','La lengua'],'Los ojos','Son los órganos de la vista.',()=>SENT.marca('ojo')),
+        _o('¿Qué parte señala la flecha?',['La oreja','El ojo','La nariz'],'La oreja','Recoge los sonidos.',()=>SENT.marca('oreja')),
+        _o('¿Qué parte señala la flecha?',['La lengua','La nariz','La oreja'],'La lengua','Es el órgano del gusto.',()=>SENT.marca('lengua'))]},
+    {v:[_o('¿Cuál es el órgano del tacto?',['La piel','La lengua','La nariz'],'La piel','El tacto está en toda la piel.'),
+        _o('¿Qué sentido usamos para saber si la sopa está salada?',['El gusto','El oído','La vista'],'El gusto'),
+        _o('¿Qué sentido nos avisa del humo de un fuego antes de verlo?',['El olfato','El gusto','El tacto'],'El olfato')]},
+    {v:[_o('¿A quién mandan sus mensajes los sentidos?',['Al cerebro','Al estómago','A los pies'],'Al cerebro','El cerebro entiende lo que vemos, oímos o tocamos.'),
+        _o('¿Cómo se llaman los hilos finísimos que llevan los mensajes al cerebro?',['Nervios','Pelos','Venas'],'Nervios'),
+        _v('Los ojos ven, pero quien entiende lo que vemos es el cerebro.',true,'Sí: los ojos mandan el mensaje y el cerebro lo entiende.')]},
+    {v:[_o('¿Cómo se llama el agujerito negro del centro del ojo?',['Pupila','Pestaña','Tímpano'],'Pupila','Por ahí entra la luz.'),
+        _o('Entras en una habitación oscura. ¿Qué le pasa a tu pupila?',['Se hace grande','Se hace pequeña','Se cierra'],'Se hace grande','Así entra más luz.',()=>SENT.ojo(true)),
+        _o('¿Por qué la pupila se hace pequeña cuando hay mucha luz?',['Para que no entre demasiada luz','Para ver más colores','Porque tiene sueño'],'Para que no entre demasiada luz',null,()=>SENT.ojo(false))]},
+    {v:[_o('¿Para qué sirven las pestañas?',['Para parar el polvo','Para oír mejor','Para oler'],'Para parar el polvo'),
+        _o('¿Qué limpia el ojo y lo mantiene húmedo?',['Las lágrimas','Las cejas','La pupila'],'Las lágrimas'),
+        _v('Las cejas ayudan a que el sudor no caiga en los ojos.',true,'Sí: las cejas, los párpados, las pestañas y las lágrimas protegen el ojo.')]},
+    {v:[_o('¿Cómo se llama la piel fina que vibra dentro del oído?',['Tímpano','Pupila','Papila'],'Tímpano','Vibra como la piel de un tambor.'),
+        _o('¿Por dónde viajan los sonidos hasta nuestro oído?',['Por el aire','Por la luz','Por los ojos'],'Por el aire'),
+        _o('Además de oír, ¿en qué nos ayuda el oído?',['A mantener el equilibrio','A ver de noche','A notar sabores'],'A mantener el equilibrio','Por eso te mareas si das muchas vueltas.')]},
+    {v:[_o('Estás resfriada y tienes la nariz tapada. ¿Por qué la comida sabe a poco?',['Porque el olfato y el gusto trabajan juntos','Porque la comida está fría','Porque la lengua duerme'],'Porque el olfato y el gusto trabajan juntos'),
+        _o('¿Cómo se llaman los bultitos de la lengua que notan los sabores?',['Papilas gustativas','Pestañas','Nervios del pie'],'Papilas gustativas'),
+        _o('¿A qué sabe el limón?',['Ácido','Dulce','Amargo'],'Ácido')]},
+    {v:[_o('¿Qué parte de la mano es la más sensible al tacto?',['Las yemas de los dedos','Las uñas','El codo'],'Las yemas de los dedos'),
+        _o('¿Cómo se llama la escritura de puntitos que las personas ciegas leen con los dedos?',['Braille','Pupila','Tímpano'],'Braille'),
+        _o('¿Para qué sirve sentir dolor?',['Nos avisa de que algo nos hace daño','Para nada','Para oír mejor'],'Nos avisa de que algo nos hace daño','El dolor es una alarma del tacto.')]},
+    {v:[_o('¿Qué animal tiene un olfato tan bueno que ayuda a buscar personas perdidas?',['El perro','El búho','La tortuga'],'El perro'),
+        _o('¿Qué animal «ve» con el oído, escuchando el eco de sus grititos?',['El murciélago','El gato','El pez'],'El murciélago'),
+        _o('¿Por qué el búho ve muy bien de noche?',['Porque sus pupilas se hacen enormes','Porque lleva linterna','Porque duerme de día'],'Porque sus pupilas se hacen enormes','Así entra mucha luz aunque sea poca.')]},
     {v:[_o('¿Por qué no debemos mirar directamente al sol?',['Porque hace daño a los ojos','Porque se apaga','Porque huele mal'],'Porque hace daño a los ojos'),
-        _v('Poner la música muy alta es bueno para el oído.',false,'Los ruidos muy fuertes dañan el oído.'),
+        _o('¿Qué parte del oído se puede dañar con la música muy alta?',['El tímpano','La pupila','La lengua'],'El tímpano'),
         _o('¿Cuál de estas cosas cuida nuestros sentidos?',['Ver la tablet a buena distancia','Mirar al sol','Poner la música muy alta'],'Ver la tablet a buena distancia')]}
   ]
 });

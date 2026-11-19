@@ -39,6 +39,22 @@ window.PLANTA=window.PLANTA||(function(){
     arbol:()=>svg(`<rect x="0" y="100" width="100" height="10" fill="#8fc97a"/><rect x="43" y="55" width="14" height="47" fill="#8b5e3c"/><circle cx="50" cy="40" r="32" fill="#4f9d4f"/>`,100,110),
     arbusto:()=>svg(`<rect x="0" y="100" width="100" height="10" fill="#8fc97a"/><path d="M50 100 L38 80 M50 100 L50 76 M50 100 L62 80" stroke="#8b5e3c" stroke-width="3"/><circle cx="34" cy="78" r="16" fill="#5cb85c"/><circle cx="66" cy="78" r="16" fill="#5cb85c"/><circle cx="50" cy="68" r="18" fill="#4f9d4f"/>`,100,110),
     hierba:()=>svg(`<rect x="0" y="100" width="100" height="10" fill="#8fc97a"/>${[22,34,46,58,70,80].map((x,i)=>`<path d="M${x} 100 Q${x+(i%2?6:-6)} 86 ${x+(i%2?3:-3)} ${74+(i%3)*4}" stroke="#3a8d3a" stroke-width="3" fill="none"/>`).join('')}`,100,110),
+    // Fotosíntesis: la hoja toma luz, agua y aire, fabrica alimento y suelta oxígeno
+    fotosintesis:()=>{ const A=(x1,y1,x2,y2,c)=>{ const a=Math.atan2(y2-y1,x2-x1), p=(d,l)=>(x2-Math.cos(a+d)*l).toFixed(1)+','+(y2-Math.sin(a+d)*l).toFixed(1); return `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${c}" stroke-width="4" stroke-linecap="round"/><polygon points="${x2},${y2} ${p(0.45,14)} ${p(-0.45,14)}" fill="${c}"/>`; };
+      return svg(`<circle cx="40" cy="34" r="20" fill="#ffd166" stroke="#e0a800" stroke-width="2"/>
+        <path d="M100 150 Q60 95 130 45 Q205 70 160 140 Q135 160 100 150Z" fill="#5cb85c" stroke="#2f7a2f" stroke-width="3"/>
+        <path d="M100 150 Q125 100 135 60" stroke="#2f7a2f" stroke-width="2.5" fill="none"/>
+        <path d="M100 150 L94 178" stroke="#3a8d3a" stroke-width="5"/>
+        ${A(60,50,108,82,'#e0a800')}${A(70,190,98,160,'#3d8bd9')}${A(20,120,82,118,'#8aa0b0')}${A(176,98,226,84,'#2a9d8f')}
+        ${T(66,30,'Luz')}${T(10,186,'Agua')}${T(2,108,'Aire')}${T(200,72,'Oxígeno')}
+        <text x="132" y="118" font-family="Baloo 2, sans-serif" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Alimento</text>`,270,200); },
+    // Hoja caduca y perenne
+    roble:(inv)=>svg(`<rect x="0" y="100" width="100" height="10" fill="${inv?'#e8eef2':'#8fc97a'}"/><rect x="45" y="55" width="10" height="47" fill="#8b5e3c"/>
+      <g stroke="#8b5e3c" stroke-width="4" stroke-linecap="round"><path d="M50 62 L28 34"/><path d="M50 58 L74 30"/><path d="M50 50 L50 18"/><path d="M38 47 L24 46"/><path d="M62 44 L80 46"/></g>
+      ${inv?'<g fill="#d98a2b"><ellipse cx="20" cy="96" rx="5" ry="3"/><ellipse cx="72" cy="97" rx="5" ry="3"/><ellipse cx="86" cy="80" rx="4" ry="3"/></g>':'<g fill="#4f9d4f" opacity=".95"><circle cx="30" cy="34" r="16"/><circle cx="70" cy="30" r="17"/><circle cx="50" cy="20" r="17"/><circle cx="50" cy="42" r="16"/></g>'}`,100,110),
+    pino:()=>svg(`<rect x="0" y="100" width="100" height="10" fill="#e8eef2"/><rect x="45" y="80" width="10" height="22" fill="#8b5e3c"/>
+      <polygon points="50,6 24,46 76,46" fill="#2e7d4f"/><polygon points="50,26 18,68 82,68" fill="#2e7d4f"/><polygon points="50,46 12,88 88,88" fill="#2e7d4f"/>`,100,110),
+    pie:(dib,txt)=>`<div style="text-align:center;font-size:15px;line-height:1.2">${dib}<br>${txt}</div>`,
     fila:(...a)=>`<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center">${a.join('')}</div>`,
     etapas:()=>P.fila(P.semilla(),'➜',P.brote(),'➜',P.plantita(),'➜',P.conFlor(),'➜',P.conFruto())
   };
@@ -51,61 +67,72 @@ const _r=(q,items,exp)=>({t:'ordenar',q,items,exp});
 window.TEMAS.push({
   id:'naturales-plantas', para:'6', emoji:'🌱', asignatura:'Ciencias de la Naturaleza', titulo:'Las plantas',
   libro:[
-    {h:'Las plantas son seres vivos', html:()=>`<p>Las plantas son <b>seres vivos</b>, como los animales y las personas. 🌱</p>
-      <p>Las plantas <b>nacen</b>, <b>crecen</b>, tienen <b>hijos</b> (nuevas plantas) y al final <b>mueren</b>.</p>
-      <p>Pero las plantas <b>no se pueden mover</b> de un sitio a otro. Viven siempre en el mismo lugar.</p>`},
+    {h:'Las plantas son seres vivos', html:()=>`<p>Las plantas son <b>seres vivos</b>, como los animales y las personas: <b>nacen</b>, <b>crecen</b>, se <b>reproducen</b> (tienen plantas hijas) y <b>mueren</b>.</p>
+      <p>Pero hay una cosa que las hace especiales: las plantas <b>fabrican su propio alimento</b>. Los animales tenemos que buscar la comida; ¡las plantas se la hacen ellas solas! 🌱</p>`},
     {h:'Las partes de la planta', html:()=>`${PLANTA.fila(PLANTA.etiquetas())}
-      <p>🟤 La <b>raíz</b> está bajo la tierra. Sujeta la planta y bebe el agua.<br>
-      🟢 El <b>tallo</b> sostiene la planta y lleva el agua hasta las hojas.<br>
-      🍃 Las <b>hojas</b> usan la luz del sol para hacer la comida de la planta.<br>
-      🌸 La <b>flor</b> es la parte de colores. De la flor sale el fruto.<br>
-      🍎 El <b>fruto</b> guarda dentro las <b>semillas</b>.</p>`},
-    {h:'Qué necesita una planta', html:()=>`<p>Para vivir y crecer, una planta necesita:</p>
-      <p>💧 <b>Agua</b>: si no la riegas, se seca.<br>☀️ <b>Luz</b>: sin luz, la planta se pone pálida y se muere.<br>🌬️ <b>Aire</b>.<br>🟫 <b>Tierra</b>, donde están las raíces.</p>
-      <p>Por eso en Villaovillo hay que regar el jardín. 🚿</p>`},
-    {h:'De semilla a planta', html:()=>`${PLANTA.etapas()}
-      <p>1. Plantamos una <b>semilla</b> en la tierra.<br>2. Con agua, la semilla <b>germina</b>: sale un brote pequeño.<br>3. El brote <b>crece</b> y se hace una planta.<br>4. Le salen <b>flores</b>.<br>5. De la flor sale el <b>fruto</b>, con semillas nuevas dentro. ¡Y vuelta a empezar! 🔁</p>`},
+      <p>🟤 La <b>raíz</b> está bajo la tierra. Sujeta la planta y absorbe el agua y las sales minerales del suelo.<br>
+      🟢 El <b>tallo</b> sostiene la planta. Por dentro tiene unos tubitos muy finos que llevan el agua desde la raíz hasta las hojas.<br>
+      🍃 Las <b>hojas</b> fabrican el alimento de la planta.<br>
+      🌸 La <b>flor</b> sirve para que nazcan plantas nuevas: de la flor sale el fruto.<br>
+      🍎 El <b>fruto</b> protege las <b>semillas</b>.</p>`},
+    {h:'La fotosíntesis: la cocina de la planta', html:()=>`${PLANTA.fila(PLANTA.fotosintesis())}
+      <p>Las hojas son como una cocina. Para hacer la comida usan tres ingredientes:</p>
+      <p>☀️ la <b>luz</b> del sol,<br>💧 el <b>agua</b> que sube desde la raíz,<br>🌬️ y un gas del <b>aire</b> que se llama <b>dióxido de carbono</b>.</p>
+      <p>Con ellos fabrican su alimento. Esto se llama <b>fotosíntesis</b> («foto» quiere decir luz).</p>
+      <p>Mientras cocinan, las hojas sueltan <b>oxígeno</b> al aire: ¡el oxígeno que respiramos las personas y los animales! Por eso los bosques son tan importantes. 🌳</p>
+      <p>Las hojas son verdes porque tienen <b>clorofila</b>, una sustancia verde que atrapa la luz del sol. Sin luz, la planta no puede cocinar: se pone pálida y se muere.</p>`},
+    {h:'Hoja caduca y hoja perenne', html:()=>`${PLANTA.fila(PLANTA.pie(PLANTA.roble(false),'Roble<br>en verano'),PLANTA.pie(PLANTA.roble(true),'Roble<br>en invierno'),PLANTA.pie(PLANTA.pino(),'Pino<br>en invierno'))}
+      <p>🍂 Los árboles de <b>hoja caduca</b> pierden sus hojas en <b>otoño</b>: primero se ponen amarillas, naranjas o marrones y luego se caen. En invierno las ramas están desnudas y en primavera salen hojas nuevas. Ejemplos: el <b>roble</b>, el <b>castaño</b> y el <b>chopo</b>.</p>
+      <p>🌲 Los árboles de <b>hoja perenne</b> tienen hojas verdes <b>todo el año</b>. También cambian las hojas, pero poco a poco, y nunca se quedan sin ellas. Ejemplos: el <b>pino</b>, el <b>olivo</b> y el <b>naranjo</b>.</p>
+      <p>«Caduca» viene de «caer». «Perenne» quiere decir «que dura siempre».</p>`},
+    {h:'De la flor a la semilla', html:()=>`${PLANTA.etapas()}
+      <p>🐝 Dentro de las flores hay un polvillo amarillo: el <b>polen</b>. Las abejas y las mariposas van de flor en flor a beber néctar y, sin darse cuenta, llevan el polen pegado de una flor a otra. Esto se llama <b>polinización</b>. Gracias a ella, la flor se convierte en <b>fruto</b>.</p>
+      <p>🌬️ Las semillas viajan para nacer lejos: el <b>viento</b> se lleva las del diente de león, los <b>animales</b> comen frutos y dejan las semillas en otro sitio, y algunas flotan en el <b>agua</b>.</p>
+      <p>🌱 Cuando una semilla cae en tierra húmeda, <b>germina</b>: primero sale una raicita hacia abajo y luego un brote hacia arriba.</p>`},
+    {h:'¿Qué parte nos comemos?', html:()=>`<p>¡Comemos plantas todos los días! Pero no siempre la misma parte:</p>
+      <p>🥕 <b>Raíz</b>: la zanahoria y el rábano.<br>🌿 <b>Tallo</b>: el espárrago y el apio.<br>🥬 <b>Hojas</b>: la lechuga y las espinacas.<br>🥦 <b>Flores</b>: el brócoli y la coliflor (son flores que aún no se han abierto).<br>🍊 <b>Frutos</b>: la naranja, la manzana… ¡y también el tomate!<br>🌰 <b>Semillas</b>: las lentejas, los garbanzos y las pipas.</p>`},
     {h:'Árboles, arbustos y hierbas', html:()=>`${PLANTA.fila(PLANTA.arbol(),PLANTA.arbusto(),PLANTA.hierba())}
-      <p>🌳 El <b>árbol</b> es muy alto y tiene un tallo grueso y duro: el <b>tronco</b>.<br>
-      🌿 El <b>arbusto</b> es más bajo y tiene muchos tallos duros y finos.<br>
+      <p>🌳 El <b>árbol</b> es alto y tiene un tallo grueso y duro: el <b>tronco</b>.<br>
+      🌿 El <b>arbusto</b> es más bajo y tiene muchos tallos duros desde el suelo.<br>
       🌾 La <b>hierba</b> es pequeña y su tallo es blando y verde.</p>`},
-    {h:'Para recordar', html:()=>`<p>• Las plantas son seres vivos: nacen, crecen, tienen hijos y mueren.<br>
-      • Partes: <b>raíz</b>, <b>tallo</b>, <b>hojas</b>, <b>flor</b> y <b>fruto</b>.<br>
-      • Necesitan <b>agua</b>, <b>luz</b>, <b>aire</b> y <b>tierra</b>.<br>
-      • Semilla ➜ brote ➜ planta ➜ flor ➜ fruto.<br>
-      • Árbol (tronco), arbusto (bajito) y hierba (tallo blando).</p>`}
+    {h:'Para recordar', html:()=>`<p>• Partes: raíz, tallo, hojas, flor y fruto (con semillas).<br>
+      • <b>Fotosíntesis</b>: con luz, agua y aire las hojas fabrican alimento y sueltan <b>oxígeno</b>.<br>
+      • Las hojas son verdes por la <b>clorofila</b>.<br>
+      • <b>Caduca</b>: pierde las hojas en otoño (roble). <b>Perenne</b>: verde todo el año (pino).<br>
+      • Las abejas llevan el <b>polen</b> de flor en flor: <b>polinización</b>.<br>
+      • Semilla ➜ germina ➜ planta ➜ flor ➜ fruto.</p>`}
   ],
   preguntas:[
-    {v:[_v('Las plantas son seres vivos.',true,'Sí: nacen, crecen, tienen hijos y mueren.'),
-        _o('¿Qué hacen las plantas, igual que los animales?',['Nacen, crecen y mueren','Hablan y cantan','Andan por el campo'],'Nacen, crecen y mueren'),
-        _v('Una planta puede ir andando a otro sitio.',false,'Las plantas no se pueden mover: viven siempre en el mismo lugar.')]},
-    {v:[_o('¿Cómo se llama la parte que señala la flecha?',['Raíz','Hoja','Flor'],'Raíz','La raíz está bajo la tierra.',()=>PLANTA.marca('raiz')),
-        _o('¿Qué parte de la planta está bajo la tierra?',['La flor','La raíz','El fruto'],'La raíz'),
-        _o('¿Qué parte bebe el agua de la tierra?',['La raíz','La flor','El fruto'],'La raíz','La raíz sujeta la planta y bebe el agua.')]},
-    {v:[_o('¿Cómo se llama la parte que señala la flecha?',['Fruto','Tallo','Raíz'],'Tallo','El tallo sostiene la planta.',()=>PLANTA.marca('tallo')),
-        _o('¿Qué parte sostiene la planta y lleva el agua a las hojas?',['El tallo','La flor','La semilla'],'El tallo'),
-        _v('El tronco de un árbol es su tallo.',true,'Sí: el tronco es un tallo grueso y duro.')]},
-    {v:[_o('¿Cómo se llama la parte que señala la flecha?',['Hoja','Flor','Raíz'],'Hoja','Las hojas son verdes.',()=>PLANTA.marca('hojas')),
-        _o('¿Qué parte usa la luz del sol para hacer la comida de la planta?',['Las hojas','La raíz','El fruto'],'Las hojas'),
-        _v('Las hojas hacen la comida de la planta con la luz del sol.',true,'Sí: por eso las plantas necesitan luz.')]},
-    {v:[_o('¿Cómo se llama la parte que señala la flecha?',['Flor','Tallo','Raíz'],'Flor','La flor es la parte de colores.',()=>PLANTA.marca('flor')),
-        _o('¿De qué parte de la planta sale el fruto?',['De la flor','De la raíz','Del tallo'],'De la flor'),
-        _o('¿Qué parte de la planta suele tener colores bonitos?',['La flor','La raíz','El tallo'],'La flor')]},
-    {v:[_o('¿Cómo se llama la parte que señala la flecha?',['Fruto','Hoja','Raíz'],'Fruto','El fruto guarda las semillas.',()=>PLANTA.marca('fruto')),
-        _o('¿Qué guarda el fruto dentro?',['Semillas','Raíces','Hojas'],'Semillas'),
-        _v('Una manzana es un fruto y dentro tiene semillas.',true,'Sí: las pepitas de la manzana son sus semillas.')]},
-    {v:[_o('¿Qué necesita una planta para vivir?',['Agua y luz','Chocolate','Música'],'Agua y luz'),
-        _v('Una planta puede vivir sin agua.',false,'Sin agua la planta se seca.'),
-        _o('Si no riegas una planta, ¿qué le pasa?',['Se seca','Crece más','Le salen flores'],'Se seca','Las plantas necesitan agua.')]},
-    {v:[_o('Guardamos una planta en un armario oscuro muchos días. ¿Qué le pasará?',['Se pondrá pálida y se morirá','Crecerá mucho','Le saldrán frutos'],'Se pondrá pálida y se morirá','Las hojas necesitan luz para hacer la comida.'),
-        _o('¿Por qué una planta necesita luz?',['Porque las hojas hacen su comida con la luz','Porque le da miedo la oscuridad','Para ver mejor'],'Porque las hojas hacen su comida con la luz'),
-        _v('Las plantas necesitan luz para vivir.',true,'Sí: sin luz las hojas no pueden hacer la comida.')]},
-    {v:[_r('Ordena cómo crece una planta.',['Semilla','Brote','Planta','Flor','Fruto'],'Semilla ➜ brote ➜ planta ➜ flor ➜ fruto.'),
-        _o('¿Qué plantamos en la tierra para que nazca una planta nueva?',['Una semilla','Una hoja','Una piedra'],'Una semilla'),
-        _o('¿Qué sale primero de la semilla?',['Un brote pequeño','Un fruto','Un árbol grande'],'Un brote pequeño','Con agua, la semilla germina y sale un brote.')]},
-    {v:[_o('¿Qué planta es esta, alta y con tronco?',['Árbol','Arbusto','Hierba'],'Árbol','El árbol tiene un tallo grueso: el tronco.',()=>PLANTA.arbol()),
-        _o('¿Qué planta es pequeña y tiene el tallo blando y verde?',['La hierba','El árbol','El arbusto'],'La hierba'),
-        _o('¿Qué planta es más baja que un árbol y tiene muchos tallos duros?',['El arbusto','La hierba','La flor'],'El arbusto')]}
+    {v:[_o('¿Cómo se llama la parte que señala la flecha?',['Raíz','Tallo','Fruto'],'Raíz','La raíz está bajo la tierra.',()=>PLANTA.marca('raiz')),
+        _o('¿Cómo se llama la parte que señala la flecha?',['Tallo','Raíz','Flor'],'Tallo','El tallo sostiene la planta.',()=>PLANTA.marca('tallo')),
+        _o('¿Cómo se llama la parte que señala la flecha?',['Fruto','Flor','Hoja'],'Fruto','El fruto protege las semillas.',()=>PLANTA.marca('fruto'))]},
+    {v:[_o('¿Qué hace la raíz?',['Sujeta la planta y absorbe el agua','Fabrica el alimento','Atrae a las abejas'],'Sujeta la planta y absorbe el agua'),
+        _o('¿Por dónde sube el agua desde la raíz hasta las hojas?',['Por unos tubitos del tallo','Por la flor','Por el aire'],'Por unos tubitos del tallo'),
+        _o('¿Para qué sirve el fruto?',['Para proteger las semillas','Para sujetar la planta','Para beber agua'],'Para proteger las semillas')]},
+    {v:[_o('¿Cómo se llama lo que hacen las hojas para fabricar su alimento?',['Fotosíntesis','Polinización','Germinación'],'Fotosíntesis','«Foto» quiere decir luz.',()=>PLANTA.fotosintesis()),
+        _o('¿Qué ingredientes usan las hojas para fabricar su alimento?',['Luz, agua y aire','Tierra, piedras y arena','Leche, pan y miel'],'Luz, agua y aire'),
+        _v('Las plantas fabrican su propio alimento.',true,'Sí: lo fabrican las hojas con la fotosíntesis.')]},
+    {v:[_o('Durante la fotosíntesis, ¿qué sueltan las hojas al aire?',['Oxígeno','Humo','Polen'],'Oxígeno','Es el oxígeno que respiramos.'),
+        _o('¿Por qué son tan importantes los bosques para las personas?',['Porque las plantas sueltan el oxígeno que respiramos','Porque hacen ruido','Porque dan sombra a las nubes'],'Porque las plantas sueltan el oxígeno que respiramos'),
+        _v('El oxígeno que respiramos lo sueltan las plantas.',true,'Sí: lo sueltan las hojas mientras fabrican su alimento.')]},
+    {v:[_o('¿Por qué las hojas son verdes?',['Porque tienen clorofila','Porque las pintan','Porque beben mucha agua'],'Porque tienen clorofila','La clorofila atrapa la luz del sol.'),
+        _o('Guardamos una planta en un armario oscuro muchos días. ¿Qué le pasará?',['Se pondrá pálida y se morirá','Crecerá más deprisa','Le saldrán frutos'],'Se pondrá pálida y se morirá','Sin luz, las hojas no pueden fabricar alimento.'),
+        _o('¿Para qué sirve la clorofila?',['Para atrapar la luz del sol','Para oler bien','Para beber agua'],'Para atrapar la luz del sol')]},
+    {v:[_o('¿Qué es un árbol de hoja caduca?',['El que pierde las hojas en otoño','El que tiene hojas todo el año','El que no tiene raíces'],'El que pierde las hojas en otoño'),
+        _o('¿Qué es un árbol de hoja perenne?',['El que tiene hojas verdes todo el año','El que pierde las hojas en otoño','El que solo tiene flores'],'El que tiene hojas verdes todo el año'),
+        _o('Este roble está en invierno, sin hojas. ¿Cómo es su hoja?',['Caduca','Perenne','Verde todo el año'],'Caduca','Los árboles de hoja caduca pierden las hojas en otoño.',()=>PLANTA.roble(true))]},
+    {v:[_o('¿Cuál de estos árboles es de hoja perenne?',['El pino','El roble','El castaño'],'El pino'),
+        _o('¿Cuál de estos árboles es de hoja caduca?',['El castaño','El pino','El olivo'],'El castaño'),
+        _o('Este pino tiene hojas en pleno invierno. ¿Cómo es su hoja?',['Perenne','Caduca','Seca'],'Perenne','Los pinos tienen hojas verdes todo el año.',()=>PLANTA.pino())]},
+    {v:[_o('¿Cómo ayudan las abejas a las plantas?',['Llevan el polen de una flor a otra','Riegan las flores','Se comen las hojas malas'],'Llevan el polen de una flor a otra','Eso se llama polinización.'),
+        _o('¿Cómo se llama el polvillo amarillo que hay dentro de las flores?',['Polen','Clorofila','Semilla'],'Polen'),
+        _v('Gracias a la polinización, la flor se convierte en fruto.',true,'Sí: las abejas llevan el polen y la flor puede hacerse fruto.')]},
+    {v:[_r('Ordena la vida de una planta.',['Semilla','Germina','Planta','Flor','Fruto'],'Semilla ➜ germina ➜ planta ➜ flor ➜ fruto.'),
+        _o('¿Cómo viajan las semillas del diente de león?',['Con el viento','En coche','Las lleva la raíz'],'Con el viento'),
+        _o('Cuando una semilla germina, ¿qué sale primero?',['Una raicita hacia abajo','Una flor','Un fruto'],'Una raicita hacia abajo','Luego sale el brote hacia arriba.')]},
+    {v:[_o('¿Qué parte de la planta es la zanahoria?',['La raíz','La flor','El fruto'],'La raíz'),
+        _o('¿Qué parte de la planta es el brócoli?',['Flores','Raíces','Semillas'],'Flores','Son flores que aún no se han abierto.'),
+        _o('¿Qué parte de la planta es la lechuga?',['Hojas','Raíz','Tallo'],'Hojas')]}
   ]
 });
 })();
