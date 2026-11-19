@@ -105,6 +105,15 @@ Todo tema nuevo de la Biblioteca es una **lección** (no un cuaderno): un archiv
 - Grupo 6: frases cortas, 3 opciones. Grupo 9: 3-4 opciones y alguna pregunta de «por qué».
 - Antes de subirlo: comprueba que cada respuesta está entre sus opciones y prueba el libro y una ronda en el catálogo (`?prueba#catalogo`).
 
+## Libros por capítulos (lectura)
+
+Para un libro que una niña lee en papel: un archivo por libro en `contenido/temas/<autor>.js` (ejemplo: `gombrich.js`, «Breve historia del mundo», para Berta). Cada capítulo es un tema sin `libro`, con `serie:{id, titulo, autor, orden, abiertos:2, total}` y `rondas:1`.
+
+- Siempre hay `abiertos` capítulos sin aprender a la vista (los primeros en orden); al aprender uno (1 ronda perfecta) se abre el siguiente. No se guarda nada nuevo: sale de lo aprendido.
+- Los aprendidos entran en los repasos como cualquier tema. Si falla, Sabina le dice que vuelva a leer el capítulo en su libro (no hay libro en el juego).
+- Preguntas escritas con nuestras palabras a partir del capítulo (nunca se copia el texto del libro): qué pasa, por qué, ordenar hechos, alguna palabra. 10 × 3 formas, como todo tema.
+- Ve preparando capítulos por delante: cuando le queden 2 o 3 por abrir, avisa a Antonio y escribe los siguientes (Antonio vuelve a subir el libro en el chat; hecho hasta ahora: capítulos 1-6).
+
 ## Material del cole → cuadernos
 
 Formato de `contenido/cuadernos.js`: `{id, para:'6'|'9'|'todas'|nombre, emoji, asignatura, titulo, preguntas:[…]}`. Tipos de pregunta: `{t:'opcion', q, opts, a, exp?}`, `{t:'vf', q, a:true|false, exp?}` y `{t:'ordenar', q, items}` (con los items en el orden correcto). De 6 a 10 preguntas, solo con lo que pone el material. Grupo 6: frases cortas y 3 opciones. Grupo 9: 3 o 4 opciones y alguna pregunta de «por qué». Pon una `exp` corta en las preguntas difíciles. Usa ids estables (`asignatura-tema`): si se cambia un id, se pierde la repetición espaciada de ese cuaderno.

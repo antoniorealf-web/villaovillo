@@ -34,7 +34,7 @@ function buildReport(){
       nivelesReto:Object.fromEntries(TLV_TYPES.map(t=>[t,tlvOf(p,t)])),
       racha:p.days.streak||0,mejorRacha:p.days.best||0,diasJugados:p.days.count||0,medallas:Object.keys(p.medals||{}).length,
       puente:p.bridge||0,tareas:p.counters.tasks||0,retos:p.counters.retos||0,historias:(p.stories||[]).length,
-      tiposTelar:ty,mates:p.math||{},cuadernos:cu,dias:log};
+      tiposTelar:ty,mates:p.math||{},cuadernos:cu,temas:Object.fromEntries(temasFor(p).map(t=>{ const x=lecT(p,t.id); return [t.id,{titulo:t.titulo,aprendido:!!x.ap,perfectas:x.dias.length}]; })),dias:log};
   });
   const data={v:1,fecha:today(),puente:[bridgeTotal(),BRIDGE_GOAL],perfiles:perf,ideas:(DB.sugs||[]).slice(-20).map(s=>({fecha:new Date(s.t).toISOString().slice(0,10),nina:s.nombre,tema:s.cat,texto:s.texto,leida:!!s.leida,resp:s.resp||''}))};
   return 'VILLAOVILLO-INFORME v1 '+today()+'\n'+JSON.stringify(data);

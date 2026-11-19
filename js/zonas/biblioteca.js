@@ -8,7 +8,7 @@ function cuadernosFor(p){ const C=window.CUADERNOS||[]; return C.filter(c=>c.par
 function dueQuestions(p,c){ const t=dayNum(today()); p.sr=p.sr||{}; return c.preguntas.map((q,i)=>({q,key:c.id+':'+i})).filter(x=>{ const s=p.sr[x.key]; return !s||s.n<=t; }); }
 function openLibrary(){ renderLibrary(); show('library'); const p=P();
   const due=cuadernosFor(p).reduce((n,c)=>n+(dueQuestions(p,c).length?1:0),0);
-  const txt=saludoHora()+', '+p.name+'! '+(p._libHi?'':'Soy Sabina. Aquí repasamos lo que aprendes en el cole; lo que cueste lo volveremos a ver otro día. ')+((cuadernosFor(p).length||temasFor(p).length)?(due||temasFor(p).some(t=>lecEstado(p,t).ok)?'¿Qué tema quieres estudiar hoy?':'Hoy lo tienes todo hecho. ¿Quieres leer algún libro o practicar?'):'Todavía no tengo cuadernos para ti. ¡Pronto llegarán!');
+  const txt=saludoHora()+', '+p.name+'! '+(p._libHi?'':'Soy Sabina. Aquí repasamos lo que aprendes en el cole; lo que cueste lo volveremos a ver otro día. ')+((cuadernosFor(p).length||temasFor(p).length)?(due||lecVisibles(p).some(t=>lecEstado(p,t).ok)?'¿Qué tema quieres estudiar hoy?':'Hoy lo tienes todo hecho. ¿Quieres leer algún libro o practicar?'):'Todavía no tengo cuadernos para ti. ¡Pronto llegarán!');
   if(!p._libHi){ p._libHi=true; saveQuiet(); }
   lugarEscena('library',$('#lib-esc'),txt); }
 function renderLibrary(){
