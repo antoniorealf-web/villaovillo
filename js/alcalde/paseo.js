@@ -90,9 +90,39 @@ function insights(p){
     if(!top.length&&!low.length) out.push('Todo en un punto intermedio: ni muy fácil ni muy difícil.'); }
   else out.push('Todavía hay pocos ejercicios para sacar conclusiones.');
   const fl=[]; cuadernosFor(p).forEach(c=>c.preguntas.forEach((q,i)=>{ const s=(p.sr||{})[c.id+':'+i]; if(s&&s.f&&s.b<2) fl.push(q.q); }));
+  temasFor(p).forEach(t=>{ const s=((p.lec||{}).t||{})[t.id]; if(s) lecCuesta(t,s).forEach(q=>fl.push(q)); });
   if(fl.length) out.push(`📚 Preguntas que se le resisten: ${fl.length}.`);
   const last=p.days&&p.days.last; if(last&&last!==today()){ const dd=dayNum(today())-dayNum(last); if(dd>=2) out.push(`⏸️ Lleva ${dd} días sin jugar.`); }
   return out;
+}
+function fichaBiblio(p,i){
+  const ts=temasFor(p), T=((p.lec||{}).t)||{}, fecha=d=>d?(d===today()?'hoy':d.split('-').reverse().slice(0,2).join('/')):'';
+  const ultimo=id=>{ if(T[id]&&T[id].u) return T[id].u; const ds=Object.keys(p.log||{}).filter(d=>((p.log[d].cu)||[]).includes(id)).sort(); return ds[ds.length-1]||''; };
+  const ap=ts.filter(t=>T[t.id]&&T[t.id].ap).length, tot=ts.reduce((a,t)=>{ const x=(T[t.id]||{}).tot; return x?[a[0]+x[0],a[1]+x[1]]:a; },[0,0]);
+  const rh=(p.lec&&p.lec.rep&&p.lec.rep.date===today())?p.lec.rep.n:0;
+  let bb=`<h4>🦉 Biblioteca</h4><div class="counter" style="margin-bottom:4px">${ap} de ${ts.length} temas aprendidos${tot[0]?` · ${tot[1]} de ${tot[0]} preguntas a la primera (${Math.round(tot[1]/tot[0]*100)} %)`:''} · repasos hoy: ${rh} de 2</div>`;
+  const fila=t=>{ const s=T[t.id]||{dias:[]}, R=t.rondas||2, n=new Set(s.dias||[]).size, u=ultimo(t.id);
+    const est=s.ap?'🌟 Aprendido':n?`${n} de ${R} rondas perfectas`:u?'Empezado':'Sin empezar';
+    const ult=(s.r||[]).slice(-3).map(r=>`${r[1]}/${r[2]}`).join(' · ');
+    let h=`<div class="frow"><span style="font-size:20px">${t.emoji||'📗'}</span><span class="fl">${t.serie?'Cap. '+t.serie.orden+' · ':''}${esc(t.titulo)}<div class="pbar"><i style="width:${s.ap?100:Math.round(Math.min(R,n)/R*100)}%"></i></div></span><span class="counter" style="text-align:right">${est}${u?' · '+fecha(u):''}${s.tot?`<br>${s.tot[1]}/${s.tot[0]} a la 1ª`:''}${ult&&(s.r||[]).length>1?' · últimas '+ult:''}</span></div>`;
+    const cu=lecCuesta(t,s); if(cu.length) h+=`<div class="fnote" style="margin:0 0 6px 30px;color:#a73a34">Le cuesta: ${cu.slice(0,3).map(esc).join(' · ')}</div>`;
+    return h; };
+  const sueltos=ts.filter(t=>!t.serie), series={}; ts.filter(t=>t.serie).forEach(t=>(series[t.serie.id]=series[t.serie.id]||[]).push(t));
+  sueltos.forEach(t=>bb+=fila(t));
+  const vis=new Set(); // los capítulos abiertos, igual que lecVisibles pero sin tocar la partida
+  Object.values(series).forEach(cs=>{ cs.sort((a,b)=>a.serie.orden-b.serie.orden); let ab=0; cs.forEach(t=>{ if(!(T[t.id]&&T[t.id].ap)&&ab<(t.serie.abiertos||2)){ ab++; vis.add(t.id); } }); });
+  Object.values(series).forEach(cs=>{ const S=cs[0].serie, apr=cs.filter(t=>T[t.id]&&T[t.id].ap);
+    bb+=`<div class="fnote" style="margin-top:8px"><b>📚 ${esc(S.titulo)}</b> · ${apr.length} de ${S.total||cs.length} capítulos aprendidos · preparados hasta el ${cs[cs.length-1].serie.orden}</div>`;
+    cs.filter(t=>(T[t.id]&&T[t.id].ap)||vis.has(t.id)).forEach(t=>bb+=fila(t));
+    const quedan=cs.filter(t=>!(T[t.id]&&T[t.id].ap)&&!vis.has(t.id)).length;
+    if(quedan<=2) bb+=`<div class="fnote" style="color:#a73a34">Solo quedan ${quedan} capítulos preparados por abrir: pide a Claude los siguientes.</div>`; });
+  if(!ts.length) bb+='<div class="counter">No hay temas para ella.</div>';
+  // cuadernos antiguos (solo si los ha usado)
+  cuadernosFor(p).forEach(cu=>{ let sab=0,vis2=0; const fl=[]; cu.preguntas.forEach((q,k)=>{ const s=(p.sr||{})[cu.id+':'+k]; if(s){ vis2++; if(s.b>=2) sab++; if(s.f&&s.b<2) fl.push(q.q); } });
+    if(!vis2) return;
+    bb+=`<div class="frow"><span style="font-size:20px">${cu.emoji||'📘'}</span><span class="fl">${esc(cu.titulo)} <span class="counter">(cuaderno)</span><div class="pbar"><i style="width:${Math.round(sab/cu.preguntas.length*100)}%"></i></div></span><span class="counter">${sab}/${cu.preguntas.length} sabidas</span></div>`;
+    if(fl.length) bb+=`<div class="fnote" style="margin:0 0 6px 30px;color:#a73a34">Le cuesta: ${fl.slice(0,3).map(esc).join(' · ')}</div>`; });
+  const be=el('div','fsec',bb); be.id='ficha-bib-'+i; return be;
 }
 function fichaCard(p,i,focus){
   const c=el('div','fcard');
@@ -129,13 +159,9 @@ function fichaCard(p,i,focus){
   pn+=mk.length?mk.sort((a,b)=>p.math[b].total-p.math[a].total).map(k=>{ const o=p.math[k]; return `<div class="frow"><span class="fl">${esc(MATH_NAMES[k]||k)}</span><span class="fv">${o.ok}/${o.total}</span>${pctTag(o.ok,o.total)}</div>`; }).join(''):'<div class="counter">Aún no ha hecho turnos.</div>';
   pn+=`<div class="counter">Foco de clase: ${p.mathFocus?esc(p.mathFocus.replace('tabla:','tabla del ')):'variado'}${p.age>7?` · Nivel de cuentas ${panLvOf(p)+1}: ${esc(PAN9_LEVELS[panLvOf(p)].n)}`:''}</div>`;
   const pe=el('div','fsec',pn); pe.id='ficha-pan-'+i; c.append(pe);
-  // biblioteca
-  let bb='<h4>🦉 Biblioteca</h4>'; const cs=cuadernosFor(p);
-  if(!cs.length) bb+='<div class="counter">No hay cuadernos para ella.</div>';
-  cs.forEach(cu=>{ let sab=0,vis=0; const fl=[]; cu.preguntas.forEach((q,k)=>{ const s=(p.sr||{})[cu.id+':'+k]; if(s){ vis++; if(s.b>=2) sab++; if(s.f&&s.b<2) fl.push(q.q); } });
-    bb+=`<div class="frow"><span style="font-size:20px">${cu.emoji||'📘'}</span><span class="fl">${esc(cu.titulo)}<div class="pbar"><i style="width:${Math.round(sab/cu.preguntas.length*100)}%"></i></div></span><span class="counter">${sab}/${cu.preguntas.length} sabidas</span></div>`;
-    if(fl.length) bb+=`<div class="fnote" style="margin:0 0 6px 30px;color:#a73a34">Le cuesta: ${fl.slice(0,3).map(esc).join(' · ')}</div>`; });
-  const be=el('div','fsec',bb); be.id='ficha-bib-'+i; c.append(be);
+  // biblioteca: temas (lecciones y libros por capítulos) y cuadernos antiguos
+  c.append(fichaBiblio(p,i));
+
   // tablón
   const pend=tasks.filter(m=>m.estado==='hecha').length, acc=tasks.filter(m=>['nuevo','aceptada'].includes(m.estado)).length;
   const tb=el('div','fsec',`<h4>📌 Tablón</h4><div class="fnote">${p.counters.tasks||0} tareas cobradas · ${acc} abiertas · <b>${pend} por comprobar</b></div>`);

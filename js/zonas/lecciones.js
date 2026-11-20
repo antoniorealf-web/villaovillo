@@ -15,6 +15,16 @@ window.TEMAS=window.TEMAS||[];
 const LEC_TOPE=24, LEC_N=6;
 function temasFor(p){ return window.TEMAS.filter(c=>c.para==='todas'||c.para===(p.age<=7?'6':'9')||String(c.para).toLowerCase()===p.name.toLowerCase()); }
 function lecT(p,id){ p.lec=p.lec||{t:{},rep:{date:'',n:0},cap:{date:'',coins:0}}; p.lec.t=p.lec.t||{}; return p.lec.t[id]=p.lec.t[id]||{dias:[],ap:false,hoy:{date:'',n:0,perfect:false}}; }
+// Lo que se apunta de cada tema (desde el 20 nov 2026; las partidas de antes no lo tienen):
+//   s.tot=[preguntas hechas, a la primera] · s.q[i]=[veces, a la primera, la última bien 1/0] · s.r=[[fecha, aciertos, preguntas]] rondas de lección · s.u=último día
+function lecApunta(p,rep){
+  LQ.qs.forEach(x=>{ const k=x.key.lastIndexOf(':'), id=x.key.slice(0,k), i=x.key.slice(k+1); const s=lecT(p,id);
+    s.tot=s.tot||[0,0]; s.tot[0]++; if(x.good) s.tot[1]++;
+    s.q=s.q||{}; const a=s.q[i]=s.q[i]||[0,0,0]; a[0]++; if(x.good) a[1]++; a[2]=x.good?1:0; s.u=today(); });
+  if(!rep){ const s=lecT(p,LQ.c.id); s.r=(s.r||[]).concat([[today(),LQ.ok,LQ.qs.length]]).slice(-30); }
+}
+function lecCuesta(t,s){ // preguntas que se le resisten: la última vez mal, o menos del 60 % con 2 o más intentos
+  return Object.entries(s.q||{}).filter(([i,a])=>a[2]===0||(a[0]>=2&&a[1]/a[0]<0.6)).map(([i])=>t.preguntas[i]&&t.preguntas[i].v[0].q).filter(Boolean); }
 function lecRondas(t){ return t.rondas||2; }
 function lecSinLibro(t){ return !(t.libro&&t.libro.length); }
 // Temas que se ven ahora: los normales y, de cada serie, los capítulos abiertos y los ya aprendidos
@@ -84,6 +94,7 @@ async function finRonda(){
     if(!s.ap&&s.dias.length>=lecRondas(t)){ s.ap=true; aprendido=true; }
     if(primera){ if(ok) addMastery(p,'bib',ok); if(p.daily) p.daily.read=true; }
   }
+  lecApunta(p,rep);
   const coins=Math.min(premio,Math.max(0,LEC_TOPE-lecCapUsado(p))), xp=(!rep&&primera)?ok+1:0;
   p.lec.cap={date:today(),coins:lecCapUsado(p)+coins};
   p.coins+=coins; p.counters.earned+=coins; p.counters.reads=(p.counters.reads||0)+1; addXP(p,xp); logAct(p,'b',n,ok,rep?'repaso':t.id);
