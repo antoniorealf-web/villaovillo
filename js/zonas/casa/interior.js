@@ -34,10 +34,12 @@ function drawFurn(c,f,x,y,s,t){
     for(let i=0;i<3;i++){ const fx=Math.sin(t*0.9+i*2)*18, fy=-40+i*7+Math.sin(t*2+i)*2, d=Math.cos(t*0.9+i*2)>0?1:-1; c.save(); c.translate(fx,fy); c.scale(d,1); c.fillStyle=['#f29b38','#e4574f','#f4c430'][i]; c.beginPath(); c.ellipse(0,0,6,4,0,0,Math.PI*2); c.fill(); c.beginPath(); c.moveTo(-5,0); c.lineTo(-10,-4); c.lineTo(-10,4); c.closePath(); c.fill(); c.restore(); }
     c.strokeStyle='#55b05a'; c.lineWidth=3; c.beginPath(); c.moveTo(-14,-16); c.quadraticCurveTo(-18+Math.sin(t)*3,-28,-12,-38); c.stroke(); c.restore();
     c.strokeStyle='rgba(255,255,255,.8)'; c.lineWidth=3; c.beginPath(); c.arc(-8,-56,14,Math.PI*1.1,Math.PI*1.5); c.stroke(); }
+  else if(typeof f.draw==='function') f.draw(c,t||0); // dibujo propio (p. ej. los muebles de un paquete), con el pie en (0,0)
   else { c.font='58px serif'; c.textAlign='center'; c.textBaseline='bottom'; c.fillStyle='#000'; c.fillText(f.e,0,4); }
   c.restore();
 }
 function drawWallItem(c,f,x,y,t){
+  if(typeof f.draw==='function'){ c.save(); c.translate(x,y); f.draw(c,t||0); c.restore(); return; } // dibujo propio, centrado en (0,0)
   if(f.draw==='board'){ drawBoardMini(c,x,y,curScreen==='house'?GD.p:null); return; }
   if(f.draw==='garland'){ c.strokeStyle='#8a5a36'; c.lineWidth=2; c.beginPath(); c.moveTo(x-50,y-20); c.quadraticCurveTo(x,y+4,x+50,y-20); c.stroke(); for(let i=0;i<7;i++){ const tt=(i+0.5)/7, px=x-50+100*tt, py=y-20+24*4*tt*(1-tt); c.fillStyle=Object.values(COLORS)[i%6].c; c.beginPath(); c.moveTo(px-6,py); c.lineTo(px+6,py); c.lineTo(px,py+14); c.closePath(); c.fill(); ol(c,1.2); } return; }
   c.fillStyle='rgba(60,40,20,.12)'; c.beginPath(); c.ellipse(x+4,y+30,22,5,0,0,Math.PI*2); c.fill();

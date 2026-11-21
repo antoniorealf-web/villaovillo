@@ -52,7 +52,7 @@ edificio({ id:'biblio', luz:true, dibuja:(c,b)=>bldgX(c,b,{wall:'#e4ecf7',roof:'
 for(const [k,i] of [['A',0],['B',1]]){
   const pp=()=>DB.profiles[i];
   edificio({ id:'house'+k, tambien:['plot'+k], luz:true,
-    dibuja:(c,b)=>{ const q=pp(); bldgX(c,b,{wall:shade(q?q.color:'#c9b89c',0.72),roof:q?shade(q.color,-0.05):'#a89a86',label:q?'🏡 Casa de '+q.name:'🏚️ Casa vacía',chimney:true,smoke:!!q,extra:houseExtra,acc:q?q.color:'#ccc'}); },
+    dibuja:(c,b)=>{ const q=pp(); bldgX(c,b,{wall:shade(q?q.color:'#c9b89c',0.72),roof:q?shade(q.color,-0.05):'#a89a86',label:q?'🏡 Casa de '+q.name:'🏚️ Casa vacía',chimney:true,smoke:!!q,extra:houseExtra,acc:q?q.color:'#ccc',nina:i}); },
     abre:()=>{ if(DB.cur===i) openHouse(DB.cur); else visitOther(); },
     alcalde:()=>{ if(DB.profiles[i]) openHouse(i); else toast('Casa vacía'); },
     mapa:{color:()=>pp()?pp().color:'#a89a86', etiqueta:()=>pp()?'🏡 '+pp().name:'🏚️', relleno:['plot'+k,'#8b5e3c']} });

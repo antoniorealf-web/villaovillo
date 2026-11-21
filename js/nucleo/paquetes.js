@@ -19,6 +19,9 @@
 
    Enchufes disponibles hoy (se añaden según los necesite un paquete):
    - tablon(ctx) → lista de carteles para el tablón del pueblo. Ver «Carteles» en js/zonas/tablon/corcho.js.
+   - tienda(p) → pestañas nuevas en la tienda: [{k, t, render(g, p)}]. Para vender muebles o cosas de jardín, se añaden
+     a FURN o SHOP con paq:'<id>' (así no salen en las pestañas de siempre, pero se siguen viendo en casa fuera de temporada)
+     y se pintan con tarjetaMueble / tarjetaJardin. Con para:'6' o '9', solo la puede comprar esa niña; once:1, solo una vez.
    - pueblo(ctx) → un objeto con lo que el paquete pone en el pueblo en cada fotograma (nieve, adornos, luces…);
      ctx = {p, st}. Las claves posibles están en decoPueblo(), en js/mundo/mundo.js.
    Además, un paquete puede traer:

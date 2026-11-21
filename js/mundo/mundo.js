@@ -79,7 +79,7 @@ function buildBG(){
 /* Lo que aportan los paquetes al pueblo (se junta todo en DECO). Cada paquete devuelve un objeto con lo que quiera de esto:
    fondo(c, fase) y fondoClave: dibujo sobre el fondo ('hierba' o 'final'); si la clave cambia, el fondo se vuelve a dibujar
    sinFlores, sinMariposas, sinBanderines: quitan esas cosas
-   adorna(c, tipo, o): se llama al dibujar cada cosa ('arbol', 'pino', 'arbusto', 'roca', 'farola', 'banco', 'buzon', 'fuente', 'tejado', 'vecino', 'nina')
+   adorna(c, tipo, o): se llama al dibujar cada cosa ('arbol', 'pino', 'arbusto', 'roca', 'farola', 'banco', 'buzon', 'fuente', 'tejado', 'fachada' (después de la puerta; o.nina = 0 o 1 en las casas), 'vecino', 'nina')
    ent: [{x, y, d(c)}] cosas que se ordenan por profundidad con las demás · encima: f(c) después de la noche · luz: [[x, y, radio, fuerza, calidez]] de noche */
 function decoPueblo(ctx){
   const d={ent:[],encima:[],luz:[]};
@@ -134,6 +134,7 @@ function bldgX(c,b,o){
   const dw=o.doorW||Math.min(52,w*0.2), dh=Math.min(wh*0.62,dw*1.6);
   if(o.kind!=='nowin'){ const ww=Math.min(48,w*0.19), whh=Math.min(44,wh*0.38); winX(c,x+w*0.12+6,wy+wh*0.2,ww,whh,o.acc||'#e46fa8'); winX(c,x+w*0.88-ww-6,wy+wh*0.2,ww,whh,o.acc||'#e46fa8'); }
   doorX(c,x+w/2,y+h-2,dw,dh,o.door||'#9a6338');
+  adorna(c,'fachada',{x,y,w,h,rh,wy,wh,dw,dh,nina:o.nina});
   if(o.extra) o.extra(c,x,y,w,h,rh,wy,wh);
   if(o.label) signX(c,x+w/2,wy-2,o.label);
 }
