@@ -1,6 +1,6 @@
 """Recorrido completo: abre todas las pantallas con el pueblo en marcha y falla si hay algún error.
 
-Uso:  python3 pruebas/recorrido.py [ruta a index.html]  (también prueba &noche)
+Uso:  python3 pruebas/recorrido.py [ruta a index.html]  (también prueba &noche y la Navidad, de día y de noche)
 """
 import asyncio, os, sys
 from playwright.async_api import async_playwright
@@ -13,12 +13,13 @@ PASOS = [
  "P().coins=2000; P().days.count=20; P().inv.fu_pecera=1; openAqua(P())", "openBoardView(DB.profiles[0])",
  "renderBoard(); show('board')", "boardCards().forEach(c=>{ openPaper(c); closePaper(); }); openPaper(boardCards()[0])", "closePaper()", "renderAlcalde(); show('alcalde')", "openFicha(DB.profiles[0])", "startVisit(1)", "endVisit()",
  "renderCatalog(); show('catalog')", "show('village')",
+ "if(typeof openArbolNav==='function'&&paqActivo(NAV)){ P().coins=500; void openArbolNav(); }", "if(typeof navPoner==='function'&&paqActivo(NAV)) void navPoner(NAV_ADORNOS[0])", "show('village')",
 ]
 async def main(path):
     async with async_playwright() as pw:
         b = await pw.chromium.launch(executable_path=CHROME, args=['--no-sandbox'])
         fallos = 0
-        for extra in ['', '&noche']:
+        for extra in ['', '&noche', '&fecha=2026-12-10', '&fecha=2026-12-10&noche']:  # también en Navidad
             pg = await b.new_page(viewport={'width': 1180, 'height': 820})
             errs = []
             pg.on('pageerror', lambda e: errs.append(str(e)))
@@ -32,7 +33,7 @@ async def main(path):
                     errs.append(f'{js}: {e}')
                 await pg.wait_for_timeout(450)
             await pg.screenshot(path='/tmp/recorrido' + extra.replace('&', '_') + '.png')
-            print(('noche' if extra else 'día') + ':', 'sin errores' if not errs else errs)
+            print((extra or 'día') + ':', 'sin errores' if not errs else errs)
             fallos += len(errs)
             await pg.close()
         await b.close()

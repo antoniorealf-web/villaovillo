@@ -30,6 +30,7 @@ function drawNight(c,st){
   edificiosActivos().filter(e=>e.luz).forEach(e=>{ const b=edRect(e); if(b&&b.door) L.push([b.door[0],b.door[1]-30,70,0.7,0.6]); });
   L.push([player.x,player.y-40,95,0.6,0]); L.push([B.plaza.x,B.plaza.y,80,0.45,0.3]); L.push([POND.x,POND.y,140,0.3,0]);
   npcs.forEach(q=>L.push([q.x,q.y-30,45,0.35,0]));
+  (DECO.luz||[]).forEach(l=>L.push(l)); // luces de los paquetes (p. ej. el árbol de Navidad)
   L.forEach(([x,y,r,a])=>{ if(!vis(x,y,r)) return; const g=o.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,`rgba(0,0,0,${a})`); g.addColorStop(1,'rgba(0,0,0,0)'); o.fillStyle=g; o.fillRect(x-r,y-r,r*2,r*2); });
   c.save(); c.setTransform(1,0,0,1,0,0); c.drawImage(NOC,0,0); c.restore();
   c.save(); c.globalCompositeOperation='lighter';

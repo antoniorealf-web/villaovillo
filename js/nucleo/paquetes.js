@@ -19,6 +19,10 @@
 
    Enchufes disponibles hoy (se añaden según los necesite un paquete):
    - tablon(ctx) → lista de carteles para el tablón del pueblo. Ver «Carteles» en js/zonas/tablon/corcho.js.
+   - pueblo(ctx) → un objeto con lo que el paquete pone en el pueblo en cada fotograma (nieve, adornos, luces…);
+     ctx = {p, st}. Las claves posibles están en decoPueblo(), en js/mundo/mundo.js.
+   Además, un paquete puede traer:
+   - pruebas: [{t:'texto', q:'&fecha=2026-12-01'}] → enlaces al modo prueba en el modo alcalde («🧪 Probar lo nuevo»).
 
    Datos: paqDatos(id) es común a las dos niñas (DB.paq); paqDatosNina(p,id) es de cada una (p.paq).
    Nada de eso se borra cuando el paquete deja de estar activo: si vuelve el año que viene, sigue ahí. */

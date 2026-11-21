@@ -83,6 +83,7 @@ function drawHero(c,x,y,o){
   else { c.beginPath(); c.arc(ex,-42,2.3,0.2*Math.PI,0.8*Math.PI); c.stroke(); }
   // ---- lazo
   if(L.style!=='mono'){ c.save(); c.translate(9,-61); c.rotate(0.35); c.fillStyle=dress; c.beginPath(); c.moveTo(0,0); c.lineTo(-6,-4); c.lineTo(-6,4); c.closePath(); c.moveTo(0,0); c.lineTo(6,-4); c.lineTo(6,4); c.closePath(); c.fill(); ol(c,1.6); c.beginPath(); c.arc(0,0,2,0,Math.PI*2); c.fill(); ol(c,1.4); c.restore(); }
+  adorna(c,'nina',{L}); // ropa de temporada (paquetes)
   c.restore();
 }
 /* partículas de polvo al andar */

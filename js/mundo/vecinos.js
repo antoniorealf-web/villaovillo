@@ -141,6 +141,7 @@ function drawNPCFig(c,k,x,y,o){
   const bob=mv?Math.abs(Math.sin(t*11))*2.6:Math.sin(t*2.1+k.length)*0.6;
   c.translate(0,-bob); c.scale(o.dir||1,1);
   (NPC_DRAW[k]||NPC_DRAW.rosa)(c,t,mv,o.blink===undefined?blinkFor(k,t):o.blink);
+  adorna(c,'vecino',{k});
   c.restore();
 }
 const EMO2NPC={'🐑':'rosa','🦔':'tomas','🐔':'coco','🐻':'bruno','🦦':'lia','🐰':'nube','🤖':'hilo','🧔':'alcalde','🦉':'sabina'};

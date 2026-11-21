@@ -45,10 +45,21 @@ async function copyText(t){
 }
 async function openAlcalde(){ if(!(await askPin())) return; renderAlcalde(); show('alcalde'); }
 function profileOptions(withAll=true){ return DB.profiles.filter(Boolean).map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')+(withAll&&DB.profiles.filter(Boolean).length>1?'<option value="todas">Las dos</option>':''); }
+/* Apartados plegables del modo alcalde. Se recuerda en este aparato cuáles dejó abiertos papá (no va en la partida). */
+const ALC_ABRE_K='villaovillo.alcAbre', ALC_ABRE_DEF=['Fallos del juego','Tareas por comprobar','Alcalde a distancia','Estás paseando','Ver el juego por dentro'];
+function alcAbiertos(){ try{ return JSON.parse(localStorage.getItem(ALC_ABRE_K)||'{}')||{}; }catch(e){ return {}; } }
+function alcClave(t){ return String(t).replace(/\(.*?\)/g,'').replace(/[0-9]/g,'').trim(); }
+function alcGuardaAbierto(k,v){ const o=alcAbiertos(); o[k]=v; try{ localStorage.setItem(ALC_ABRE_K,JSON.stringify(o)); }catch(e){} }
 function renderAlcalde(){
   const V=$('#alc-body'); V.innerHTML='';
   $('#alc-back').style.display=REMOTO&&!VISIT?'none':''; const tt=$('#scr-alcalde .ttl'); if(tt) tt.textContent=REMOTO?'🎩 Alcalde a distancia':'🎩 Modo alcalde';
-  const box=(title)=>{ const d=el('div','panel'); d.style.marginBottom='14px'; d.append(el('div','wsec',title)); V.append(d); return d; };
+  const ab=alcAbiertos();
+  const box=(title,abre)=>{ const k=alcClave(title), d=el('details','panel alc-sec'); d.style.marginBottom='14px';
+    d.open = k in ab ? !!ab[k] : (abre!=null ? !!abre : ALC_ABRE_DEF.some(x=>k.includes(x)));
+    d.append(el('summary','wsec',title)); d.addEventListener('toggle',()=>alcGuardaAbierto(k,d.open)); V.append(d); return d; };
+  const todo=el('div'); todo.style.cssText='display:flex;gap:8px;justify-content:flex-end;margin:0 0 10px';
+  [['▾ Abrir todo',true],['▸ Cerrar todo',false]].forEach(([t,v])=>{ const b=el('button','btn',t); b.style.cssText='min-height:40px;font-size:15px;padding:4px 12px'; b.onclick=()=>V.querySelectorAll('details.alc-sec').forEach(d=>{ d.open=v; }); todo.append(b); });
+  V.append(todo);
   // supervisión
   if(REMOTO){ renderRemotoBox(V,box); renderNovedadesBox(box); }
   const errs=(DB.errores||[]).filter(x=>Date.now()-(x.ult||0)<7*864e5);
@@ -94,10 +105,13 @@ function renderAlcalde(){
   if(navigator.share){ const bs=el('button','btn','📤 Enviar'); bs.onclick=()=>{ navigator.share({title:'Informe Villaovillo '+today(),text:buildReport()}).catch(()=>{}); }; rowI.append(bs); }
   bi.append(rowI);
   // modo prueba: enlace (se abre aparte, con su propio guardado)
-  const bp=box('🧪 Modo prueba');
-  bp.append(el('div','counter','Para probar cosas sin tocar las partidas de las niñas (guarda aparte).'));
-  const lp=el('a','btn','🧪 Abrir el modo prueba'); lp.href=location.pathname+'?prueba'; lp.target='_blank'; lp.rel='noopener'; lp.style.cssText='display:inline-block;margin-top:8px;text-decoration:none'; bp.append(lp);
-  const lc=el('a','btn','📚 Catálogo de ejercicios'); lc.href=location.pathname+'?prueba#catalogo'; lc.target='_blank'; lc.rel='noopener'; lc.style.cssText='display:inline-block;margin:8px 0 0 8px;text-decoration:none'; bp.append(lc);
+  const bp=box('🧪 Probar lo nuevo');
+  bp.append(el('div','counter','Se abre aparte, con su propio guardado: nada de lo que hagas ahí toca las partidas de las niñas. La primera vez, crea una jugadora de prueba.'));
+  const lps=el('div'); lps.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-top:8px';
+  [{t:'🧪 El juego de hoy',q:''},{t:'📚 Catálogo de ejercicios',q:'#catalogo'},{t:'🌙 El pueblo de noche',q:'&noche'}]
+    .concat(...PAQUETES.map(d=>d.pruebas||[]))
+    .forEach(x=>{ const a=el('a','btn',esc(x.t)); a.href=location.pathname+'?prueba'+(x.q||''); a.target='_blank'; a.rel='noopener'; a.style.cssText='display:inline-block;text-decoration:none'; lps.append(a); });
+  bp.append(lps);
   // carta
   const b4=box('✉️ Escribir una carta');
   const fc=el('div'); fc.innerHTML=`<select class="inputline" id="c-para">${profileOptions()}</select><input class="inputline" id="c-texto" placeholder="¡Estoy muy orgulloso de ti!"><div class="lbl">Regalo (botones, opcional)</div><input class="inputline" id="c-premio" type="number" value="0" min="0" max="50">`;
