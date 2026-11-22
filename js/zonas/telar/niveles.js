@@ -88,7 +88,7 @@ function genEncargo(p,seed,kind,id,forceType){
   }
   const npcs=['rosa','tomas','coco'].concat(lv>=2?['bruno','lia']:[]).concat(lv>=3?['nube']:[]);
   return {id,kind,type,L,lvl:type==='seq'||type==='reglas'||type==='cua'?1:type==='rep'||type==='falta'?2:type==='cab'?(lv>=3?3:2):3,npc:type==='hilo'?'hilo':pk(npcs),
-    title:(kind==='practice'?'Práctica: ':'')+(type==='cua'?pk(['Cuadro mágico','Colcha mágica','Tapiz mágico']):type==='falta'?pk(['Programa roto','Tarjetas perdidas','El programa de','Programa incompleto']).replace('El programa de','Programa de '+pk(['Rosa','Tomás','Coco'])):pk(GARMENTS)+' '+pk(GSTYLE)),story:null,ask:ASK[type],v6:v,v9:v};
+    title:(kind==='practice'?'Práctica: ':'')+(type==='cua'?pk(['Cuadro mágico','Colcha mágica','Tapiz mágico']):type==='falta'?pk(['Programa roto','Tarjetas perdidas','El programa de','Programa incompleto']).replace('El programa de','Programa de '+pk(['Rosa','Tomás','Coco'])):pk(enchufe('prendas').length?enchufe('prendas'):GARMENTS)+' '+pk(GSTYLE)),story:null,ask:ASK[type],v6:v,v9:v};
 }
 
 /* ---------- cabezal: diseños con bucles dentro de bucles y mejor solución ---------- */

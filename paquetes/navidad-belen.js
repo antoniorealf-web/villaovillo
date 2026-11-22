@@ -85,7 +85,9 @@ function openBelen(p,desde){
   if(BL.mine&&!blVer(p).esc.length) setTimeout(()=>{ if(curScreen==='belen'&&BL.p===p) toast('Toca una pieza de la derecha para ponerla. Luego muévela con el dedo.',3500); },400);
 }
 function blSalir(){ const p=BL.p; BL.p=null; if(BL.from==='casa'){ const i=DB.profiles.indexOf(p); houseView='room'; openHouse(i>=0?i:DB.cur); } else show('village'); }
-function blPegas(){ const box=$('#bl-peg'); if(!box) return; box.innerHTML=''; blPegasDe(BL.p).forEach(x=>box.append(el('span','',esc(x.e+' de '+x.de)))); }
+function blPegas(){ const box=$('#bl-peg'); if(!box) return; box.innerHTML=''; const D=((BL.p&&BL.p.paq)||{}).navidad||{};
+  if(D.premio&&D.premioDado===D.premio.temp) box.append(el('span','',esc('🏆 '+D.premio.cat)));
+  blPegasDe(BL.p).forEach(x=>box.append(el('span','',esc(x.e+' de '+x.de)))); }
 function blHerramientas(){
   const T=$('#bl-tools'); T.innerHTML=''; blPegas(); if(!BL.mine) return;
   const b=blDatos(BL.p), q=b.esc[BL.sel], pz=q&&blPieza(q.i);

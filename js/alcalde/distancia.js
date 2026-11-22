@@ -63,10 +63,13 @@ function aplicaOrden(o){
     case 'notaDel': { const L=corkMsgs(), k=L.findIndex(x=>x.id===d.id); if(k>=0){ corkHistMarca(L[k],'papa'); L.splice(k,1); } return true; }
     case 'pizNota': { if(!p) return false; const n=ordNota(d.n,false); n.from='Papá'; if(!n.text) return false; const b=boardOf(p); if(!b.notes.some(x=>x.id===n.id)){ b.notes.unshift(n); if(b.notes.length>30) b.notes.length=30; } p.updatedAt=Date.now(); return true; }
     case 'pizDel': { if(!p) return false; const b=boardOf(p), k=b.notes.findIndex(x=>x.id===d.id); if(k>=0) b.notes.splice(k,1); p.updatedAt=Date.now(); return true; }
+    case 'paq': { // lo que papá decide para un paquete (p. ej. el regalo de Reyes): lo aplica el propio paquete con def.ordenes[campo](p, valor)
+      if(!p) return false; const def=PAQUETES.find(x=>x.id===d.id), fn=def&&def.ordenes&&def.ordenes[d.campo]; if(typeof fn!=='function') return false;
+      let r=false; try{ r=fn(p,d.valor); }catch(e){ apuntaFallo(e,'orden:'+d.id); return false; } if(r===false) return false; p.updatedAt=Date.now(); return true; }
   }
   return false;
 }
-const ORD_TIPOS=['set','tarea','validar','quitar','recAdd','recDel','nota','notaDel','pizNota','pizDel','sugLeida'];
+const ORD_TIPOS=['set','tarea','validar','quitar','recAdd','recDel','nota','notaDel','pizNota','pizDel','sugLeida','paq'];
 function ordenPermitida(o){ if(!ORD_TIPOS.includes(o.tipo)) return false; if(o.tipo!=='set') return true;
   return o.para==='pueblo'?ORD_SET_PUEBLO.test(o.dato.campo||''):ORD_SET_NINA.test(o.dato.campo||''); }
 /* Papá hace un cambio. En la tablet se aplica ya; en el móvil se envía a la nube. Devuelve true si salió bien. */

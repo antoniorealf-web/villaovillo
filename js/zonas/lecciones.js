@@ -13,7 +13,7 @@
    ========================================================= */
 window.TEMAS=window.TEMAS||[];
 const LEC_TOPE=24, LEC_N=6;
-function temasFor(p){ return window.TEMAS.filter(c=>c.para==='todas'||c.para===(p.age<=7?'6':'9')||String(c.para).toLowerCase()===p.name.toLowerCase()); }
+function temasFor(p){ return window.TEMAS.filter(c=>!c.activo||c.activo()).filter(c=>c.para==='todas'||c.para===(p.age<=7?'6':'9')||String(c.para).toLowerCase()===p.name.toLowerCase()); }
 function lecT(p,id){ p.lec=p.lec||{t:{},rep:{date:'',n:0},cap:{date:'',coins:0}}; p.lec.t=p.lec.t||{}; return p.lec.t[id]=p.lec.t[id]||{dias:[],ap:false,hoy:{date:'',n:0,perfect:false}}; }
 // Lo que se apunta de cada tema (desde el 20 nov 2026; las partidas de antes no lo tienen):
 //   s.tot=[preguntas hechas, a la primera] · s.q[i]=[veces, a la primera, la última bien 1/0] · s.r=[[fecha, aciertos, preguntas]] rondas de lección · s.u=último día

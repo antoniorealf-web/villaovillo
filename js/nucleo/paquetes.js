@@ -26,6 +26,11 @@
      ctx = {p, st}. Las claves posibles están en decoPueblo(), en js/mundo/mundo.js.
    Además, un paquete puede traer:
    - pruebas: [{t:'texto', q:'&fecha=2026-12-01'}] → enlaces al modo prueba en el modo alcalde («🧪 Probar lo nuevo»).
+   - alcalde(box) → sus propios apartados en el modo alcalde mientras está activo (se crean con box(título)).
+   - ordenes: {campo(p, valor)} → lo que papá decide para una niña (orden 'paq' con {id, campo, valor}; sirve también
+     desde el móvil). Debe poder aplicarse dos veces sin efecto y devolver false si el valor no vale.
+   - Otros enchufes: panaderia(p) → [{t, fn}] botones en el obrador; prendas() → nombres de prendas para los encargos del telar.
+   - Canciones: SONGS admite solo:()=>bool (suena solo entonces). Temas de la Biblioteca: activo:()=>bool.
 
    Datos: paqDatos(id) es común a las dos niñas (DB.paq); paqDatosNina(p,id) es de cada una (p.paq).
    Nada de eso se borra cuando el paquete deja de estar activo: si vuelve el año que viene, sigue ahí. */
@@ -97,4 +102,5 @@ function renderPaquetesBox(box){
     a.append(sel); r.append(a); b.append(r);
   });
   Object.keys(PAQ_ERR).filter(id=>!PAQUETES.some(d=>d.id===id)).forEach(id=>b.append(el('div','counter','⚠️ No se pudo cargar el paquete «'+id+'»: '+PAQ_ERR[id])));
+  PAQUETES.forEach(def=>{ if(typeof def.alcalde==='function'&&paqActivo(def)) try{ def.alcalde(box); }catch(e){ apuntaFallo(e,'alcalde:'+def.id); } }); // apartados propios de cada paquete
 }

@@ -19,6 +19,9 @@ PASOS = [
  "if(typeof openBelen==='function'&&paqActivo(NAV)){ const p=P(); p.coins=500; openBelen(p,'pueblo'); BL_GRUPOS.forEach(([g])=>{ BL.tab=g; blPanel(); }); const b=blDatos(p); BL_PIEZAS.forEach(x=>{ b.own[x.id]=1; b.esc.push({i:x.id,x:450,y:400}); }); BL.sel=0; blHerramientas(); b.foto=today(); }",
  "if(typeof openBelen==='function'&&paqActivo(NAV)&&DB.profiles[1]) openBelen(DB.profiles[1]===P()?DB.profiles[0]:DB.profiles[1],'pueblo')", "openBoard()", "show('village')",
  "if(typeof openAdviento==='function'&&paqActivo(NAV)){ const p=P(); logAct(p,'t',1,1,'seq'); logAct(p,'b',1,1,'x'); logAct(p,'p',1,1); void openAdviento(p); }", "if(typeof advAbrir==='function'&&paqActivo(NAV)) void advAbrir(P(),advPendiente(P())||1)",
+ "if(typeof openCartaReyes==='function'&&paqActivo(NAV)) void openCartaReyes()", "show('village')",
+ "if(typeof navTurnoNavidad==='function'&&paqActivo(NAV)){ openBakery(); navTurnoNavidad(); }", "show('village')",
+ "if(typeof navEntregas==='function'&&paqActivo(NAV)){ NAV.ordenes.premio(P(),NAV_PREMIOS[0]); NAV.ordenes.reyes(P(),{r:'nav_bici',b:10,m:'hola'}); renderAlcalde(); }",
  "if(typeof ADV_REGALOS!=='undefined'&&paqActivo(NAV)){ const p=P(); for(let d=1;d<=24;d++) ADV_REGALOS[d](p); const R=roomOf(p); R.wl[2]='fu_nav_adviento'; R.pat='nav_papel'; R.fl[2]='fu_nav_alfombra'; R.fl[3]='fu_nav_musica'; houseView='room'; openHouse(DB.cur); }", "show('village')",
 ]
 async def main(path):

@@ -134,7 +134,9 @@ function openBakery(age){
   box.append(el('div','counter',hecho?'🥐 Turno de hoy hecho. Los turnos de práctica dan menos botones.':`🥐 Un turno son ${MZ.qs.length} cuentas. Las 🌱 son de repaso y las 🔥 de reto (dan más botones).`));
   const go=el('button','btn primary',hecho?'🧮 Otro turno de práctica':'🧮 Empezar el turno'); go.style.fontSize='24px'; go.onclick=empezarTurno;
   const out=el('button','btn','← Volver al pueblo'); out.onclick=()=>show('village');
-  box.append(go,out); O.append(box);
+  box.append(go);
+  enchufe('panaderia',p).forEach(x=>{ if(x&&x.t&&typeof x.fn==='function'){ const b=el('button','btn',x.t); b.style.fontSize='20px'; b.onclick=x.fn; box.append(b); } }); // botones de los paquetes (p. ej. el turno de Navidad)
+  box.append(out); O.append(box);
   show('bakery'); lugarEscena('bakery',$('#bk-esc'),txt);
 }
 function openBakeryDiv(){ MZ={qs:Array.from({length:6},()=>{ const q=genDivGrid(); q.k="divgrid"; q.tier=0; return q; }),i:0,ok:0,tries:0,input:"",catalog:true}; empezarTurno(); }

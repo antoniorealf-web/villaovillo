@@ -94,7 +94,7 @@ function musicTick(){
   const S=SND; if(!S||!S.on) return;
   const ahead=AC.currentTime+0.5;
   if(!S.cur||S.idx>=S.cur.ev.length&&AC.currentTime>S.t0+S.cur.len+3){
-    S.rep=(S.rep||0)+1; if(!S.cur||S.rep>2){ const pool=nightLevel()>0.5?[0,2]:SONGS.map((_,i)=>i); S.song=pool[(pool.indexOf(S.song)+1)%pool.length]; S.rep=1; S.cur=buildSong(S.song); }
+    S.rep=(S.rep||0)+1; if(!S.cur||S.rep>2){ const vale=i=>!SONGS[i].solo||SONGS[i].solo(), pool=nightLevel()>0.5?SONGS.map((_,i)=>i).filter(i=>(i===0||i===2||SONGS[i].noche)&&vale(i)):SONGS.map((_,i)=>i).filter(vale); S.song=pool[(pool.indexOf(S.song)+1)%pool.length]; S.rep=1; S.cur=buildSong(S.song); }
     S.idx=0; S.t0=AC.currentTime+0.3; }
   while(S.idx<S.cur.ev.length&&S.t0+S.cur.ev[S.idx].t<ahead){ const e=S.cur.ev[S.idx++]; if(e.f) playNote(e,S.t0+e.t); }
 }
