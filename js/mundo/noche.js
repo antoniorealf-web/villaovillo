@@ -26,6 +26,7 @@ function drawNight(c,st){
   o.setTransform(k,0,0,k,-cam.x*k,-cam.y*k); o.globalCompositeOperation='destination-out';
   const L=[];
   if(st.lv>=2) LAMPS.forEach(([x,y])=>L.push([x,y-62,120,0.95,1]));
+  if(st.lv>=2&&AMPLIO) AMP.farolas.forEach(([x,y])=>L.push([x,y-62,120,0.95,1])); // farolas de la ampliación
   NIGHTWINS.forEach(([x,y,w,h])=>L.push([x+w/2,y+h/2,Math.max(w,h)*1.5,0.95,0.8]));
   edificiosActivos().filter(e=>e.luz).forEach(e=>{ const b=edRect(e); if(b&&b.door) L.push([b.door[0],b.door[1]-30,70,0.7,0.6]); });
   L.push([player.x,player.y-40,95,0.6,0]); L.push([B.plaza.x,B.plaza.y,80,0.45,0.3]); L.push([POND.x,POND.y,140,0.3,0]);

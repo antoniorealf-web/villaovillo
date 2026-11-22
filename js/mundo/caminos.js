@@ -6,26 +6,27 @@
    (A*, 8 direcciones) y lo deja en pocos tramos rectos (solo gira donde hace falta).
    andarA(obj, x, y) lo pone en marcha para el personaje (player) o para un vecino.
    ========================================================= */
-const CAM_C=30, CAM_W=Math.ceil(WW/CAM_C), CAM_H=Math.ceil(WH/CAM_C), CAM_M=14; // margen alrededor de lo que no se pisa
+const CAM_C=30, CAM_M=14; let CAM_W=Math.ceil(WW/CAM_C), CAM_H=Math.ceil((WH-WY0)/CAM_C); // margen alrededor de lo que no se pisa
 const RIO={x0:1862,x1:1992,puenteY:828,puenteMedio:30};
 function rioCorta(x,y){ return x>RIO.x0&&x<RIO.x1&&!(bridgeDoneSafe()&&Math.abs(y-RIO.puenteY)<RIO.puenteMedio); }
 function bridgeDoneSafe(){ try{ return !VISIT&&bridgeDone(); }catch(e){ return false; } }
 /* ¿Se puede pisar este punto? (con un pequeño margen para que los pies no rocen las paredes) */
 function pisable(x,y){
-  if(x<30||x>WW-30||y<60||y>WH-20) return false;
+  if(x<30||x>WW-30||y<WY0+60||y>WH-20) return false;
   if(rioCorta(x,y)) return false;
   for(const [dx,dy] of [[0,0],[CAM_M,0],[-CAM_M,0],[0,CAM_M],[0,-CAM_M]]) if(insideBuilding(x+dx,y+dy)) return false;
   return true;
 }
 let CAM_GRID=null, CAM_KEY='';
 function camRejilla(){
-  const key=bridgeDoneSafe()?'p':'n'; if(CAM_GRID&&CAM_KEY===key) return CAM_GRID;
+  const key=(bridgeDoneSafe()?'p':'n')+WW+','+WY0; if(CAM_GRID&&CAM_KEY===key) return CAM_GRID;
+  CAM_W=Math.ceil(WW/CAM_C); CAM_H=Math.ceil((WH-WY0)/CAM_C); // el pueblo puede crecer (ampliación)
   const g=new Uint8Array(CAM_W*CAM_H);
-  for(let j=0;j<CAM_H;j++) for(let i=0;i<CAM_W;i++) g[j*CAM_W+i]=pisable(i*CAM_C+CAM_C/2,j*CAM_C+CAM_C/2)?1:0;
+  for(let j=0;j<CAM_H;j++) for(let i=0;i<CAM_W;i++) g[j*CAM_W+i]=pisable(i*CAM_C+CAM_C/2,WY0+j*CAM_C+CAM_C/2)?1:0;
   CAM_GRID=g; CAM_KEY=key; return g;
 }
 function camLibre(g,i,j){ return i>=0&&j>=0&&i<CAM_W&&j<CAM_H&&g[j*CAM_W+i]===1; }
-function camCelda(x,y){ return [clamp(Math.floor(x/CAM_C),0,CAM_W-1),clamp(Math.floor(y/CAM_C),0,CAM_H-1)]; }
+function camCelda(x,y){ return [clamp(Math.floor(x/CAM_C),0,CAM_W-1),clamp(Math.floor((y-WY0)/CAM_C),0,CAM_H-1)]; }
 function camCercana(g,i,j){ // la casilla libre más cercana
   if(camLibre(g,i,j)) return [i,j];
   for(let r=1;r<20;r++){ let best=null,bd=1e9;
@@ -57,7 +58,7 @@ function caminoA(x0,y0,x1,y1){
       if(ng<gs[nk]){ gs[nk]=ng; from[nk]=cur; fs[nk]=ng+h(nk); open.push(nk); } }
   }
   if(!found) return null;
-  const cells=[]; for(let k=ei;k!==-1&&k!==si;k=from[k]) cells.push([(k%CAM_W)*CAM_C+CAM_C/2,((k/CAM_W)|0)*CAM_C+CAM_C/2]); cells.reverse();
+  const cells=[]; for(let k=ei;k!==-1&&k!==si;k=from[k]) cells.push([(k%CAM_W)*CAM_C+CAM_C/2,WY0+((k/CAM_W)|0)*CAM_C+CAM_C/2]); cells.reverse();
   if(!insideBuilding(x1,y1)&&!rioCorta(x1,y1)&&x1>=30&&x1<=WW-30) cells.push([x1,y1]); // el punto exacto (una puerta, por ejemplo) aunque esté pegado a la pared
   // alisar: desde cada punto, saltar al más lejano que se vea en línea recta
   const out=[]; let ax=x0, ay=y0, i=0;

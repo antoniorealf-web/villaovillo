@@ -49,9 +49,10 @@ function visitTap(x,y){
   for(const [k,i] of [['A',0],['B',1]]){ const [bx,by]=buzonPos(k); if(Math.abs(x-bx)<30&&y>by-110&&y<by+12){ const q=DB.profiles[i]; return go([bx-34,by+10],()=>{ if(!q){ toast('Buzón vacío'); return; } const n=mailCountOf(q); say({face:'📬',name:'Buzón de '+q.name,text:n?`Tiene ${n===1?'una carta o un reto sin abrir':n+' cartas o retos sin abrir'}.`:'No tiene nada sin abrir.',speak:false}); }); } }
   for(const e of edificiosActivos()){ if(e.otroLado&&!bridgeDone()) continue; if(edToca(e,x,y)) return go(edRect(e).door,()=>e.alcalde?e.alcalde({}):null); } // ver js/mundo/edificios.js
   if(x>=1790&&x<=1990&&y>=740&&y<=890) return go([1830,850],()=>say({face:'🦦',name:NPCS.lia.n,text:`El puente va por ${bridgeTotal()} de ${BRIDGE_GOAL} botones. ${DB.profiles.filter(Boolean).map(q=>q.name+' ha puesto '+(q.bridge||0)).join(' y ')}.`,speak:false}));
+  if(AMPLIO&&inRect(x,y,zona('granja'))){ toast('Aquí estará la granja: abre con la parcela del huerto'); return; }
   if(x>=1870){ toast('Al otro lado del río están el Huerto y el Laboratorio (todavía cerrados)'); return; }
   if(player.x>1880){ player.x=1850; player.path=[]; }
-  let tx=clamp(x,30,1860), ty=clamp(y,60,1580);
+  let tx=clamp(x,30,1860), ty=clamp(y,WY0+60,1580);
   if(inPond(tx,ty)){ const a=Math.atan2((ty-POND.y)/POND.ry,(tx-POND.x)/POND.rx); tx=POND.x+Math.cos(a)*(POND.rx+24); ty=POND.y+Math.sin(a)*(POND.ry+24); }
   andarA(player,tx,ty); player.act=null; tapFx={x:tx,y:ty,t:0};
 }

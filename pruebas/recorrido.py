@@ -28,7 +28,7 @@ async def main(path):
     async with async_playwright() as pw:
         b = await pw.chromium.launch(executable_path=CHROME, args=['--no-sandbox'])
         fallos = 0
-        for extra in ['', '&noche', '&fecha=2026-12-10', '&fecha=2026-12-10&noche']:  # también en Navidad
+        for extra in ['', '&noche', '&fecha=2026-12-10', '&fecha=2026-12-10&noche', '&fecha=2027-01-10', '&fecha=2027-01-10&noche']:  # también en Navidad y con el pueblo ampliado
             pg = await b.new_page(viewport={'width': 1180, 'height': 820})
             errs = []
             pg.on('pageerror', lambda e: errs.append(str(e)))

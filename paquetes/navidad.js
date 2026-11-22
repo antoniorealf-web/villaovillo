@@ -151,12 +151,13 @@ function navAdorna(c,tipo,o){
     c.beginPath(); c.arc(0,-73,5.2,0,Math.PI*2); c.fillStyle='#fffaf3'; c.fill(); ol(c,1.6); return; }
 }
 function navFondo(c,fase){
-  if(fase==='hierba'){ const g=c.createLinearGradient(0,0,0,WH); g.addColorStop(0,'#f4f8fd'); g.addColorStop(1,'#e6eef7'); c.fillStyle=g; c.fillRect(0,0,WW,WH);
-    for(let i=0;i<260;i++){ c.fillStyle=i%2?'rgba(255,255,255,.7)':'rgba(170,195,228,.16)'; c.beginPath(); c.ellipse(seeded(i)*WW,seeded(i+99)*WH,30+seeded(i+7)*60,12+seeded(i+3)*20,0,0,Math.PI*2); c.fill(); }
-    for(let i=0;i<700;i++){ c.fillStyle='rgba(200,220,245,.55)'; c.beginPath(); c.arc(seeded(i+3000)*WW,seeded(i+4000)*WH,1.3,0,Math.PI*2); c.fill(); }
+  const H=WH-WY0; // el pueblo puede ser más grande (ampliación): se cubre todo
+  if(fase==='hierba'){ const g=c.createLinearGradient(0,WY0,0,WH); g.addColorStop(0,'#f4f8fd'); g.addColorStop(1,'#e6eef7'); c.fillStyle=g; c.fillRect(0,WY0,WW,H);
+    for(let i=0;i<260;i++){ c.fillStyle=i%2?'rgba(255,255,255,.7)':'rgba(170,195,228,.16)'; c.beginPath(); c.ellipse(seeded(i)*WW,WY0+seeded(i+99)*H,30+seeded(i+7)*60,12+seeded(i+3)*20,0,0,Math.PI*2); c.fill(); }
+    for(let i=0;i<700;i++){ c.fillStyle='rgba(200,220,245,.55)'; c.beginPath(); c.arc(seeded(i+3000)*WW,WY0+seeded(i+4000)*H,1.3,0,Math.PI*2); c.fill(); }
     return; }
   // final: nieve pisada en caminos y plaza, y orillas blancas
-  for(let i=0;i<900;i++){ const x=seeded(i+8000)*1860, y=seeded(i+8100)*WH; if(inPond(x,y)) continue;
+  for(let i=0;i<900;i++){ const x=seeded(i+8000)*1860, y=WY0+seeded(i+8100)*H; if(inPond(x,y)) continue;
     c.fillStyle='rgba(255,255,255,.5)'; c.beginPath(); c.ellipse(x,y,5+seeded(i+8200)*12,2.5+seeded(i+8300)*4,0,0,Math.PI*2); c.fill(); }
   c.strokeStyle='rgba(255,255,255,.85)'; c.lineWidth=6; c.beginPath(); c.ellipse(POND.x,POND.y,POND.rx+8,POND.ry+7,0,0,Math.PI*2); c.stroke();
 }

@@ -2,7 +2,8 @@
 /* =========================================================
    PUEBLO (canvas)
    ========================================================= */
-const VW=2400, VH=1600, WW=2400, WH=1600;
+const VW=2400, VH=1600;
+let WW=2400, WH=1600, WY0=0; // tamaño del mundo: con la ampliación (js/mundo/ampliacion.js) es más ancho y empieza más arriba (WY0 < 0)
 const vcanvas=$('#vcanvas'), vctx=vcanvas.getContext('2d');
 let vScale=1, vOffX=0, vOffY=0, vDpr=1, rafId=null, lastT=0, tGlobal=0;
 const player={x:600,y:548,tx:600,ty:548,moving:false,dir:1,act:null};
