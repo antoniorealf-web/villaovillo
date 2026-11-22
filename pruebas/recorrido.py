@@ -16,6 +16,8 @@ PASOS = [
  "if(typeof openArbolNav==='function'&&paqActivo(NAV)){ P().coins=500; void openArbolNav(); }", "if(typeof navPoner==='function'&&paqActivo(NAV)) void navPoner(NAV_ADORNOS[0])", "show('village')",
  "if(typeof NAV!=='undefined'&&paqActivo(NAV)){ openShop(); shopTab='navidad'; renderShop(); document.querySelectorAll('#shopgrid button.btn.green').forEach(b=>{ if(!b.disabled) b.click(); }); }",
  "if(typeof NAV!=='undefined'&&paqActivo(NAV)){ const p=P(), R=roomOf(p); FURN.filter(f=>f.paq&&p.inv['fu_'+f.k]).forEach((f,i)=>{ if(f.z==='wall') R.wl[i%6]='fu_'+f.k; else R.fl[i]='fu_'+f.k; }); houseView='room'; openHouse(DB.cur); }", "show('village')",
+ "if(typeof openBelen==='function'&&paqActivo(NAV)){ const p=P(); p.coins=500; openBelen(p,'pueblo'); BL_GRUPOS.forEach(([g])=>{ BL.tab=g; blPanel(); }); const b=blDatos(p); BL_PIEZAS.forEach(x=>{ b.own[x.id]=1; b.esc.push({i:x.id,x:450,y:400}); }); BL.sel=0; blHerramientas(); b.foto=today(); }",
+ "if(typeof openBelen==='function'&&paqActivo(NAV)&&DB.profiles[1]) openBelen(DB.profiles[1]===P()?DB.profiles[0]:DB.profiles[1],'pueblo')", "openBoard()", "show('village')",
 ]
 async def main(path):
     async with async_playwright() as pw:

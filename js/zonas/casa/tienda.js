@@ -46,7 +46,7 @@ function tarjetaMueble(g,p,f){
   if(f.k==='pizarra') c.append(el('div','counter','Para dibujar y dejar mensajes'));
   if(f.k==='pecera') c.append(el('div','counter','Con un pez. ¡Luego podrás comprar más!'));
   if(f.nota) c.append(el('div','counter',esc(f.nota)));
-  const b=el('button','btn green',`🔘 ${f.p}`); b.disabled=p.coins<f.p; b.onclick=()=>{ if(p.coins<f.p) return; p.coins-=f.p; const k='fu_'+f.k; p.inv[k]=(p.inv[k]||0)+1; save('Compró: '+f.n); sfxBuy(); toast(`🛋️ ¡${f.n} para tu casa!`); renderShop(); };
+  const b=el('button','btn green',f.p?`🔘 ${f.p}`:'¡Gratis!'); b.disabled=p.coins<f.p; b.onclick=()=>{ if(p.coins<f.p) return; p.coins-=f.p; const k='fu_'+f.k; p.inv[k]=(p.inv[k]||0)+1; save('Compró: '+f.n); sfxBuy(); toast(`🛋️ ¡${f.n} para tu casa!`); renderShop(); };
   c.append(b); g.append(c);
 }
 function tarjetaJardin(g,p,s){

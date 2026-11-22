@@ -131,7 +131,9 @@ function drawRoom(t){
   cosas.sort((a,b)=>a.y-b.y).forEach(o=>o.d());
 }
 function roomClick(x,y){
-  const hk=roomHitKey(x,y,roomOf(GD.p)); if((hk==='fu_pizarra'||hk==='fu_pecera')&&!(GD.mine&&invSel)){ beep(700,0.05); if(hk==='fu_pizarra') openBoardView(GD.p); else openAqua(GD.p); return; }
+  const hk=roomHitKey(x,y,roomOf(GD.p)), fa=hk&&furn(hk);
+  if(fa&&typeof fa.abre==='function'&&!(GD.mine&&invSel)){ beep(700,0.05); fa.abre(GD.p); return; } // muebles que se abren (p. ej. el Belén)
+  if((hk==='fu_pizarra'||hk==='fu_pecera')&&!(GD.mine&&invSel)){ beep(700,0.05); if(hk==='fu_pizarra') openBoardView(GD.p); else openAqua(GD.p); return; }
   const p=GD.p, R=roomOf(p); if(!GD.mine){ roomAndar(x,y); return; } // de visita: solo se pasea
   const sel=invSel&&invSel.startsWith('fu_')?furn(invSel):null;
   for(let i=0;i<WALL_SLOTS.length;i++){ const [sx,sy]=WALL_SLOTS[i]; if(Math.abs(x-sx)<46&&Math.abs(y-sy)<46){
@@ -167,7 +169,7 @@ function renderRoomPanel(inv,p){
       row.append(b); }); inv.append(row); };
   opts(WALLPATS,R.pat,v=>R.pat=v,'🧱 Papel de la pared');
   opts(FLOORS,R.floor,v=>R.floor=v,'🪵 Suelo');
-  inv.append(el('div','help','<div>💡 Elige un mueble de tu cesta y toca el suelo o un hueco de la pared. Si tocas algo ya colocado, vuelve a tu cesta. La pizarra y la pecera se abren al tocarlas.</div>'));
+  inv.append(el('div','help','<div>💡 Elige un mueble de tu cesta y toca el suelo o un hueco de la pared. Si tocas algo ya colocado, vuelve a tu cesta. La pizarra, la pecera y el Belén se abren al tocarlos.</div>'));
 }
 
 $('#hv-garden').onclick=()=>{ houseView='garden'; invSel=null; renderHouse(); sizeGarden(); };
