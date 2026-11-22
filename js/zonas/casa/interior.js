@@ -84,6 +84,7 @@ function drawRoom(t){
   c.fillStyle=R.wall; c.fillRect(0,0,RW.W,340);
   c.save(); c.beginPath(); c.rect(0,0,RW.W,330); c.clip();
   const dk=shade(R.wall,-0.08), lt=shade(R.wall,0.5);
+  const wpd=WALLPATS.find(w=>w.k===R.pat); if(wpd&&typeof wpd.draw==='function') wpd.draw(c,RW.W,330,R.wall); // papel de un paquete
   if(R.pat==='rayas'){ c.fillStyle=dk; for(let x=0;x<RW.W;x+=44) c.fillRect(x,0,20,330); }
   if(R.pat==='lunares'){ c.fillStyle=lt; for(let y=20,r=0;y<330;y+=40,r++) for(let x=20+(r%2)*20;x<RW.W;x+=40){ c.beginPath(); c.arc(x,y,6,0,Math.PI*2); c.fill(); } }
   if(R.pat==='flores'){ for(let y=30,r=0;y<330;y+=60,r++) for(let x=30+(r%2)*40;x<RW.W;x+=80) drawFlower(c,x,y,['#e46fa8','#ffffff','#f4c430'][(x+y)%3]); }
@@ -160,7 +161,7 @@ function renderRoomPanel(inv,p){
   inv.append(el('div','lbl','🖌️ Color de la pared'));
   const wc=el('div','choice'); WALLCOLS.forEach(col=>{ const d=el('button','dot'+(R.wall===col?' sel':'')); d.style.background=col; d.onclick=()=>{ R.wall=col; save(); renderHouse(); }; wc.append(d); }); inv.append(wc);
   const opts=(list,cur,set,label)=>{ inv.append(el('div','lbl',label)); const row=el('div','choice');
-    list.forEach(o=>{ const owned=R.owned[o.k], lock=o.m&&mLevel(p,o.m[0])<o.m[1];
+    list.filter(o=>!o.paq||R.owned[o.k]).forEach(o=>{ const owned=R.owned[o.k], lock=o.m&&mLevel(p,o.m[0])<o.m[1]; // lo de los paquetes, solo si ya lo tiene
       const b=el('button',cur===o.k?'sel':'',owned?o.n:lock?`🔒 ${o.n}`:`${o.n} · 🔘${o.p}`);
       b.onclick=async()=>{ if(owned){ set(o.k); save(); renderHouse(); return; } if(lock){ toast(`Necesitas ${MAST[o.m[0]].n} nivel ${o.m[1]}`); return; }
         if(p.coins<o.p){ toast('No tienes botones suficientes'); return; }

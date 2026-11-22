@@ -112,7 +112,7 @@ NAV.enchufes.tienda=function(){
     h('⭐ Únicos: cada una tiene los suyos');
     FURN.filter(f=>deNav(f)&&mio(f)).forEach(f=>tarjetaMueble(g,p,f)); SHOP.filter(s=>deNav(s)&&mio(s)).forEach(s=>tarjetaJardin(g,p,s));
     FURN.filter(f=>deNav(f)&&f.para&&!mio(f)).forEach(f=>tarjetaMueble(g,p,f)); SHOP.filter(s=>deNav(s)&&s.para&&!mio(s)).forEach(s=>tarjetaJardin(g,p,s));
-    h('🛋️ Para tu casa'); FURN.filter(f=>deNav(f)&&!f.para&&!f.abre).forEach(f=>tarjetaMueble(g,p,f));
+    h('🛋️ Para tu casa'); FURN.filter(f=>deNav(f)&&!f.para&&!f.abre&&!f.regalo).forEach(f=>tarjetaMueble(g,p,f));
     h('🌼 Para tu jardín (se ve desde el pueblo)'); SHOP.filter(s=>deNav(s)&&!s.para).forEach(s=>tarjetaJardin(g,p,s));
     h('🚪 Para tu puerta'); tarjetaPuerta(g,p);
   }}];

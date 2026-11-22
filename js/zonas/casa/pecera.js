@@ -144,7 +144,7 @@ function renderAquaSide(){
       else { p.coins-=o.p; A.deco.push(o.k); save('Decoró su pecera: '+o.n); sfxBuy(); }
       renderAquaSide(); };
     c.append(b); return c; };
-  FISH.forEach(o=>g.append(item(o,'fish'))); AQDECO.forEach(o=>g.append(item(o,'deco')));
+  FISH.filter(o=>!o.paq).forEach(o=>g.append(item(o,'fish'))); AQDECO.forEach(o=>g.append(item(o,'deco')));
   S.append(g);
 }
 $('#aq-back').onclick=()=>{ const p=AQ&&AQ.p; AQ=null; if(p){ houseView='room'; openHouse(DB.profiles.indexOf(p)); } else show('village'); };
