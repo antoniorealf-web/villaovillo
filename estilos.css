@@ -192,9 +192,10 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none}
 .rbstage{display:flex;justify-content:center;margin:6px 0}
 #rb-cv{display:block;touch-action:manipulation}
 .rbmis{background:#fff4d6;border:3px dashed #e8c77a;border-radius:16px;padding:8px 12px;font-size:19px;line-height:1.35;margin-top:6px}
-#rb-msg{font-size:19px;font-weight:700;min-height:30px;padding:4px 2px}
-#rb-msg.bad{color:#c0443d}
-#rb-msg.good{color:var(--ok)}
+#rb-msg,#hu-msg{font-size:19px;font-weight:700;min-height:30px;padding:4px 2px}
+#rb-msg.bad,#hu-msg.bad{color:#c0443d}
+#rb-msg.good,#hu-msg.good{color:var(--ok)}
+#hu-cv{display:block;touch-action:manipulation;cursor:pointer}
 .ccard.rbc{background:#fff}
 .ccard.rb-P,.ccard.rb-W,.ccard.rb-H{background:#eef8e6}
 .ccard.rb-TL,.ccard.rb-TR{background:#eef3ff}

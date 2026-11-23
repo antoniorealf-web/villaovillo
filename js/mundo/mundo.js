@@ -266,7 +266,7 @@ function drawVillage(){
   // huertos de las casas y zonas cerradas
   const pA=DB.profiles[0], pB=DB.profiles[1];
   drawPlot(c,B.plotA,pA); drawPlot(c,B.plotB,pB);
-  for(const [k,ic,nm] of [['huerto','🤖','Huerto del robot'],['lab','🔭','Laboratorio']]){ const z=zona(k); if(vis(z.x+z.w/2,z.y+z.h/2,Math.max(z.w,z.h))) lockedX(c,z,ic,nm,zoneReqText(k)); }
+  for(const [k,ic,nm] of [['huerto','🤖','Huerto del robot'],['lab','🔭','Laboratorio']]){ if(zonaAbierta(k)) continue; const z=zona(k); if(vis(z.x+z.w/2,z.y+z.h/2,Math.max(z.w,z.h))) lockedX(c,z,ic,nm,zoneReqText(k)); }
   if(AMPLIO) ampZonasPueblo(c);
   // patos
   for(let d=0;d<3;d++){ const a=tGlobal*0.25+d*2.1; const x=POND.x+Math.cos(a)*(POND.rx-50), y=POND.y+Math.sin(a)*(POND.ry-30); if(vis(x,y)) duckX(c,x,y,-Math.sin(a)>0?1:-1); }
@@ -364,7 +364,7 @@ function openMap(){
   (AMPLIO?FOREST.filter(t=>t.x<=1975).concat(AMP_BOSQUE()):FOREST).forEach(t=>{ c.fillStyle='#4f9e45'; c.beginPath(); c.arc(t.x,t.y-30,26*t.s,0,Math.PI*2); c.fill(); });
   const lab=(b,t)=>{ c.font="800 44px 'Baloo 2',sans-serif"; c.textAlign='center'; c.textBaseline='middle'; const tw=c.measureText(t).width+40; roundRect(c,b.x+b.w/2-tw/2,b.y+b.h/2-34,tw,68,18); c.fillStyle='rgba(255,250,241,.95)'; c.fill(); ol(c,5); c.fillStyle='#5a3d22'; c.fillText(t,b.x+b.w/2,b.y+b.h/2+2); };
   eds.forEach(e=>{ if(e.mapa&&e.mapa.etiqueta) lab(edRect(e),edVal(e.mapa.etiqueta,e)); });
-  lab(zona('huerto'),'🤖 🔒'); lab(zona('lab'),'🔭 🔒'); if(AMPLIO) lab(zona('granja'),'🐄 🔒');
+  if(!zonaAbierta('huerto')) lab(zona('huerto'),'🤖 🔒'); if(!zonaAbierta('lab')) lab(zona('lab'),'🔭 🔒'); if(AMPLIO) lab(zona('granja'),'🐄 🔒');
   c.fillStyle=p.color; c.beginPath(); c.arc(player.x,player.y-20,30,0,Math.PI*2); c.fill(); ol(c,8); c.font='40px serif'; c.fillStyle='#000'; c.fillText('⭐',player.x,player.y-20);
   cv.onclick=ev=>{ const rr=cv.getBoundingClientRect(); const x=(ev.clientX-rr.left)/s, y=(ev.clientY-rr.top)/s+WY0; ov.classList.remove('on'); handleWorldTap(x,y); };
 }

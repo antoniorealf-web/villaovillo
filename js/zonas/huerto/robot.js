@@ -25,6 +25,7 @@ const RB_OPS={
   P:{e:'🌱',n:'Plantar'}, W:{e:'💧',n:'Regar'}, H:{e:'🧺',n:'Recoger'}
 };
 const RB_CULTIVOS=['zanahoria','lechuga','tomate','calabaza'];
+const RB_CULT_E={zanahoria:'🥕',lechuga:'🥬',col:'🥦',haba:'🫘',fresa:'🍓',tomate:'🍅',maiz:'🌽',calabaza:'🎃'}; // etiqueta de las semillas
 const RB_PEND=['sem','sw','sed','sed2','mad'];
 const RB_MAX_NIVEL=10;
 

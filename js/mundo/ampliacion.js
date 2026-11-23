@@ -38,6 +38,8 @@ function fijaMundo(){
   AMPLIO=a; WW=a?AMP.ancho:2400; WY0=a?-AMP.arriba:0; CAM_GRID=null; BGC=null;
   return true;
 }
+/* una zona del otro lado que ya tiene su paquete (edificio activo, p. ej. 'huertoVivo') deja de dibujarse cerrada */
+function zonaAbierta(k){ const id={huerto:'huertoVivo',lab:'labVivo'}[k]; return !!id&&edificiosActivos().some(e=>e.id===id); }
 function zona(k){ return AMPLIO&&AMP.zonas[k]?AMP.zonas[k]:B[k]; }
 function bgClave(){ return (DECO.fondoClave||'')+(AMPLIO?'|amp':''); }
 

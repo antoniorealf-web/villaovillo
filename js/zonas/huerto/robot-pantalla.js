@@ -3,7 +3,7 @@
    ROBOT DEL HUERTO · pantalla (scr-robot)
    ---------------------------------------------------------
    openRobot(R, opts): enseña un reto (de rbGenera) con el huerto dibujado, el programa y las tarjetas.
-   opts: {catalog, volver(), alAcabar({estrellas, tarjetas, cesta, intentos})}.
+   opts: {catalog, volver(), alGanar({estrellas, tarjetas, cesta, intentos}) → texto extra (premios), una sola vez al acabar bien}.
    Las tarjetas y Repetir funcionan como el cabezal del telar (mismas clases: cbox, repblk, ccard opc):
    tocar una tarjeta de abajo la añade donde está el recuadro azul; tocar una del programa la quita.
    ▶ ejecuta, 🐢 despacio, 👣 paso a paso. Esta pantalla no guarda nada: quien la abre decide qué se gana.
@@ -31,6 +31,21 @@ function rbVerdura(c,x,y,s,cul){
   } else if(cul==='tomate'){
     rbPlanta(c,x,y,s*1.05);
     for(const [dx,dy] of [[-0.14,0.02],[0.13,-0.06],[0.04,0.14]]){ c.fillStyle='#e4423a'; c.beginPath(); c.arc(x+dx*s,y+dy*s,s*0.1,0,Math.PI*2); c.fill(); c.fillStyle='rgba(255,255,255,.55)'; c.beginPath(); c.arc(x+dx*s-s*0.03,y+dy*s-s*0.03,s*0.025,0,Math.PI*2); c.fill(); }
+  } else if(cul==='col'){
+    for(const [dx,dy,r,col] of [[-0.12,0.06,0.16,'#9fd39a'],[0.12,0.06,0.16,'#9fd39a'],[0,-0.05,0.2,'#c4e8b5'],[0,0.05,0.16,'#b2e0a5']]){ c.fillStyle=col; c.beginPath(); c.arc(x+dx*s,y+dy*s,r*s,0,Math.PI*2); c.fill(); }
+    c.strokeStyle='#7fb878'; c.lineWidth=s*0.025; for(const a of [-0.6,0,0.6]){ c.beginPath(); c.moveTo(x,y+s*0.08); c.quadraticCurveTo(x+Math.sin(a)*s*0.08,y-s*0.04,x+Math.sin(a)*s*0.17,y-s*0.15); c.stroke(); }
+  } else if(cul==='haba'){
+    rbPlanta(c,x,y-s*0.04,s*0.9);
+    for(const [dx,a] of [[-0.12,0.5],[0.12,-0.5]]){ c.save(); c.translate(x+dx*s,y+s*0.12); c.rotate(a); c.fillStyle='#6cbf4a'; c.beginPath(); c.ellipse(0,0,s*0.07,s*0.2,0,0,Math.PI*2); c.fill(); c.fillStyle='#8fd66a'; for(const k of [-0.1,0,0.1]){ c.beginPath(); c.arc(0,k*s,s*0.035,0,Math.PI*2); c.fill(); } c.restore(); }
+  } else if(cul==='fresa'){
+    rbHoja(c,x-s*0.04,y-s*0.04,-2.6,s*0.22,'#4fae4a'); rbHoja(c,x+s*0.04,y-s*0.04,-0.5,s*0.22,'#4fae4a');
+    for(const [dx,dy] of [[-0.12,0.1],[0.12,0.08]]){ const fx=x+dx*s, fy=y+dy*s; c.fillStyle='#e2343f'; c.beginPath(); c.moveTo(fx-s*0.09,fy-s*0.05); c.quadraticCurveTo(fx,fy-s*0.1,fx+s*0.09,fy-s*0.05); c.quadraticCurveTo(fx+s*0.08,fy+s*0.08,fx,fy+s*0.13); c.quadraticCurveTo(fx-s*0.08,fy+s*0.08,fx-s*0.09,fy-s*0.05); c.fill();
+      c.fillStyle='#ffe28a'; for(const [a,b] of [[-0.04,0],[0.03,0.02],[0,0.07],[-0.02,0.04]]){ c.beginPath(); c.arc(fx+a*s,fy+b*s,s*0.012,0,Math.PI*2); c.fill(); } c.fillStyle='#3f9e3f'; c.beginPath(); c.ellipse(fx,fy-s*0.07,s*0.06,s*0.025,0,0,Math.PI*2); c.fill(); }
+  } else if(cul==='maiz'){
+    rbHoja(c,x,y+s*0.18,-2.2,s*0.3,'#5aa845'); rbHoja(c,x,y+s*0.18,-0.9,s*0.3,'#5aa845');
+    c.fillStyle='#f6cf3d'; c.beginPath(); c.ellipse(x,y-s*0.02,s*0.09,s*0.22,0,0,Math.PI*2); c.fill();
+    c.strokeStyle='#d9a91c'; c.lineWidth=s*0.015; for(const k of [-0.12,-0.04,0.04,0.12]){ c.beginPath(); c.moveTo(x-s*0.08,y+k*s); c.lineTo(x+s*0.08,y+k*s); c.stroke(); } c.beginPath(); c.moveTo(x,y-s*0.22); c.lineTo(x,y+s*0.18); c.stroke();
+    rbHoja(c,x-s*0.02,y+s*0.15,-1.95,s*0.2,'#7cc65a'); rbHoja(c,x+s*0.02,y+s*0.15,-1.2,s*0.2,'#7cc65a');
   } else {
     rbHoja(c,x+s*0.05,y-s*0.12,-0.8,s*0.22,'#4fae4a');
     c.fillStyle='#f39a2b'; c.beginPath(); c.ellipse(x,y+s*0.06,s*0.24,s*0.18,0,0,Math.PI*2); c.fill();
@@ -76,6 +91,7 @@ function rbCasilla(c,R,cel,i,x0,y0,cs,t,marca){
     c.setLineDash([s*0.06,s*0.05]); c.strokeStyle='#fff6dc'; c.lineWidth=s*0.04; c.beginPath(); c.arc(cx,cy,s*0.24,0,Math.PI*2); c.stroke(); c.setLineDash([]);
     c.fillStyle='#6b4423'; c.beginPath(); c.ellipse(cx,cy,s*0.07,s*0.045,0.5,0,Math.PI*2); c.fill(); c.fillStyle='#8a5a30'; c.beginPath(); c.ellipse(cx-s*0.01,cy-s*0.01,s*0.035,s*0.02,0.5,0,Math.PI*2); c.fill();
     if(t_==='sw') rbGota(c,x+cs*0.78,y+cs*0.24,s*0.1);
+    if(k.c&&RB_CULT_E[k.c]){ c.font=`${s*0.24}px sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText(RB_CULT_E[k.c],x+cs*0.24,y+cs*0.76); } // qué semilla es
     return;
   }
   if(t_==='sed'||t_==='sed2'){ if(t_==='sed2') rbBrote(c,cx,cy+s*0.05,s*0.8,true); else rbBrote(c,cx,cy+s*0.02,s,true);
@@ -161,7 +177,7 @@ function rbRender(){
   const act=el('div','actions');
   if(RBZ.fin&&RBZ.fin.ok){
     if(RBZ.opts.catalog){ const ot=el('button','btn primary','🔁 Otro reto'); ot.onclick=()=>openRobot(rbGenera(R.modo,R.nivel,'cat'+Date.now()),RBZ.opts); act.append(ot); }
-    if(RBZ.opts.alAcabar){ const sg=el('button','btn primary','Seguir ➜'); sg.onclick=()=>RBZ.opts.alAcabar(RBZ.fin); act.append(sg); }
+    if(RBZ.opts.volver&&!RBZ.opts.catalog){ const sg=el('button','btn primary','Seguir ➜'); sg.onclick=()=>RBZ.opts.volver(); act.append(sg); }
     Rt.append(act); return;
   }
   if(RBZ.att>=3&&!RBZ.step){ const h=el('button','btn blue','💡 Pista'); h.onclick=rbPista; act.append(h); }
@@ -207,8 +223,9 @@ function rbFin(S){
   }
   const n=rbCuenta(RBZ.prog), st=rbEstrellas(RBZ.R,n);
   RBZ.fin={ok:true,estrellas:st,tarjetas:n,cesta,intentos:RBZ.att};
+  let extra=''; if(RBZ.opts.alGanar){ try{ extra=RBZ.opts.alGanar(RBZ.fin)||''; }catch(e){ try{ apuntaFallo(e,'robot'); }catch(_){} } }
   rbRender();
-  const m=st===3?`¡Perfecto! ⭐⭐⭐ Lo has hecho con ${n} tarjetas.`:`¡Huerto listo! ${'⭐'.repeat(st)} Con ${RBZ.R.best} tarjetas o menos conseguirías las tres estrellas.`;
+  const m=(st===3?`¡Perfecto! ⭐⭐⭐ Lo has hecho con ${n} tarjetas.`:`¡Huerto listo! ${'⭐'.repeat(st)} Con ${RBZ.R.best} tarjetas o menos conseguirías las tres estrellas.`)+(extra?' '+extra:'');
   rbMsg(m,'good'); speakAuto(m); try{ fanfare(); }catch(e){ beep(880,0.1); }
 }
 async function rbEjecuta(slow){
@@ -247,7 +264,7 @@ function rbAyuda(R){
 function openRobot(R,opts={}){
   RBZ.R=R; RBZ.opts=opts; RBZ.prog=[]; RBZ.sel=[]; RBZ.running=false; RBZ.step=null; RBZ.att=0; RBZ.vis=null; rbLimpiaEstado();
   $('#rb-title').textContent='🤖 Huerto del robot';
-  $('#rb-chip').textContent=(opts.catalog?'🧪 ':'')+(R.modo==='flechas'?'Flechas':'Girar')+' · nivel '+R.nivel;
+  $('#rb-chip').textContent=(opts.catalog?'🧪 ':'')+(R.trabajo?'🌱 Trabajo de hoy · ':'')+(R.modo==='flechas'?'Flechas':'Girar')+' · nivel '+R.nivel;
   $('#rb-ask').textContent=rbAyuda(R);
   $('#rb-mision').innerHTML=`<div class="rbmis"><b>Hoy toca:</b> ${esc(rbMision(R))}${R.max?` <span class="counter">· como mucho ${R.max} tarjetas</span>`:''}</div>`;
   rbMsg(''); show('robot'); rbRender();
