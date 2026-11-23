@@ -49,5 +49,6 @@ function renderCatalog(){
     proto.make=a=>{ const g=genEncargo({age:a,unlocked:3,id:'cat',tlvForce:CAT_L},'cat'+t+Date.now()+Math.random(),'catalog','cat'+Date.now(),t); g.title=proto.title; return g; };
     L.append(catCard(proto, proto.title, t==='cab'?'Nuevo · programa el cabezal':t==='cua'?'Nuevo · lógica tipo sudoku':''));
   });
+  L.append(rbCatCard()); // huerto del robot (js/zonas/huerto/robot-pantalla.js), con el mismo nivel de reto
 }
 $('#cat-back').onclick=()=>{ if(P()&&P().met) show('village'); else { renderProfiles(); show('profiles'); } };

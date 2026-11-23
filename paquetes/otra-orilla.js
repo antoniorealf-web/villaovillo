@@ -11,5 +11,6 @@ paquete({ id:'otra-orilla', nombre:'La otra orilla', emoji:'🌾', cuando:{desde
   info(){ return 'Pueblo más grande: granja arriba, huerto y laboratorio al otro lado del río'; },
   pruebas:[
     {t:'🌾 El pueblo ampliado (10 ene)', q:'&fecha=2027-01-10'},
-    {t:'🌙 El pueblo ampliado de noche', q:'&fecha=2027-01-10&noche'}
+    {t:'🌙 El pueblo ampliado de noche', q:'&fecha=2027-01-10&noche'},
+    {t:'🤖 Robot del huerto (en el catálogo, al final)', q:'#catalogo'}
   ] });

@@ -187,6 +187,17 @@ button{font-family:inherit;color:inherit;cursor:pointer;border:none}
 .mplus{font-size:30px;font-weight:800}
 .mpad{display:grid;grid-template-columns:repeat(3,78px);gap:8px}
 .mpad .btn{font-size:28px;min-height:62px}
+
+/* ---------- robot del huerto (js/zonas/huerto/) ---------- */
+.rbstage{display:flex;justify-content:center;margin:6px 0}
+#rb-cv{display:block;touch-action:manipulation}
+.rbmis{background:#fff4d6;border:3px dashed #e8c77a;border-radius:16px;padding:8px 12px;font-size:19px;line-height:1.35;margin-top:6px}
+#rb-msg{font-size:19px;font-weight:700;min-height:30px;padding:4px 2px}
+#rb-msg.bad{color:#c0443d}
+#rb-msg.good{color:var(--ok)}
+.ccard.rbc{background:#fff}
+.ccard.rb-P,.ccard.rb-W,.ccard.rb-H{background:#eef8e6}
+.ccard.rb-TL,.ccard.rb-TR{background:#eef3ff}
 .mdisp{font-size:40px;font-weight:800;min-width:170px;text-align:center;background:#fff;border:3px solid var(--line);border-radius:14px;padding:2px 12px;margin-bottom:8px;display:inline-block}
 .mchoices{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
 .mchoices .btn{font-size:22px}
