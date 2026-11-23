@@ -29,18 +29,26 @@ const RB_CULT_E={zanahoria:'🥕',lechuga:'🥬',col:'🥦',haba:'🫘',fresa:'�
 const RB_PEND=['sem','sw','sed','sed2','mad'];
 const RB_MAX_NIVEL=10;
 
-function rbCuenta(list){ let c=0; for(const n of list){ c++; if(n.op==='rep') c+=rbCuenta(n.body); } return c; }
+function rbCuenta(list){ let c=0; for(const n of list){ c++; if(n.body) c+=rbCuenta(n.body); if(n.els) c+=rbCuenta(n.els); } return c; }
+/* condiciones de «❓ Si…» (en la casilla donde está el robot, o delante) */
+const RB_CONDS={sed:{e:'💧',n:'tiene sed',c:'sed'}, mad:{e:'🧺',n:'está madura',c:'madura'}, sem:{e:'🌱',n:'hay semilla',c:'semilla'}, delante:{e:'🧱',n:'hay valla o piedra delante',c:'valla delante'}};
+function rbTieneCond(list){ return list.some(n=>n.op==='if'||n.op==='hasta'||(n.body&&rbTieneCond(n.body))||(n.els&&rbTieneCond(n.els))); }
 function rbClona(o){ return JSON.parse(JSON.stringify(o,(k,v)=>k.startsWith('_')?undefined:v)); }
 
 /* ---------- motor ---------- */
-function rbRun(R,prog){
+function rbRun(R,prog){ // R: un huerto ({w,h,ini,cel}); con varios huertos, ver rbRunTodos
   const cel=R.cel.map(c=>({p:c.p,t:c.t,c:c.c}));
   let x=R.ini.x, y=R.ini.y, d=R.ini.d, err=null, cesta=0; const steps=[], stack=[];
+  const bloqueado=()=>{ const nx=x+RB_DIRS[d][0], ny=y+RB_DIRS[d][1]; return nx<0||ny<0||nx>=R.w||ny>=R.h||!!cel[ny*R.w+nx].p; };
+  const cond=k=>{ const t=cel[y*R.w+x].t; return k==='sed'?(t==='sed'||t==='sed2'):k==='mad'?t==='mad':k==='sem'?(t==='sem'||t==='sw'):k==='delante'?bloqueado():false; };
   const exec=list=>{
     for(const n of list){
       if(err) return;
       if(steps.length>400){ err={t:'pasos',node:n}; return; }
       if(n.op==='rep'){ for(let k=0;k<n.n;k++){ stack.push([n,k+1]); exec(n.body); stack.pop(); if(err) return; } continue; }
+      if(n.op==='if'){ const v=cond(n.cond); steps.push({node:n,x,y,d,loops:stack.map(s=>s.slice()),pregunta:1,v}); exec(v?n.body:(n.els||[])); continue; }
+      if(n.op==='hasta'){ let k=0; while(!bloqueado()){ k++; if(k>40||steps.length>400){ err={t:'pasos',node:n}; return; } stack.push([n,k]); const antes=steps.length; exec(n.body); stack.pop(); if(err) return; if(steps.length===antes){ err={t:'pasos',node:n}; return; } }
+        steps.push({node:n,x,y,d,loops:stack.map(s=>s.slice()),pregunta:1,v:true,fin:1}); continue; }
       const loops=stack.map(s=>s.slice()), o=n.op;
       if(o==='TL'||o==='TR'){ d=(d+(o==='TL'?3:1))%4; steps.push({node:n,x,y,d,loops}); continue; }
       if(o==='F'||o in {U:1,R:1,D:1,L:1}){
@@ -73,10 +81,16 @@ const RB_ERR={
   regarnada:'Ahí no hay ninguna planta que regar.',
   verde:'¡Esa planta todavía no está madura! Solo se recoge cuando se ve la verdura.',
   nadarecoger:'Ahí no hay nada que recoger.',
-  pasos:'¡Uf, el robot no para! Revisa los números de Repetir.'
+  pasos:'¡Uf, el robot no para! Revisa los Repetir: dentro tiene que avanzar.'
 };
-function rbEstrellas(R,n){ return n<=R.best?3:n<=R.best+2?2:1; }
+function rbVariantes(R){ return R.vars||[R]; }
+function rbRunTodos(R,prog){ return rbVariantes(R).map(V=>rbRun(V,prog)); }
+function rbEstrellas(R,n,prog){ if(R.trabajo&&R.modo==='si'&&prog&&rbTieneCond(prog)) return 3; // un programa general (con «si») vale las tres estrellas en el trabajo de cada día
+  return n<=R.best?3:n<=R.best+2?2:1; }
 function rbMision(R){
+  if(R.vars&&R.vars.length>1){ const k={}; R.vars.forEach(V=>V.cel.forEach(c=>{ if(c.t) k[c.t]=1; }));
+    const t=[]; if(k.sw) t.push('planta y riega las semillas 🌱💧'); if(k.sed) t.push('riega las plantas con sed 💧'); if(k.mad) t.push('recoge lo maduro 🧺');
+    return `Un solo programa para los ${R.vars.length} huertos: `+(t.length>1?t.slice(0,-1).join(', ')+' y '+t[t.length-1]:t[0])+'. Deja en paz las plantas que ya están bien.'; }
   const k={sem:0,sw:0,sed:0,mad:0}; R.cel.forEach(c=>{ if(c.t in k) k[c.t]++; });
   const t=[]; if(k.sem) t.push(`planta ${k.sem} semilla${k.sem>1?'s':''} 🌱`);
   if(k.sw) t.push(`planta y riega ${k.sw} semilla${k.sw>1?'s':''} 🌱💧`);
@@ -140,6 +154,8 @@ const RB_NIV={
 };
 function rbModoDe(age){ return age<=7?'flechas':'girar'; }
 function rbConRepetir(modo,nivel){ return !!(RB_NIV[modo][Math.max(1,Math.min(RB_MAX_NIVEL,nivel))]||{}).rep; }
+/* condiciones que ofrece un nivel de «si» (para la paleta) */
+function rbCondsDe(modo,nivel){ if(modo!=='si') return []; const L=RB_NIV.si[Math.max(1,Math.min(RB_MAX_NIVEL,nivel))]; return L.conds.concat(nivel>=7?['delante']:[]); }
 const RB_ACT={sem:['P'],sw:['P','W'],sed:['W'],mad:['H']};
 
 /* Plantillas: devuelven {x,y,mov:[U/R/D/L…, 'A' = hacer la tarea aquí]} o null si no cabe */
@@ -169,6 +185,7 @@ function rbPlantilla(tpl,w,h,n,r){
 
 function rbGenera(modo,nivel,seed){
   nivel=Math.max(1,Math.min(RB_MAX_NIVEL,nivel|0||1));
+  if(modo==='si') return rbGeneraSi(nivel,seed);
   const L=RB_NIV[modo][nivel], r=rng(String(seed||Math.random()));
   for(let intento=0;intento<60;intento++){
     const R=rbIntenta(modo,nivel,L,r); if(R) return R;
@@ -230,4 +247,64 @@ function rbIntenta(modo,nivel,L,r){
   if(L.max) R.max=best+1;
   const chk=rbRun(R,sol); if(chk.err||chk.pend) return null;
   return R;
+}
+
+/* =========================================================
+   CONDICIONES (modo 'si', después de girar): un solo programa para varios huertos
+   Cada reto trae R.vars = [{w,h,ini,cel}] (2 o 3 huertos distintos) y el mismo programa tiene que dejarlos
+   todos bien: sin «❓ Si…» no se puede, porque cada huerto tiene las plantas en otro sitio.
+   Plantillas: 'fila' (misma longitud), 'hasta' (filas de distinto largo: 🔁 Repetir hasta la valla),
+   'dosfilas' (ida y vuelta) y 'marco' (la vuelta al huerto, de distinto tamaño). sino: todas las casillas
+   son «sed» o «madura» (Si… / si no…). Se mueve como en girar (👣 ↩️ ↪️).
+   ========================================================= */
+RB_NIV.si=[null,
+  {tpl:'fila',n:[3,3],vars:2,conds:['sed'],rep:1},
+  {tpl:'fila',n:[4,4],vars:2,conds:['sed'],rep:1,max:1},
+  {tpl:'fila',n:[4,4],vars:3,conds:['sed','mad'],rep:1,max:1},
+  {tpl:'fila',n:[5,5],vars:3,conds:['sed','mad','sem'],rep:1,max:1},
+  {tpl:'hasta',n:[3,6],vars:3,conds:['sed','mad'],rep:1},
+  {tpl:'hasta',n:[3,6],vars:3,conds:['sed','mad'],rep:1,sino:1},
+  {tpl:'dosfilas',n:[3,5],vars:3,conds:['sed','mad','sem'],rep:1},
+  {tpl:'dosfilas',n:[3,6],vars:3,conds:['sed','mad','sem'],rep:1,max:1},
+  {tpl:'marco',n:[3,5],vars:3,conds:['sed','mad'],rep:1},
+  {tpl:'marco',n:[3,6],vars:3,conds:['sed','mad','sem'],rep:1,max:1}];
+const RB_SI_ACT={sed:[{op:'W'}],mad:[{op:'H'}],sem:[{op:'P'},{op:'W'}]};
+function rbSiCuerpo(L){ // lo que se hace en cada casilla
+  if(L.sino) return [{op:'if',cond:'mad',body:[{op:'H'}],els:[{op:'W'}]}];
+  return L.conds.map(c=>({op:'if',cond:c,body:RB_SI_ACT[c].map(o=>({op:o.op}))}));
+}
+function rbGeneraSi(nivel,seed){
+  const L=RB_NIV.si[nivel], r=rng(String(seed||Math.random())), ri=k=>Math.floor(r()*k);
+  const T={sed:'sed',mad:'mad',sem:'sw'};
+  for(let intento=0;intento<80;intento++){
+    const usados=new Set(), vars=[];
+    const lens=[]; for(let v=0;v<L.vars;v++){ let n=L.n[0]+ri(L.n[1]-L.n[0]+1); if(L.tpl!=='fila'&&L.tpl!=='dosfilas'||true){ while(L.n[0]!==L.n[1]&&lens.includes(n)&&lens.length<L.n[1]-L.n[0]+1) n=L.n[0]+ri(L.n[1]-L.n[0]+1); } lens.push(L.tpl==='fila'?L.n[0]:n); }
+    for(let v=0;v<L.vars;v++){
+      const n=lens[v], tarea=()=>{ if(L.sino) return r()<0.5?'mad':'sed'; const k=r(); if(k<0.18) return null; if(k<0.3) return 'peq'; return T[L.conds[ri(L.conds.length)]]; };
+      let w,h,ini,celdas=[];
+      if(L.tpl==='fila'||L.tpl==='hasta'){ w=n+1; h=1; ini={x:0,y:0,d:1}; for(let i=1;i<=n;i++) celdas.push(i); }
+      else if(L.tpl==='dosfilas'){ w=n+1; h=2; ini={x:0,y:0,d:1}; for(let i=1;i<=n;i++) celdas.push(i); for(let i=0;i<n;i++) celdas.push(w+i); }
+      else { w=h=n+1; ini={x:0,y:0,d:1}; for(let i=0;i<w*h;i++){ const x=i%w, y=Math.floor(i/w); if((x===0||y===0||x===w-1||y===h-1)) celdas.push(i); } }
+      const cel=Array.from({length:w*h},()=>({p:0,t:null,c:RB_CULTIVOS[ri(4)]}));
+      celdas.forEach(i=>{ if(L.tpl==='marco'&&i===0){ const t=tarea(); cel[i].t=t==='peq'?null:t; } else cel[i].t=tarea(); if(cel[i].t&&cel[i].t!=='peq') usados.add(cel[i].t); });
+      if(L.tpl==='marco') for(let i=0;i<w*h;i++){ if(!celdas.includes(i)) cel[i].t=r()<0.5?'peq':null; }
+      vars.push({w,h,ini,cel});
+    }
+    // que cada condición haga falta en algún huerto, y que ningún huerto esté vacío
+    if(L.conds.some(c=>!usados.has(T[c]))) continue;
+    if(vars.some(V=>!V.cel.some(c=>c.t&&c.t!=='peq'))) continue;
+    if(L.sino&&!(usados.has('mad')&&usados.has('sed'))) continue;
+    const cuerpo=rbSiCuerpo(L); let sol;
+    if(L.tpl==='fila') sol=[{op:'rep',n:L.n[0],body:[{op:'F'}].concat(cuerpo)}];
+    else if(L.tpl==='hasta') sol=[{op:'hasta',body:[{op:'F'}].concat(cuerpo)}];
+    else if(L.tpl==='dosfilas') sol=[{op:'rep',n:2,body:[{op:'hasta',body:[{op:'F'}].concat(cuerpo)},{op:'TR'},{op:'F'},{op:'TR'}]}];
+    else sol=[{op:'rep',n:4,body:[{op:'hasta',body:[{op:'F'}].concat(cuerpo)},{op:'TR'}]}];
+    // en 'dosfilas' la casilla donde baja no se mira: que no tenga tarea
+    if(L.tpl==='dosfilas') vars.forEach(V=>{ V.cel[V.w+V.w-1].t=null; });
+    const R=Object.assign({modo:'si',nivel,tpl:L.tpl,vars,sol,best:rbCuenta(sol),conds:rbCondsDe('si',nivel),sino:!!L.sino},vars[0]);
+    if(L.max) R.max=R.best+1;
+    if(rbRunTodos(R,sol).some(x=>x.err||x.pend)) continue;
+    return R;
+  }
+  return rbGeneraSi(1,seed+'x');
 }

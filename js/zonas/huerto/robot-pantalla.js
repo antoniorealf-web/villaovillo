@@ -8,7 +8,7 @@
    tocar una tarjeta de abajo la añade donde está el recuadro azul; tocar una del programa la quita.
    ▶ ejecuta, 🐢 despacio, 👣 paso a paso. Esta pantalla no guarda nada: quien la abre decide qué se gana.
    ========================================================= */
-const RBZ={R:null,prog:[],sel:[],running:false,step:null,att:0,opts:{},cel:null,rob:null,vis:null,choque:null,falla:-1,brillo:-1,raf:null,t:0,last:0,fin:null};
+const RBZ={vi:0,varOk:[],R:null,prog:[],sel:[],running:false,step:null,att:0,opts:{},cel:null,rob:null,vis:null,choque:null,falla:-1,brillo:-1,raf:null,t:0,last:0,fin:null};
 
 /* ---------- dibujo ---------- */
 function rbGota(c,x,y,s){ c.beginPath(); c.moveTo(x,y-s); c.bezierCurveTo(x+s*0.9,y,x+s*0.7,y+s*0.9,x,y+s*0.9); c.bezierCurveTo(x-s*0.7,y+s*0.9,x-s*0.9,y,x,y-s); c.closePath(); c.fillStyle='#4aa3df'; c.fill(); c.strokeStyle='#2f78ad'; c.lineWidth=Math.max(1,s*0.15); c.stroke(); c.fillStyle='rgba(255,255,255,.7)'; c.beginPath(); c.arc(x-s*0.25,y+s*0.25,s*0.18,0,Math.PI*2); c.fill(); }
@@ -100,9 +100,10 @@ function rbCasilla(c,R,cel,i,x0,y0,cs,t,marca){
   if(t_==='peq'){ rbPlanta(c,cx,cy+s*0.03,s*0.8); return; }
   if(t_==='mad'){ rbVerdura(c,cx,cy+s*0.02,s,k.c); rbBrillo(c,x+cs*0.8,y+cs*0.2,s,t); }
 }
+function rbV(){ const R=RBZ.R; return R&&R.vars?R.vars[RBZ.vi]||R.vars[0]:R; } // el huerto que se está mirando
 function rbDibuja(){
   const cv=$('#rb-cv'); if(!cv||!RBZ.R) return;
-  const R=RBZ.R, W=Math.min(640,(cv.parentElement&&cv.parentElement.clientWidth)||400), dpr=Math.min(2,window.devicePixelRatio||1);
+  const R=rbV(), W=Math.min(640,(cv.parentElement&&cv.parentElement.clientWidth)||400), dpr=Math.min(2,window.devicePixelRatio||1);
   const cs=Math.min(96,(W-24)/R.w), bw=cs*R.w+24, bh=cs*R.h+24;
   if(cv.width!==Math.round(bw*dpr)||cv.height!==Math.round(bh*dpr)){ cv.width=Math.round(bw*dpr); cv.height=Math.round(bh*dpr); cv.style.width=bw+'px'; cv.style.height=bh+'px'; }
   const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,bw,bh);
@@ -126,12 +127,30 @@ function rbBucle(now){
 }
 
 /* ---------- programa (como el cabezal) ---------- */
-function rbCurList(){ let l=RBZ.prog; for(const i of RBZ.sel){ const n=l[i]; if(!n||n.op!=='rep'){ RBZ.sel=[]; return RBZ.prog; } l=n.body; } return l; }
+/* RBZ.sel: camino hasta la caja donde se añade; un número = el cuerpo de ese bloque, «3e» = el «si no» del bloque 3 */
+function rbCurList(){ let l=RBZ.prog; for(const s of RBZ.sel){ const e=typeof s==='string', n=l[parseInt(s)]; if(!n||!(e?n.els:n.body)){ RBZ.sel=[]; return RBZ.prog; } l=e?n.els:n.body; } return l; }
+function rbCondBtn(n,R,locked){ const C=RB_CONDS[n.cond]||RB_CONDS.sed, b=el('button','sicond',`${C.e} ${C.c}`); b.title=C.n;
+  b.onclick=ev=>{ ev.stopPropagation(); if(locked) return; const L=(R.conds&&R.conds.length?R.conds:['sed']); n.cond=L[(L.indexOf(n.cond)+1)%L.length]; beep(560,0.04); rbLimpiaEstado(); rbRender(); }; return b; }
 function rbCarta(op){ const o=RB_OPS[op], c=el('div','ccard opc rbc rb-'+op); c.innerHTML=`<span>${o.e}</span><small>${o.n}</small>`; return c; }
 function rbRenderProg(list,path,locked){
   const box=el('div','cbox'+(!locked&&path.join(',')===RBZ.sel.join(',')?' sel':''));
   if(!list.length) box.append(el('span','empty',path.length?'Toca aquí y añade lo que se repite':'Toca las tarjetas de abajo para programar al robot…'));
   list.forEach((n,i)=>{
+    if(n.op==='if'){
+      const b=el('div','repblk siblk'); n._el=b;
+      const del=el('button','','✖'); del.onclick=ev=>{ ev.stopPropagation(); if(locked) return; list.splice(i,1); RBZ.sel=[]; beep(300,0.05); rbRender(); };
+      const hd=el('div','rephead'); hd.append(el('span','','❓ Si'),rbCondBtn(n,RBZ.R,locked),el('span','','→'),del); b.append(hd);
+      b.append(rbRenderProg(n.body,path.concat(i),locked));
+      if(n.els){ b.append(el('div','sino','si no →')); b.append(rbRenderProg(n.els,path.concat(i+'e'),locked)); }
+      box.append(b); return;
+    }
+    if(n.op==='hasta'){
+      const b=el('div','repblk hastablk'); n._el=b;
+      const vu=el('span','vuelta',''); n._cnt=vu;
+      const del=el('button','','✖'); del.onclick=ev=>{ ev.stopPropagation(); if(locked) return; list.splice(i,1); RBZ.sel=[]; beep(300,0.05); rbRender(); };
+      const hd=el('div','rephead'); hd.append(el('span','','🔁 Repetir hasta la valla'),del,vu); b.append(hd);
+      b.append(rbRenderProg(n.body,path.concat(i),locked)); box.append(b); return;
+    }
     if(n.op==='rep'){
       const b=el('div','repblk'); n._el=b;
       const hd=el('div','rephead'); hd.append(el('span','','🔁 Repetir ×'));
@@ -156,19 +175,26 @@ function rbAdd(node){
   const n=rbCuenta(RBZ.prog);
   if(n>=40){ toast('¡Programa demasiado largo! Usa 🔁 Repetir.'); return; }
   if(RBZ.R.max&&n>=RBZ.R.max){ toast(`¡Solo caben ${RBZ.R.max} tarjetas! Usa 🔁 Repetir.`); return; }
-  const l=rbCurList(); l.push(node); if(node.op==='rep') RBZ.sel=RBZ.sel.concat(l.length-1);
+  const l=rbCurList(); l.push(node); if(node.body) RBZ.sel=RBZ.sel.concat(l.length-1);
   rbLimpiaEstado(); beep(640,0.05); rbRender();
 }
-function rbLimpiaEstado(){ if(RBZ.running||RBZ.step) return; RBZ.cel=null; RBZ.rob={x:RBZ.R.ini.x,y:RBZ.R.ini.y,d:RBZ.R.ini.d}; RBZ.choque=null; RBZ.falla=-1; RBZ.brillo=-1; RBZ.fin=null; }
+function rbLimpiaEstado(){ if(RBZ.running||RBZ.step) return; const V=rbV(); RBZ.cel=null; RBZ.rob={x:V.ini.x,y:V.ini.y,d:V.ini.d}; RBZ.choque=null; RBZ.falla=-1; RBZ.brillo=-1; RBZ.fin=null; }
 function rbPaleta(){
   const R=RBZ.R, ops=(R.modo==='flechas'?['U','R','D','L']:['F','TL','TR']).concat(['P','W','H']);
   const pal=el('div','palette'); ops.forEach(op=>{ const c=rbCarta(op); c.onclick=()=>rbAdd({op}); pal.append(c); });
   if(rbConRepetir(R.modo,R.nivel)){ const rc=el('div','ccard opc'); rc.style.background='#fff3e0'; rc.innerHTML='<span>🔁</span><small>Repetir</small>'; rc.onclick=()=>rbAdd({op:'rep',n:2,body:[]}); pal.append(rc); }
+  if(R.modo==='si'){ // condiciones
+    const C=(R.conds&&R.conds.length?R.conds:['sed']);
+    if(R.nivel>=5||R.trabajo){ const h=el('div','ccard opc'); h.style.background='#fff3e0'; h.innerHTML='<span>🔁</span><small>Hasta la valla</small>'; h.onclick=()=>rbAdd({op:'hasta',body:[]}); pal.append(h); }
+    const si=el('div','ccard opc'); si.style.background='#f3ecff'; si.innerHTML='<span>❓</span><small>Si…</small>'; si.onclick=()=>rbAdd({op:'if',cond:C[0],body:[]}); pal.append(si);
+    if(R.sino||R.nivel>=6||R.trabajo){ const sn=el('div','ccard opc'); sn.style.background='#f3ecff'; sn.innerHTML='<span>❓</span><small>Si… / si no</small>'; sn.onclick=()=>rbAdd({op:'if',cond:C[0],body:[],els:[]}); pal.append(sn); }
+  }
   return pal;
 }
 function rbRender(){
   const R=RBZ.R, Rt=$('#rb-right'); Rt.innerHTML='';
   const locked=RBZ.running||!!RBZ.step||!!(RBZ.fin&&RBZ.fin.ok);
+  rbPestanas(locked);
   Rt.append(el('div','lbl','Programa del robot'));
   Rt.append(rbRenderProg(RBZ.prog,[],locked));
   Rt.append(el('div','counter',`Tarjetas usadas: ${rbCuenta(RBZ.prog)}`+(R.max?` · 📦 caben ${R.max}`:'')+` · ⭐⭐⭐ con ${R.best} o menos`));
@@ -193,78 +219,98 @@ function rbRender(){
   const run=el('button','btn primary','▶ ¡Adelante!'); run.onclick=()=>rbEjecuta(false); run.disabled=RBZ.running;
   act.append(clr,stp,slow,run); Rt.append(act);
 }
+function rbPestanas(locked){ // con varios huertos: una pestaña por huerto (✓ cuando el programa ya funciona en él)
+  const box=$('#rb-vars'); if(!box) return; box.innerHTML=''; const R=RBZ.R; if(!R||!R.vars||R.vars.length<2){ box.style.display='none'; return; }
+  box.style.display='';
+  R.vars.forEach((V,i)=>{ const ok=RBZ.varOk[i], b=el('button',(i===RBZ.vi?'sel ':'')+(ok===true?'ok':ok===false?'mal':''),`🏡 Huerto ${i+1}${ok===true?' ✓':ok===false?' ✗':''}`);
+    b.onclick=()=>{ if(locked||RBZ.running) return; RBZ.vi=i; rbLimpiaEstado(); RBZ.vis=null; rbRender(); }; box.append(b); });
+}
 function rbMsg(t,cls){ const m=$('#rb-msg'); m.className=cls||''; m.textContent=t||''; }
 
 /* ---------- ejecutar ---------- */
-function rbPrepara(){ RBZ.cel=RBZ.R.cel.map(c=>({p:c.p,t:c.t,c:c.c})); RBZ.rob={x:RBZ.R.ini.x,y:RBZ.R.ini.y,d:RBZ.R.ini.d}; RBZ.vis=Object.assign({},RBZ.rob); RBZ.choque=null; RBZ.falla=-1; RBZ.brillo=-1; RBZ.fin=null;
-  return {res:rbRun(RBZ.R,RBZ.prog),idx:0}; }
+function rbPrepara(vi){ if(vi!=null) RBZ.vi=vi; const V=rbV(); RBZ.cel=V.cel.map(c=>({p:c.p,t:c.t,c:c.c})); RBZ.rob={x:V.ini.x,y:V.ini.y,d:V.ini.d}; RBZ.vis=Object.assign({},RBZ.rob); RBZ.choque=null; RBZ.falla=-1; RBZ.brillo=-1; RBZ.fin=null;
+  return {res:rbRun(V,RBZ.prog),idx:0,vi:RBZ.vi}; }
 function rbLimpiaHL(){ document.querySelectorAll('#rb-right .run').forEach(e=>e.classList.remove('run')); document.querySelectorAll('#rb-right .loopon').forEach(e=>e.classList.remove('loopon')); document.querySelectorAll('#rb-right .vuelta').forEach(e=>e.textContent=''); }
 function rbAplica(S){
   const s=S.res.steps[S.idx]; rbLimpiaHL();
-  (s.loops||[]).forEach(([n,k])=>{ if(n._el) n._el.classList.add('loopon'); if(n._cnt) n._cnt.textContent=`vuelta ${k} de ${n.n}`; });
-  if(s.node._el) s.node._el.classList.add('run');
+  (s.loops||[]).forEach(([n,k])=>{ if(n._el) n._el.classList.add('loopon'); if(n._cnt) n._cnt.textContent=n.op==='hasta'?`vuelta ${k}`:`vuelta ${k} de ${n.n}`; });
+  if(s.node._el){ s.node._el.classList.add('run'); s.node._el.classList.remove('si-si','si-no'); if(s.pregunta&&!s.fin) s.node._el.classList.add(s.v?'si-si':'si-no'); }
   RBZ.rob={x:s.x,y:s.y,d:s.d};
-  if(s.choca){ RBZ.choque=true; }
-  else if(s.falla){ RBZ.falla=s.y*RBZ.R.w+s.x; }
+  if(s.pregunta){ beep(s.v?760:300,0.04,'sine',0.03); }
+  else if(s.choca){ RBZ.choque=true; }
+  else if(s.falla){ RBZ.falla=s.y*rbV().w+s.x; }
   else if(s.act){ RBZ.cel[s.i].t=s.t; beep(s.act==='P'?520:s.act==='W'?700:880,0.06,'triangle',0.05); }
   else if(s.mv) beep(420,0.03,'sine',0.03);
   S.idx++;
 }
-function rbFin(S){
-  const {err,pend,cesta}=S.res; rbLimpiaHL(); RBZ.running=false; RBZ.step=null;
+function rbFin(S,todos){ // todos = lista de resultados de los huertos que se han probado (con varios huertos)
+  const {err,pend}=S.res, varios=RBZ.R.vars&&RBZ.R.vars.length>1, en=varios?`En el huerto ${S.vi+1}: `:'';
+  rbLimpiaHL(); RBZ.running=false; RBZ.step=null;
+  if(varios) RBZ.varOk[S.vi]=!err&&!pend;
   if(err){
     rbRender(); if(err.node&&err.node._el) err.node._el.classList.add('shake');
-    const m=RB_ERR[err.t]||'¡Uy! Algo no ha salido bien.'; rbMsg(m,'bad'); speakAuto(m); beep(220,0.2,'sawtooth',0.03); return;
+    const m=en+(RB_ERR[err.t]||'¡Uy! Algo no ha salido bien.'); rbMsg(m,'bad'); speakAuto(m); beep(220,0.2,'sawtooth',0.03); return;
   }
   if(pend){
     const i=RBZ.cel.findIndex(c=>RB_PEND.includes(c.t)); RBZ.brillo=i;
-    rbRender(); const m=`¡Casi! Aún queda${pend>1?'n':''} ${pend} cosa${pend>1?'s':''} por hacer en el huerto. Mira la casilla que brilla.`;
+    rbRender(); const m=en+`¡Casi! Aún queda${pend>1?'n':''} ${pend} cosa${pend>1?'s':''} por hacer. Mira la casilla que brilla.`;
     rbMsg(m,'bad'); speakAuto(m); beep(260,0.15,'sawtooth',0.03); return;
   }
-  const n=rbCuenta(RBZ.prog), st=rbEstrellas(RBZ.R,n);
-  RBZ.fin={ok:true,estrellas:st,tarjetas:n,cesta,intentos:RBZ.att};
+  if(varios&&!todos){ rbRender(); const m=`¡En el huerto ${S.vi+1} funciona! Pulsa ▶ para probarlo en todos.`; rbMsg(m,'good'); speakAuto(m); return; }
+  const cesta=(todos||[S.res]).reduce((a,r)=>a+(r.cesta||0),0);
+  const n=rbCuenta(RBZ.prog), st=rbEstrellas(RBZ.R,n,RBZ.prog);
+  RBZ.fin={ok:true,estrellas:st,tarjetas:n,cesta,intentos:RBZ.att,prog:rbClona(RBZ.prog)};
   let extra=''; if(RBZ.opts.alGanar){ try{ extra=RBZ.opts.alGanar(RBZ.fin)||''; }catch(e){ try{ apuntaFallo(e,'robot'); }catch(_){} } }
   rbRender();
-  const m=(st===3?`¡Perfecto! ⭐⭐⭐ Lo has hecho con ${n} tarjetas.`:`¡Huerto listo! ${'⭐'.repeat(st)} Con ${RBZ.R.best} tarjetas o menos conseguirías las tres estrellas.`)+(extra?' '+extra:'');
+  const m=(varios?`¡Funciona en los ${RBZ.R.vars.length} huertos! `:'')+(st===3?`¡Perfecto! ⭐⭐⭐ Lo has hecho con ${n} tarjetas.`:`¡Huerto listo! ${'⭐'.repeat(st)} Con ${RBZ.R.best} tarjetas o menos conseguirías las tres estrellas.`)+(extra?' '+extra:'');
   rbMsg(m,'good'); speakAuto(m); try{ fanfare(); }catch(e){ beep(880,0.1); }
 }
 async function rbEjecuta(slow){
   if(RBZ.running||RBZ.step) return;
   if(!RBZ.prog.length){ rbMsg('El programa está vacío. ¡Toca las tarjetas!','bad'); return; }
-  RBZ.att++; RBZ.running=true; const S=rbPrepara(); rbRender(); rbMsg(slow?'🐢 Mira qué tarjeta se ilumina en cada momento…':'🤖 El robot está trabajando…');
-  const n=S.res.steps.length, delay=slow?650:Math.max(180,Math.min(420,5000/Math.max(1,n)));
-  while(S.idx<n){ rbAplica(S); await new Promise(r=>setTimeout(r,delay)); if(curScreen!=='robot'){ RBZ.running=false; return; } }
-  rbFin(S);
+  RBZ.att++; RBZ.running=true; const nv=rbVariantes(RBZ.R).length, todos=[]; RBZ.varOk=[];
+  for(let vi=0;vi<nv;vi++){
+    const S=rbPrepara(vi); rbRender(); rbMsg((nv>1?`🏡 Huerto ${vi+1} de ${nv}. `:'')+(slow?'🐢 Mira qué tarjeta se ilumina en cada momento…':'🤖 El robot está trabajando…'));
+    const n=S.res.steps.length, delay=slow?650:Math.max(nv>1?120:180,Math.min(420,(nv>1?3500:5000)/Math.max(1,n)));
+    while(S.idx<n){ rbAplica(S); await new Promise(r=>setTimeout(r,delay)); if(curScreen!=='robot'){ RBZ.running=false; return; } }
+    todos.push(S.res);
+    if(S.res.err||S.res.pend||vi===nv-1){ rbFin(S,todos); return; }
+    RBZ.varOk[vi]=true; RBZ.running=true; await new Promise(r=>setTimeout(r,500));
+  }
 }
 function rbPasoIni(){
   if(RBZ.running) return;
   if(!RBZ.prog.length){ rbMsg('El programa está vacío. ¡Toca las tarjetas!','bad'); return; }
-  RBZ.att++; RBZ.step=rbPrepara(); rbRender();
+  RBZ.att++; RBZ.step=rbPrepara(RBZ.vi); rbRender();
   rbMsg('👣 Pulsa «Siguiente paso» y mira qué tarjeta se ilumina y qué hace el robot.');
   if(!RBZ.step.res.steps.length) rbFin(RBZ.step);
 }
 function rbPasoSig(){
   const S=RBZ.step; if(!S) return;
   if(S.idx<S.res.steps.length){ rbAplica(S); const s=S.res.steps[S.idx-1], o=s.node.op;
-    rbMsg(s.choca?'💥 ¡Choca!':s.falla?'❌ Ahí no puede hacer eso':o==='P'?'🌱 Planta la semilla':o==='W'?'💧 Riega':o==='H'?'🧺 Recoge la verdura':o==='TL'?'↩️ Gira a la izquierda':o==='TR'?'↪️ Gira a la derecha':'👣 Avanza una casilla'); }
+    if(s.pregunta){ rbMsg(s.fin?'🧱 Hay valla delante: se acaba el Repetir.':`❓ ¿${(RB_CONDS[s.node.cond]||{}).n||''}? ${s.v?'Sí → hace lo de dentro.':'No → '+(s.node.els?'hace lo del «si no».':'se lo salta.')}`); }
+    else rbMsg(s.choca?'💥 ¡Choca!':s.falla?'❌ Ahí no puede hacer eso':o==='P'?'🌱 Planta la semilla':o==='W'?'💧 Riega':o==='H'?'🧺 Recoge la verdura':o==='TL'?'↩️ Gira a la izquierda':o==='TR'?'↪️ Gira a la derecha':'👣 Avanza una casilla'); }
   if(S.idx>=S.res.steps.length) setTimeout(()=>rbFin(S),350);
 }
 function rbPista(){
-  const R=RBZ.R, primero=R.sol[0], op=primero.op==='rep'?primero.body[0].op:primero.op;
+  const R=RBZ.R, primero=R.sol[0];
+  if(R.modo==='si'){ const m=primero.op==='hasta'||(primero.body&&primero.body[0].op==='hasta')?'💡 Pista: usa 🔁 Repetir hasta la valla y, dentro, 👣 Avanza y un ❓ Si… para cada cosa que puede pasar.':'💡 Pista: dentro de un 🔁 Repetir: 👣 Avanza y luego un ❓ Si… para cada cosa (¿tiene sed?, ¿está madura?…).'; rbMsg(m); speakAuto(m); return; }
+  const op=primero.op==='rep'?primero.body[0].op:primero.op;
   const m=primero.op==='rep'?`💡 Pista: el robot puede empezar con un 🔁 Repetir ×${primero.n} que empiece por ${RB_OPS[op].e} ${RB_OPS[op].n}.`:`💡 Pista: la primera tarjeta puede ser ${RB_OPS[op].e} ${RB_OPS[op].n}.`;
   rbMsg(m); speakAuto(m);
 }
 
 /* ---------- abrir ---------- */
 function rbAyuda(R){
+  if(R.modo==='si') return 'El robot anda hacia donde mira y no sabe qué se va a encontrar. Con ❓ Si… mira la casilla donde está: si se cumple, hace lo de dentro. Toca la condición del bloque para cambiarla.';
   return R.modo==='flechas'
     ? 'Toca las flechas para llevar al robot por el huerto. Cuando esté encima de una casilla, dile qué hacer: 🌱 plantar, 💧 regar o 🧺 recoger.'
     : 'El robot anda hacia donde mira (la flecha amarilla). 👣 Avanza una casilla; ↩️ y ↪️ lo giran sin moverse. Cuando esté encima de una casilla: 🌱 planta, 💧 riega o 🧺 recoge.';
 }
 function openRobot(R,opts={}){
-  RBZ.R=R; RBZ.opts=opts; RBZ.prog=[]; RBZ.sel=[]; RBZ.running=false; RBZ.step=null; RBZ.att=0; RBZ.vis=null; rbLimpiaEstado();
+  RBZ.R=R; RBZ.opts=opts; RBZ.prog=opts.prog?rbClona(opts.prog):[]; RBZ.sel=[]; RBZ.running=false; RBZ.step=null; RBZ.att=0; RBZ.vis=null; RBZ.vi=0; RBZ.varOk=[]; rbLimpiaEstado();
   $('#rb-title').textContent='🤖 Huerto del robot';
-  $('#rb-chip').textContent=(opts.catalog?'🧪 ':'')+(R.trabajo?'🌱 Trabajo de hoy · ':'')+(R.modo==='flechas'?'Flechas':'Girar')+' · nivel '+R.nivel;
+  $('#rb-chip').textContent=(opts.catalog?'🧪 ':'')+(R.trabajo?'🌱 Trabajo de hoy · ':'')+(R.modo==='flechas'?'Flechas':R.modo==='si'?'Condiciones':'Girar')+' · nivel '+R.nivel;
   $('#rb-ask').textContent=rbAyuda(R);
   $('#rb-mision').innerHTML=`<div class="rbmis"><b>Hoy toca:</b> ${esc(rbMision(R))}${R.max?` <span class="counter">· como mucho ${R.max} tarjetas</span>`:''}</div>`;
   rbMsg(''); show('robot'); rbRender();
@@ -280,6 +326,6 @@ function rbCatCard(){
   const c=el('div','ecard'); c.style.cursor='default';
   c.innerHTML=`<div class="who">🤖</div><div class="t">Huerto del robot</div><div class="badge">Programar · nuevo</div><div class="counter">Plantar, regar y recoger con tarjetas. Usa el nivel de reto de arriba (1-10).</div>`;
   const row=el('div','choice'); row.style.justifyContent='flex-start';
-  [[6,'👧 6-7 años · flechas'],[9,'👧 8-10 años · girar']].forEach(([a,t])=>{ const b=el('button','',t); b.onclick=()=>{ ensureTestProfile(); openRobot(rbGenera(rbModoDe(a),CAT_L,'cat'+Date.now()),{catalog:true}); }; row.append(b); });
+  [['flechas','👧 6-7 años · flechas'],['girar','👧 8-10 años · girar'],['si','🧠 Condiciones (si…)']].forEach(([m,t])=>{ const b=el('button','',t); b.onclick=()=>{ ensureTestProfile(); openRobot(rbGenera(m,CAT_L,'cat'+Date.now()),{catalog:true}); }; row.append(b); });
   c.append(row); return c;
 }

@@ -24,8 +24,8 @@ function huMia(){ const p=P(); return !!p&&!VISIT&&!REMOTO&&huAbierta(p); }
 function huGeo(cv){ // dónde va cada parcela en el lienzo
   const ps=DB.profiles, Ws=[0,1].map(k=>ps[k]?((huLee(ps[k])||{}).W||huTam(ps[k])):0);
   const W=Math.min(720,(cv.parentElement&&cv.parentElement.clientWidth)||600);
-  const cols=Ws[0]+Ws[1], cs=Math.min(64,(W-70)/Math.max(1,cols)), alto=Math.max(...Ws)*cs;
-  return {W,cs,H:alto+70,Ws,x:[20,W-20-Ws[1]*cs],y:44};
+  const cols=Ws[0]+Ws[1], cs=Math.min(64,(W-90)/Math.max(1,cols)), alto=Math.max(...Ws)*cs;
+  return {W,cs,H:alto+86,Ws,x:[28,W-28-Ws[1]*cs],y:60};
 }
 function huDibuja(){
   const cv=$('#hu-cv'); if(!cv) return;
@@ -36,8 +36,7 @@ function huDibuja(){
   const p=P();
   [0,1].forEach(k=>{ const q=DB.profiles[k]; if(!q) return; const x0=g.x[k], y0=g.y, W=g.Ws[k];
     huDibujaParcela(c,q,x0,y0,g.cs,HUZ.t);
-    c.font='bold 18px "Baloo 2",sans-serif'; c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#3d5a2a';
-    c.fillText((q===p&&!VISIT?'⭐ ':'')+q.name,x0+W*g.cs/2,22);
+    huCartel(c,x0+W*g.cs/2,24,(q===p&&!VISIT?'⭐ ':'')+q.name,q.color);
     if(q===p&&HUZ.sem&&huMia()){ c.strokeStyle='#f4c430'; c.lineWidth=4; c.setLineDash([8,6]); roundRect(c,x0-5,y0-5,W*g.cs+10,W*g.cs+10,12); c.stroke(); c.setLineDash([]); }
   });
 }
@@ -69,7 +68,7 @@ function huRender(){
     Rt.append(el('div','wsec','Las parcelas'));
     DB.profiles.filter(Boolean).forEach(q=>{ const H=huLee(q), d=card(q.name);
       if(!H){ d.append(el('div','counter',huAbierta(q)?'Aún no ha entrado en su parcela.':`🔒 Se abre con Telar nivel ${ZONE_REQ.huerto[1]}.`)); return; }
-      const n=huCuenta(H); d.append(el('div','counter',`${H.modo==='flechas'?'⬆️ Flechas':'↪️ Girar'} · nivel ${H.niv} · ${n.sem+n.sed+n.regada} plantas, ${n.mad} maduras`));
+      const n=huCuenta(H); d.append(el('div','counter',`${HU_MODOS[H.modo]} · nivel ${H.niv} · ${n.sem+n.sed+n.regada} plantas, ${n.mad} maduras`));
       const b=el('button','btn','🧩 Probar un reto de su nivel'); b.onclick=()=>openRobot(rbGenera(H.modo,H.niv,'vis'+Date.now()),{catalog:true,volver:()=>openHuerto()}); d.append(b); });
     return;
   }
@@ -78,12 +77,13 @@ function huRender(){
     d.append(el('div','counter','Mientras tanto, mira lo que crece en la parcela de tu hermana.')); return;
   }
   const H=huIni(p), n=huCuenta(H);
-  $('#hu-chip').textContent=`${H.modo==='flechas'?'⬆️ Flechas':'↪️ Girar'} · nivel ${H.niv}`;
+  $('#hu-chip').textContent=`${HU_MODOS[H.modo]} · nivel ${H.niv}`;
   // trabajo de hoy
   const R=huTrabajo(p), d1=card('🤖 Trabajo de hoy');
   if(R){
     d1.append(el('div','',`${n.sem?`🌱 ${n.sem} por plantar · `:''}${n.sed?`💧 ${n.sed} con sed · `:''}${n.mad?`🧺 ${n.mad} madura${n.mad>1?'s':''}`:''}`.replace(/ · $/,'')));
     const b=el('button','btn primary','🤖 Programar al robot'); b.onclick=()=>{ HUZ.sem=null; openRobot(R,{volver:()=>openHuerto(),alGanar:fin=>huGanaTrabajo(p,R,fin)}); }; d1.append(b);
+    if(H.prog&&H.modo==='si'){ const bp=el('button','btn','📼 Cargar mi programa guardado'); bp.onclick=()=>{ HUZ.sem=null; openRobot(R,{volver:()=>openHuerto(),alGanar:fin=>huGanaTrabajo(p,R,fin),prog:H.prog}); }; d1.append(bp); }
   } else d1.append(el('div','',n.regada+n.mad+n.sed?'✅ ¡Hoy tu parcela está perfecta! Vuelve mañana: las plantas tendrán sed otra vez.':'Tu parcela está vacía. ¡Siembra algo!'));
   // sembrar
   const d2=card('🌱 Sembrar'); const temp=huTemporada();
