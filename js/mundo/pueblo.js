@@ -188,6 +188,7 @@ async function talkNPC(n){
     if(c&&r===1){ const [bx,by]=buzonPos(DB.cur===0?'A':'B'); andarA(player,bx-34,by+10); player.act=openMail; } return; // se va andando hasta su buzón
   }
   let text=pick(info.hi);
+  const ext=enchufe('vecino',n,p).filter(x=>typeof x==='string'); if(ext.length) text=ext[0]; // pistas de los paquetes (p. ej. Chispín)
   if(hasEncargo(n.k)) text='¡Hola, '+p.name+'! Tengo un encargo para ti en el taller. ¿Vamos?';
   const r=await say({face:info.e,name:info.n,text,buttons:hasEncargo(n.k)?[{t:'Luego'},{t:'¡Al taller!',cls:'primary'}]:[{t:'¡Adiós!',cls:'primary'}]});
   if(hasEncargo(n.k)&&r===1){ andarA(player,B.taller.door[0],B.taller.door[1]); player.act=openWorkshop; }

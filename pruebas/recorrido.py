@@ -20,6 +20,7 @@ PASOS = [
  "if(typeof openBelen==='function'&&paqActivo(NAV)&&DB.profiles[1]) openBelen(DB.profiles[1]===P()?DB.profiles[0]:DB.profiles[1],'pueblo')", "openBoard()", "show('village')",
  "if(typeof openAdviento==='function'&&paqActivo(NAV)){ const p=P(); logAct(p,'t',1,1,'seq'); logAct(p,'b',1,1,'x'); logAct(p,'p',1,1); void openAdviento(p); }", "if(typeof advAbrir==='function'&&paqActivo(NAV)) void advAbrir(P(),advPendiente(P())||1)",
  "if(typeof openCartaReyes==='function'&&paqActivo(NAV)) void openCartaReyes()", "show('village')",
+ "if(typeof chHoy==='function'&&chHoy()) void chEncontrado()", "if(typeof CH_SITIOS!=='undefined'&&paqActivo(NAV)){ const p=P(); chD(p).dias['2026-12-02']=1; void chDespedida(p); }", "show('village')",
  "if(typeof navTurnoNavidad==='function'&&paqActivo(NAV)){ openBakery(); navTurnoNavidad(); }", "show('village')",
  "if(typeof navEntregas==='function'&&paqActivo(NAV)){ NAV.ordenes.premio(P(),NAV_PREMIOS[0]); NAV.ordenes.reyes(P(),{r:'nav_bici',b:10,m:'hola'}); renderAlcalde(); }",
  "if(typeof ADV_REGALOS!=='undefined'&&paqActivo(NAV)){ const p=P(); for(let d=1;d<=24;d++) ADV_REGALOS[d](p); const R=roomOf(p); R.wl[2]='fu_nav_adviento'; R.pat='nav_papel'; R.fl[2]='fu_nav_alfombra'; R.fl[3]='fu_nav_musica'; houseView='room'; openHouse(DB.cur); }", "show('village')",

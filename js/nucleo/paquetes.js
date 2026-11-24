@@ -29,7 +29,8 @@
    - alcalde(box) → sus propios apartados en el modo alcalde mientras está activo (se crean con box(título)).
    - ordenes: {campo(p, valor)} → lo que papá decide para una niña (orden 'paq' con {id, campo, valor}; sirve también
      desde el móvil). Debe poder aplicarse dos veces sin efecto y devolver false si el valor no vale.
-   - Otros enchufes: panaderia(p) → [{t, fn}] botones en el obrador; prendas() → nombres de prendas para los encargos del telar.
+   - Otros enchufes: panaderia(p) → [{t, fn}] botones en el obrador; prendas() → nombres de prendas para los encargos del telar;
+     vecino(n, p) → una frase (texto) que dice el vecino n al hablar con él, en vez de su saludo (p. ej. las pistas de Chispín).
    - Canciones: SONGS admite solo:()=>bool (suena solo entonces). Temas de la Biblioteca: activo:()=>bool.
 
    Datos: paqDatos(id) es común a las dos niñas (DB.paq); paqDatosNina(p,id) es de cada una (p.paq).
