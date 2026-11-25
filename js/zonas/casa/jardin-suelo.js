@@ -104,7 +104,7 @@ function jdSoltar(){ GD.mano=null; GD.fantasma=null; }
 function jdPuedeCesta(o){ return !plTipo(o.k)||plPremio(o.k)||(plCrecida(o)&&!(plTipo(o.k)==='arbol'&&plRiegos(o)>30)); }
 function jdGuarda(p){ const i=GD.mano, o=i!=null&&p.jardin.cel[i]; if(!o) return; if(!jdPuedeCesta(o)){ toast(plCrecida(o)?'Este árbol ya es muy grande para la cesta. ¡Muévelo a otro sitio!':'🌱 Está creciendo: no cabe en la cesta. ¡Muévela a otro sitio!'); return; }
   p.jardin.cel[i]=null; jdACesta(p,o); (o.en||[]).forEach(k2=>{ if(k2) p.inv[k2]=(p.inv[k2]||0)+1; }); jdSoltar(); beep(350,0.05); save(); renderHouse(); }
-function jardinClick(x,y){ const p=GD.p, J=p.jardin; if(!GD.mine){ toast('Este jardín no es tuyo 😊'); return; }
+function jardinClick(x,y){ const p=GD.p, J=p.jardin; if(!GD.mine){ if(!jgToque(x,y)) toast('Este jardín no es tuyo 😊'); return; } // de visita: solo andar y jugar
   const r=Math.floor((y-JD.gy)/JD.cs), col=Math.floor((x-JD.gx)/JD.cs), dentro=r>=0&&r<jdF(p)&&col>=0&&col<JD.C, h=jdToca(p,x,y);
   if(GD.girar){ if(h){ h.o.gi=h.o.gi?0:1; beep(620,0.05); save(); } else toast('Toca algo del jardín para darle la vuelta'); return; }
   if(GD.mano!=null&&J.cel[GD.mano]){ const o=J.cel[GD.mano];
@@ -118,11 +118,17 @@ function jardinClick(x,y){ const p=GD.p, J=p.jardin; if(!GD.mine){ toast('Este j
     else { const k=jdK(invSel), [w,hh]=jdTam(k); J.cel[res.r*JD.C+res.c]=plTipo(k)?plNueva(invSel,invSel.startsWith('gw:')):{k,g:0,need:0}; const pie=jdPie(res.r,res.c,w,hh); GD.spark.push({x:pie.x,y:pie.y-20,t:0}); }
     p.inv[invSel]--; if(!p.inv[invSel]){ delete p.inv[invSel]; invSel=null; } GD.fantasma=null;
     beep(760,0.07,'triangle'); save(); renderHouse(); return; }
+  if(GD.mover){ // «Mover cosas»: coger, quitar lo colgado o los caminos
+    if(h&&h.top>=0){ const k2=h.o.en[h.top]; h.o.en[h.top]=null; p.inv[k2]=(p.inv[k2]||0)+1; beep(350,0.05); save(); renderHouse(); return; }
+    if(h){ GD.mano=h.i; beep(600,0.04); renderHouse(); toast((plTipo(h.o.k)?plInfo(h.o):itemInfo(h.o.k).n)+'. Toca otro sitio para moverlo.',2600); return; }
+    if(dentro&&J.cam[r*JD.C+col]){ const k=J.cam[r*JD.C+col]; J.cam[r*JD.C+col]=null; p.inv[k]=(p.inv[k]||0)+1; beep(350,0.05); save(); renderHouse(); return; }
+    toast('Toca algo para moverlo o quitarlo'); return; }
+  if(h&&h.top>=0&&h.o.en[h.top]==='sh_columpio'){ jgToque(x,y); return; } // a columpiarse
+  if(h&&JG_USOS[h.o.k]){ jgToque(x,y); return; } // banco, tiovivo y noria: a usarlos
   if(h&&h.top>=0){ const k2=h.o.en[h.top]; if(k2==='sh_campanilla'){ jdSuena(); toast('🎐 ¡Tilín, tilín! Para quitarla, toca el árbol y «Quitar lo colgado».',2400); return; }
     h.o.en[h.top]=null; p.inv[k2]=(p.inv[k2]||0)+1; beep(350,0.05); save(); renderHouse(); return; }
   if(h){ GD.mano=h.i; beep(600,0.04); renderHouse(); toast(plTipo(h.o.k)?plInfo(h.o)+'. Toca otro sitio para moverla.':itemInfo(h.o.k).n+': toca otro sitio para moverlo.',2600); return; }
-  if(dentro&&J.cam[r*JD.C+col]){ const k=J.cam[r*JD.C+col]; J.cam[r*JD.C+col]=null; p.inv[k]=(p.inv[k]||0)+1; beep(350,0.05); save(); renderHouse(); return; }
-  toast('Elige algo de tu cesta y toca un hueco del jardín'); }
+  if(!jgToque(x,y)) toast('Elige algo de tu cesta y toca un hueco del jardín'); } // en el césped: andar
 /* Aviso del jardín nuevo, una vez */
 function jardinAviso(p){ const J=p.jardin; if(VISIT||!J||!(J.ampliado===1||J.aviso.length)) return;
   const cuenta={}; J.aviso.forEach(k=>{ cuenta[k]=(cuenta[k]||0)+1; }); const fuera=Object.entries(cuenta).map(([k,n])=>(n>1?n+' × ':'')+'«'+itemInfo(k).n+'»'), nuevo=J.ampliado===1;

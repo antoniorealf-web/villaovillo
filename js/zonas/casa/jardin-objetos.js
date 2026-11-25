@@ -20,7 +20,7 @@ function joSombra(c,rx){ c.fillStyle='rgba(40,60,20,.22)'; c.beginPath(); c.elli
 function joAbeja(c,x,y,t){ c.save(); c.translate(x,y); c.fillStyle='#f4c430'; c.beginPath(); c.ellipse(0,0,4,3,0,0,Math.PI*2); c.fill(); ol(c,1);
   c.fillStyle='#3b2f3a'; c.fillRect(-1,-3,1.6,6); c.fillStyle='rgba(255,255,255,.85)'; c.beginPath(); c.ellipse(-1,-4,2.4,1.6,Math.sin(t*40)*0.5,0,Math.PI*2); c.fill(); c.restore(); }
 let JD_LUCES=null; // mientras se dibuja el jardín grande: dónde hay faroles (para su luz de noche)
-function joFarol(c,t,col){ const nt=nightLevel(); if(JD_LUCES){ const m=c.getTransform(); JD_LUCES.push([m.e/GD.k,m.f/GD.k]); } if(nt>0.2){ const g=c.createRadialGradient(0,0,2,0,0,40); g.addColorStop(0,`rgba(255,210,120,${0.6*nt})`); g.addColorStop(1,'rgba(255,210,120,0)'); c.fillStyle=g; c.beginPath(); c.arc(0,0,40,0,Math.PI*2); c.fill(); }
+function joFarol(c,t,col){ const nt=nightLevel(); if(JD_LUCES){ const m=c.getTransform(); JD_LUCES.push([m.e/GD.k,m.f/GD.k,70,'255,190,100']); } if(nt>0.2){ const g=c.createRadialGradient(0,0,2,0,0,40); g.addColorStop(0,`rgba(255,210,120,${0.6*nt})`); g.addColorStop(1,'rgba(255,210,120,0)'); c.fillStyle=g; c.beginPath(); c.arc(0,0,40,0,Math.PI*2); c.fill(); }
   c.beginPath(); c.ellipse(0,0,9,12,0,0,Math.PI*2); c.fillStyle=col||'#e4574f'; c.fill(); ol(c,1.8); c.strokeStyle='rgba(0,0,0,.25)'; c.lineWidth=1; c.beginPath(); c.ellipse(0,0,4,12,0,0,Math.PI*2); c.stroke();
   joRR(c,-5,-15,10,4,1,'#3b2f3a',1.2); joRR(c,-5,11,10,4,1,'#3b2f3a',1.2); c.fillStyle=nt>0.2?'rgba(255,240,180,.9)':'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(-3,-2,2.2,5,0,0,Math.PI*2); c.fill(); }
 function joCaseta(c,t,i){ joRR(c,-11,-14,22,22,3,'#e09a5a',1.8); c.beginPath(); c.moveTo(-15,-12); c.lineTo(0,-26); c.lineTo(15,-12); c.closePath(); c.fillStyle='#c94a3a'; c.fill(); ol(c,1.8);
@@ -29,8 +29,9 @@ function joCaseta(c,t,i){ joRR(c,-11,-14,22,22,3,'#e09a5a',1.8); c.beginPath(); 
 function joCampanilla(c,t,i){ joRR(c,-11,-3,22,4,2,'#8a5a36',1.4); [-8,-3,2,7].forEach((x,j)=>{ const l=12+j*3, a=Math.sin(t*2+j+i)*0.18; c.save(); c.translate(x,1); c.rotate(a); c.strokeStyle='#8a7f88'; c.lineWidth=1; c.beginPath(); c.moveTo(0,0); c.lineTo(0,4); c.stroke(); joRR(c,-1.6,4,3.2,l,1.5,['#a6d8f0','#f6b8cf','#c9e6a8','#ffe08a'][j],1.1); c.restore(); });
   c.beginPath(); c.arc(0,24,3,0,Math.PI*2); c.fillStyle='#f4c430'; c.fill(); ol(c,1); }
 const JD_COLG={
-  sh_columpio(c,t,i){ const a=Math.sin(t*1.8+i)*0.18, L=Math.max(20,-JD_COLG._suelo-14); c.save(); c.rotate(a);
+  sh_columpio(c,t,i){ const jn=JD_COLG._jinete, a=jn?Math.sin(t*2.4)*0.38:Math.sin(t*1.8+i)*0.18, L=Math.max(20,-JD_COLG._suelo-14); c.save(); c.rotate(a);
     c.strokeStyle='#8a5a36'; c.lineWidth=2.2; c.beginPath(); c.moveTo(-12,0); c.lineTo(-13,L); c.moveTo(12,0); c.lineTo(13,L); c.stroke();
+    if(jn) jgFigura(c,jn,0,L-2+15*JG.sc,t,{sit:1,brazos:'arriba'}); // la niña columpiándose (jardin-gente.js)
     joRR(c,-18,L-2,36,7,3,'#c98f5a',2); c.restore(); joRR(c,-16,-4,32,6,3,'#7a4f2e',1.6); },
   sh_panal(c,t,i){ c.strokeStyle='#5a4a3a'; c.lineWidth=1.6; c.beginPath(); c.moveTo(0,0); c.lineTo(0,6); c.stroke();
     c.beginPath(); c.moveTo(0,5); c.bezierCurveTo(15,8,15,30,0,34); c.bezierCurveTo(-15,30,-15,8,0,5); c.fillStyle='#f2b84b'; c.fill(); ol(c,1.8);
@@ -41,11 +42,12 @@ const JD_COLG={
   sh_pajaro(c,t,i){ c.strokeStyle='#5a4a3a'; c.lineWidth=1.4; c.beginPath(); c.moveTo(0,0); c.lineTo(0,8); c.stroke(); c.save(); c.translate(0,34); joCaseta(c,t,i); c.restore(); },
   sh_cesta(c,t,i){ c.save(); c.translate(0,0); JD_DIB.sh_cesta(c,t,{sin:1}); c.restore(); }
 };
-JD_COLG._suelo=-60; // lo pone jdObjeto antes de dibujar un columpio: lo que hay del sitio al suelo
+JD_COLG._suelo=-60; JD_COLG._jinete=null; // lo pone jdEncima antes de dibujar: lo que hay del sitio al suelo y quién se columpia
 const JD_DIB={
-  sh_banco(c){ joSombra(c,50); [[-44,-26],[36,-26]].forEach(([x,y])=>joRR(c,x,y,8,26,2,'#5a4a56',1.8));
+  sh_banco(c,t,o){ joSombra(c,50); [[-44,-26],[36,-26]].forEach(([x,y])=>joRR(c,x,y,8,26,2,'#5a4a56',1.8));
     joRR(c,-52,-32,104,9,3,'#c98f5a'); joRR(c,-52,-58,104,8,3,'#b97a48'); joRR(c,-52,-46,104,8,3,'#b97a48');
-    [[-46,-62],[38,-62]].forEach(([x,y])=>joRR(c,x,y,8,32,2,'#5a4a56',1.8)); },
+    [[-46,-62],[38,-62]].forEach(([x,y])=>joRR(c,x,y,8,32,2,'#5a4a56',1.8));
+    const a=o&&jgEn(o); if(a){ const en=o.en||[], sx=en[0]&&!en[1]?24:en[1]&&!en[0]?-22:0; jgFigura(c,a,sx,-30+15*JG.sc,t,{sit:1}); } }, // sentada en el banco
   sh_fuente(c,t){ joSombra(c,54); c.beginPath(); c.ellipse(0,-14,52,18,0,0,Math.PI*2); c.fillStyle='#c9c3b6'; c.fill(); ol(c,2.4);
     c.beginPath(); c.ellipse(0,-17,44,13,0,0,Math.PI*2); c.fillStyle='#7ec6ea'; c.fill(); ol(c,1.6);
     for(let j=0;j<3;j++){ c.strokeStyle='rgba(255,255,255,.6)'; c.lineWidth=1.5; c.beginPath(); c.ellipse(0,-17,10+((t*14+j*12)%34),3+((t*4+j*4)%10),0,0,Math.PI*2); c.stroke(); }
@@ -78,7 +80,7 @@ const JD_DIB={
     c.beginPath(); c.moveTo(0,-70); c.quadraticCurveTo(14,-40,28,-4); c.lineTo(20,0); c.closePath(); c.fillStyle='#f6b04f'; c.fill(); ol(c,1.6);
     c.strokeStyle=OUT; c.lineWidth=2; c.beginPath(); c.moveTo(0,-94); c.lineTo(0,-104); c.stroke(); const ond=Math.sin(t*4)*3; c.beginPath(); c.moveTo(0,-104); c.lineTo(16,-101+ond); c.lineTo(0,-97); c.closePath(); c.fillStyle='#e4574f'; c.fill(); ol(c,1.4);
     c.strokeStyle='#8a7f88'; c.lineWidth=1.4; c.beginPath(); c.moveTo(-50,-38); c.lineTo(-92,4); c.moveTo(50,-38); c.lineTo(92,4); c.stroke(); },
-  sh_tiovivo(c,t){ joSombra(c,84); const a=t*0.8;
+  sh_tiovivo(c,t,o){ joSombra(c,84); const jn=o&&jgEn(o), a=t*(jn?1.2:0.8);
     c.beginPath(); c.ellipse(0,-10,78,18,0,0,Math.PI*2); c.fillStyle='#c94a3a'; c.fill(); ol(c,2.4); c.beginPath(); c.ellipse(0,-16,78,18,0,0,Math.PI*2); c.fillStyle='#f6e0b8'; c.fill(); ol(c,2.2);
     joRR(c,-6,-140,12,126,4,'#f4c430',2);
     const cab=(j)=>{ const ang=a+j*Math.PI*2/4, x=Math.sin(ang)*58, dz=Math.cos(ang), y=-16+dz*10, sube=Math.sin(t*2.5+j)*8; return {x,y,dz,sube,j}; };
@@ -86,20 +88,21 @@ const JD_DIB={
     const dibCab=p=>{ c.strokeStyle='#f6e0b8'; c.lineWidth=3; c.beginPath(); c.moveTo(p.x,p.y-104); c.lineTo(p.x,p.y); c.stroke(); c.save(); c.translate(p.x,p.y-38+p.sube); const s=0.75+p.dz*0.15; c.scale(Math.sin(a+p.j*Math.PI/2)>0?-s:s,s);
       c.beginPath(); c.ellipse(0,0,18,9,0,0,Math.PI*2); c.fillStyle=['#fffaf1','#f6b8cf','#bfe6fb','#c9e6a8'][p.j]; c.fill(); ol(c,1.8); c.beginPath(); c.moveTo(12,-4); c.quadraticCurveTo(20,-18,26,-16); c.lineTo(28,-8); c.quadraticCurveTo(22,-8,16,2); c.closePath(); c.fill(); ol(c,1.8);
       [[-12,6],[-5,8],[6,8],[12,6]].forEach(([x,y],k)=>{ c.strokeStyle=OUT; c.lineWidth=4; c.beginPath(); c.moveTo(x,y); c.lineTo(x+(k%2?3:-3),y+12); c.stroke(); });
-      c.fillStyle='#a678d6'; c.beginPath(); c.ellipse(-2,-7,7,3,0,0,Math.PI*2); c.fill(); c.restore(); };
+      c.fillStyle='#a678d6'; c.beginPath(); c.ellipse(-2,-7,7,3,0,0,Math.PI*2); c.fill(); if(jn&&p.j===0) jgFigura(c,jn,-2,-6+15*1.25,t,{sit:1,sc:1.25,dir:1}); c.restore(); };
     cs.filter(p=>p.dz<0).forEach(dibCab);
     c.beginPath(); c.moveTo(-84,-120); c.quadraticCurveTo(0,-176,84,-120); c.lineTo(84,-114); c.lineTo(-84,-114); c.closePath(); c.fillStyle='#e4574f'; c.fill(); ol(c,2.4);
     c.save(); c.beginPath(); c.moveTo(-84,-120); c.quadraticCurveTo(0,-176,84,-120); c.lineTo(84,-114); c.lineTo(-84,-114); c.closePath(); c.clip(); c.fillStyle='#fffaf1'; for(let x=-84;x<84;x+=24){ c.beginPath(); c.moveTo(x,-114); c.lineTo(x+12,-114); c.lineTo(x*0.1+6,-180); c.closePath(); c.fill(); } c.restore();
     for(let x=-78;x<=78;x+=13){ c.beginPath(); c.arc(x,-112,6.5,0,Math.PI); c.fillStyle=(x/13)%2?'#f4c430':'#e4574f'; c.fill(); ol(c,1.2); }
     c.beginPath(); c.arc(0,-158,7,0,Math.PI*2); c.fillStyle='#f4c430'; c.fill(); ol(c,1.6);
     cs.filter(p=>p.dz>=0).forEach(dibCab); },
-  sh_noria(c,t){ joSombra(c,70); const cy=-110, R=78, a=t*0.35;
+  sh_noria(c,t,o){ joSombra(c,70); const jn=o&&jgEn(o), cy=-110, R=78, a=t*(jn?0.5:0.35);
     c.strokeStyle=OUT; c.lineWidth=9; c.beginPath(); c.moveTo(-60,0); c.lineTo(0,cy); c.lineTo(60,0); c.stroke(); c.strokeStyle='#4a8fdc'; c.lineWidth=5; c.stroke();
     c.beginPath(); c.arc(0,cy,R,0,Math.PI*2); c.strokeStyle=OUT; c.lineWidth=7; c.stroke(); c.strokeStyle='#fffaf1'; c.lineWidth=4; c.stroke();
     c.beginPath(); c.arc(0,cy,R*0.55,0,Math.PI*2); c.strokeStyle='#fffaf1'; c.lineWidth=3; c.stroke();
     for(let j=0;j<8;j++){ const b=a+j*Math.PI/4; c.strokeStyle='#fffaf1'; c.lineWidth=2.5; c.beginPath(); c.moveTo(0,cy); c.lineTo(Math.cos(b)*R,cy+Math.sin(b)*R); c.stroke(); }
     c.beginPath(); c.arc(0,cy,9,0,Math.PI*2); c.fillStyle='#f4c430'; c.fill(); ol(c,2);
     for(let j=0;j<8;j++){ const b=a+j*Math.PI/4, x=Math.cos(b)*R, y=cy+Math.sin(b)*R; c.strokeStyle=OUT; c.lineWidth=1.6; c.beginPath(); c.moveTo(x,y); c.lineTo(x,y+6); c.stroke();
+      if(jn&&j===0) jgFigura(c,jn,x,y+12+15*0.62,t,{sit:1,sc:0.62}); // la niña asomada en su cabina
       joRR(c,x-11,y+6,22,16,6,['#e4574f','#f4c430','#55b05a','#a678d6'][j%4],1.8); joRR(c,x-7,y+9,14,6,2,'#bfe6fb',1); } }
 };
 /* Dibuja una cosa del jardín que no es planta (con lo que tenga colgado o encima) */
@@ -111,7 +114,7 @@ function jdObjeto(c,o,x,y,t,esc,i,fant){ const k=jdK(o.k), d=JD_DIB[k];
 /* Lo que tiene colgado o encima, después de dibujar la cosa (árbol o banco) */
 function jdEncima(c,o,x,y,t,esc,i){ const S=jdSitios(o); if(!o.en||!S.length) return; esc=esc||1;
   o.en.forEach((k2,j)=>{ const st=S[j]; if(!k2||!st) return; c.save(); c.translate(x+(o.gi?-1:1)*st.x*esc,y+st.y*esc); if(esc!==1) c.scale(esc,esc);
-    JD_COLG._suelo=st.y; const f=JD_COLG[jdK(k2)]; if(f) f(c,t,i*3+j); c.restore(); }); }
+    JD_COLG._suelo=st.y; const jn=jgEn(o); JD_COLG._jinete=jn&&jn.usa.tipo==='columpio'&&jn.usa.j===j?jn:null; const f=JD_COLG[jdK(k2)]; if(f) f(c,t,i*3+j); JD_COLG._jinete=null; c.restore(); }); }
 /* Tocar la campanilla la hace sonar */
 function jdSuena(){ [1046,1318,1568,1318,2093].forEach((f,j)=>setTimeout(()=>beep(f,0.18,'sine',0.05),j*110)); }
 /* Nieve en el jardín mientras dura la Navidad (como en el pueblo): fase 'suelo' (manchas y tejado) y 'copos' (encima de todo) */

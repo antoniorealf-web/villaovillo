@@ -24,6 +24,7 @@ function sproutX(c,x,y,big){
 }
 function drawGarden(t){
   const cv=$('#gcv'); if(!cv) return; const c=cv.getContext('2d'), p=GD.p, d=gardenDims(p);
+  const dtj=Math.min(0.05,Math.max(0,t-(JG.last||t))); JG.last=t; jgMover(dtj); // la niña que anda (jardin-gente.js)
   c.setTransform(GD.k,0,0,GD.k,0,0);
   const sky=c.createLinearGradient(0,0,0,200); sky.addColorStop(0,'#bfe6fb'); sky.addColorStop(1,'#e7f6ff'); c.fillStyle=sky; c.fillRect(0,0,d.W,200);
   const gr=c.createLinearGradient(0,170,0,d.H); gr.addColorStop(0,'#a6d884'); gr.addColorStop(1,'#8cc46a'); c.fillStyle=gr; c.fillRect(0,170,d.W,d.H-170);
@@ -59,10 +60,10 @@ function drawGarden(t){
   // caminos, guía para colocar y cosas de atrás hacia delante (jardin-suelo.js)
   const mano=GD.mine&&GD.mano!=null&&p.jardin.cel[GD.mano]?GD.mano:null; // lo que se está moviendo
   const sel=mano!=null?p.jardin.cel[mano].k:GD.mine&&invSel&&!invSel.startsWith('fu_')&&p.inv[invSel]>0?invSel:null;
-  const cosas=jdCosas(c,p,t); if(sel) jdGuia(c,p,sel,t,mano);
+  const cosas=jdCosas(c,p,t).concat(jgCosas(c,t)); if(sel) jdGuia(c,p,sel,t,mano);
   JD_LUCES=[]; cosas.sort((a,b)=>a.y-b.y).forEach(o=>o.d()); const luces=JD_LUCES; JD_LUCES=null;
   const nl=nightLevel(); if(nl>0.3){ c.fillStyle=`rgba(25,30,70,${(0.3*nl).toFixed(3)})`; c.fillRect(0,0,d.W,d.H); // de noche, más oscuro y los faroles alumbran
-    c.save(); c.globalCompositeOperation='lighter'; luces.forEach(([x,y])=>{ const g=c.createRadialGradient(x,y,3,x,y,70); g.addColorStop(0,'rgba(255,190,100,.5)'); g.addColorStop(1,'rgba(255,190,100,0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,70,0,Math.PI*2); c.fill(); }); c.restore(); }
+    c.save(); c.globalCompositeOperation='lighter'; luces.forEach(([x,y,r,col])=>{ const g=c.createRadialGradient(x,y,2,x,y,r); g.addColorStop(0,`rgba(${col},.55)`); g.addColorStop(1,`rgba(${col},0)`); c.fillStyle=g; c.beginPath(); c.arc(x,y,r,0,Math.PI*2); c.fill(); }); c.restore(); } // luces: [x, y, radio, color]
   if(mano!=null){ const o=p.jardin.cel[mano], [w,h]=jdTam(o.k); roundRect(c,JD.gx+(mano%JD.C)*JD.cs+2,JD.gy+Math.floor(mano/JD.C)*JD.cs+2,w*JD.cs-4,h*JD.cs-4,10); c.strokeStyle=`rgba(255,210,63,${0.7+Math.sin(t*6)*0.3})`; c.lineWidth=4; c.stroke(); }
   if(sel) jdFantasma(c,p,sel,t,mano);
   jdNieve(c,d,t,'copos');

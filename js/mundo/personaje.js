@@ -16,13 +16,14 @@ function drawHero(c,x,y,o){
   c.save(); c.translate(x,y); c.scale(o.sc||1,o.sc||1);
   // sombra
   const sh=1-Math.min(0.4,(bob+hop)/20);
-  c.fillStyle='rgba(60,40,20,.18)'; c.beginPath(); c.ellipse(0,1,14*sh,4.5*sh,0,0,Math.PI*2); c.fill();
+  if(!o.sit){ c.fillStyle='rgba(60,40,20,.18)'; c.beginPath(); c.ellipse(0,1,14*sh,4.5*sh,0,0,Math.PI*2); c.fill(); } // o.sit: sentada (piernas hacia delante; caderas en y=-15)
   c.translate(0,-bob-hop);
   c.scale(o.dir||1,1);
   if(mv) c.rotate(0.06);
   const sw1=Math.sin(w), liftL=mv?Math.max(0,sw1)*4.5:0, liftR=mv?Math.max(0,-sw1)*4.5:0;
-  const armL = mv ? 0.15+0.4*Math.max(0,-sw1) : 0.22+Math.sin(t*2.2)*0.04;
-  const armR = mv ? 0.15+0.4*Math.max(0,sw1) : 0.22+Math.sin(t*2.2)*0.04;
+  let armL = mv ? 0.15+0.4*Math.max(0,-sw1) : 0.22+Math.sin(t*2.2)*0.04;
+  let armR = mv ? 0.15+0.4*Math.max(0,sw1) : 0.22+Math.sin(t*2.2)*0.04;
+  if(o.brazos==='arriba'){ armL=2.75; armR=2.75; } // agarrada a las cuerdas del columpio
   const skin=L.skin, dress=L.dress, dressD=shade(dress,-0.22), hair=L.hair, hairD=shade(hair,-0.25);
   // ---- pelo de atrás
   c.fillStyle=hair;
@@ -40,7 +41,7 @@ function drawHero(c,x,y,o){
   c.save(); c.scale(-1,1); arm(-9, armL, false); c.restore(); // brazos girados respecto a la cabeza; piernas y pies sin girar
   // ---- piernas y zapatos
   const leg=(sx,lift)=>{
-    c.save(); c.translate(sx,-15-lift);
+    c.save(); c.translate(o.sit?sx*0.5:sx,-15-lift); if(o.sit) c.rotate(-1.45);
     c.strokeStyle=OUT; c.lineWidth=8; c.lineCap='round'; c.beginPath(); c.moveTo(0,0); c.lineTo(0,11); c.stroke();
     c.strokeStyle='#ffffff'; c.lineWidth=5; c.beginPath(); c.moveTo(0,0); c.lineTo(0,11); c.stroke();
     c.fillStyle=shade(dress,-0.35); c.beginPath(); c.ellipse(1.5,13,5,3.3,0,0,Math.PI*2); c.fill(); ol(c,1.8);
