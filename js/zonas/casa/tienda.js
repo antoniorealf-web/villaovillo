@@ -22,9 +22,9 @@ function renderShop(){
   if(shopTab==='casa'){ FURN.filter(f=>!f.paq).forEach(f=>tarjetaMueble(g,p,f)); return; }
   if(p.gardenRows<6){
     const price=p.gardenRows===4?150:300, rr=p.gardenRows===4?7:20;
-    const c=el('div','sitem'); c.style.background='#eaf7e4'; c.innerHTML=`<div class="e">🪴</div><div class="n">Ampliar el jardín</div><div class="counter">+1 fila de huecos</div>`;
+    const c=el('div','sitem'); c.style.background='#eaf7e4'; c.innerHTML=`<div class="e">🪴</div><div class="n">Ampliar el jardín</div><div class="counter">+2 filas de césped</div>`;
     if(p.counters.water<rr) c.append(el('div','counter',`🔒 Riega ${rr} días (llevas ${p.counters.water})`));
-    else { const b=el('button','btn green',`🔘 ${price}`); b.disabled=p.coins<price; b.onclick=()=>{ if(p.coins<price) return; p.coins-=price; p.gardenRows++; for(let i=0;i<8;i++) p.garden.push(null); save('Amplió el jardín'); fanfare(); toast('🪴 ¡Tu jardín es más grande!'); renderShop(); }; c.append(b); }
+    else { const b=el('button','btn green',`🔘 ${price}`); b.disabled=p.coins<price; b.onclick=()=>{ if(p.coins<price) return; p.coins-=price; p.gardenRows++; for(let i=0;i<8;i++) p.garden.push(null); jdIni(p); save('Amplió el jardín'); fanfare(); toast('🪴 ¡Tu jardín es más grande!'); renderShop(); }; c.append(b); }
     g.append(c);
   }
   SHOP.filter(s=>!s.paq).forEach(s=>tarjetaJardin(g,p,s));
@@ -32,7 +32,7 @@ function renderShop(){
 }
 /* ¿Lo tiene ya? (cesta, suelo o pared) */
 function tieneMueble(p,f){ const R=roomOf(p), k='fu_'+f.k; return (p.inv[k]||0)>0||casaTiene(R,k); }
-function tieneJardin(p,s){ const k='sh_'+s.k; return (p.inv[k]||0)>0||p.garden.some(c=>c&&c.k===k); }
+function tieneJardin(p,s){ const k='sh_'+s.k; return (p.inv[k]||0)>0||jdTiene(p,k); }
 /* Cosas que solo puede comprar una de las dos (f.para = '6' o '9'): la otra la ve, pero no la compra. */
 function deOtra(p,f){ if(!f.para||f.para===grupoDe(p)) return null; const o=DB.profiles.find(q=>q&&grupoDe(q)===f.para); return o?o.name:'tu hermana'; }
 function tarjetaMueble(g,p,f){
@@ -51,12 +51,12 @@ function tarjetaMueble(g,p,f){
   c.append(b); g.append(c);
 }
 function tarjetaJardin(g,p,s){
-  const c=el('div','sitem'); c.innerHTML=`<div class="e">${s.e}</div><div class="n">${esc(s.n)}</div>`;
+  const c=el('div','sitem'), [tw,th]=jdTam('sh_'+s.k); c.innerHTML=`<div class="e">${s.e}</div><div class="n">${esc(s.n)}</div><div class="counter">${s.camino?`Camino · ${s.lote||1} baldosas`:tw*th>1?`Ocupa ${tw}×${th} casillas`:'Ocupa 1 casilla'}</div>`;
   const otra=deOtra(p,s); if(otra){ c.style.opacity=.6; c.append(el('div','counter',`⭐ Es de ${esc(otra)}. ¡Ve a verla a su casa!`)); g.append(c); return; }
   const rq=shopReq(s); if(rq&&mLevel(p,rq[0])<rq[1]){ c.style.opacity=.6; c.append(el('div','counter',`🔒 ${MAST[rq[0]].e} ${MAST[rq[0]].n} nivel ${rq[1]}`)); g.append(c); return; }
   if(s.once&&tieneJardin(p,s)){ c.append(el('div','counter','✅ Ya lo tienes')); g.append(c); return; }
   if(s.nota) c.append(el('div','counter',esc(s.nota)));
   const b=el('button','btn green',`🔘 ${s.p}`); b.disabled=p.coins<s.p;
-  b.onclick=()=>{ if(p.coins<s.p) return; p.coins-=s.p; const k='sh_'+s.k; p.inv[k]=(p.inv[k]||0)+1; save('Compró: '+s.n); sfxBuy(); toast(`${s.e} ¡${s.n} a tu cesta!`); renderShop(); };
+  b.onclick=()=>{ if(p.coins<s.p) return; p.coins-=s.p; const k='sh_'+s.k; p.inv[k]=(p.inv[k]||0)+(s.lote||1); save('Compró: '+s.n); sfxBuy(); toast(`${s.e} ¡${s.n} a tu cesta!`); renderShop(); };
   c.append(b); g.append(c);
 }

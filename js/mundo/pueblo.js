@@ -78,16 +78,17 @@ function drawShop(c,b){
   // toldo a rayas
   const y=b.y+b.h*0.38+30; for(let i=0;i<8;i++){ c.fillStyle=i%2?'#fff':'#e4574f'; c.beginPath(); const x=b.x+16+i*(b.w-32)/8; c.moveTo(x,y); c.lineTo(x+(b.w-32)/8,y); c.lineTo(x+(b.w-32)/16,y+14); c.closePath(); c.fill(); }
 }
-function drawPlot(c,b,p){
-  c.fillStyle='#8b5e3c'; roundRect(c,b.x,b.y,b.w,b.h,10); c.fill();
+function drawPlot(c,b,p){ // el jardín de cada niña visto desde el pueblo (césped, jardin-suelo.js)
+  c.fillStyle='#8fca6c'; roundRect(c,b.x,b.y,b.w,b.h,10); c.fill();
   c.strokeStyle='#d7b98c'; c.lineWidth=5; c.stroke();
-  const rows=p?p.gardenRows:4, cw=(b.w-10)/8, ch=(b.h-10)/rows, fs=Math.min(cw,ch);
-  c.fillStyle='#a8754e';
-  for(let i=0;i<8*rows;i++){ const x=b.x+5+(i%8)*cw, y=b.y+5+Math.floor(i/8)*ch; roundRect(c,x+1,y+1,cw-2,ch-2,4); c.fill(); }
-  if(!p) return;
-  c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#000';
-  p.garden.forEach((cell,i)=>{ if(!cell) return; const [em,fr]=cellEmoji(cell); const x=b.x+5+(i%8)*cw+cw/2, y=b.y+5+Math.floor(i/8)*ch+ch/2;
-    c.font=`${fs*0.9}px serif`; c.fillText(em,x,y+1); if(fr){ c.font=`${fs*0.45}px serif`; c.fillText(fr,x+cw*0.28,y+ch*0.25); } });
+  if(!p||!p.jardin) return;
+  const F=jdF(p), cw=(b.w-10)/JD.C, ch=(b.h-10)/F, cx0=b.x+5, cy0=b.y+5;
+  p.jardin.cam.forEach((k,i)=>{ if(!k) return; c.fillStyle=jdK(k)==='sh_cam_baldosa'?'#dca070':'#d2ccbf'; c.fillRect(cx0+(i%JD.C)*cw+0.5,cy0+Math.floor(i/JD.C)*ch+0.5,cw-1,ch-1); });
+  c.textAlign='center'; c.textBaseline='bottom'; c.fillStyle='#000';
+  p.jardin.cel.map((o,i)=>o&&{o,i}).filter(Boolean).sort((a,b)=>Math.floor(a.i/JD.C)+jdTam(a.o.k)[1]-Math.floor(b.i/JD.C)-jdTam(b.o.k)[1]).forEach(({o,i})=>{
+    const [w,h]=jdTam(o.k), x=cx0+(i%JD.C+w/2)*cw, y=cy0+(Math.floor(i/JD.C)+h)*ch, fs=Math.min(w*cw,h*ch)*1.15, [em,fr]=cellEmoji(o);
+    c.font=`${fs}px serif`; c.fillText(em,x,y+1); if(fr){ c.font=`${fs*0.45}px serif`; c.fillText(fr,x+fs*0.28,y-fs*0.25); } });
+  c.textBaseline='middle';
   if(p===P() && needsWater(p)){ const bob=Math.sin(tGlobal*4)*4; c.fillStyle='#fffaf1'; c.beginPath(); c.arc(b.x+b.w-6,b.y-14+bob,17,0,Math.PI*2); c.fill(); c.strokeStyle='#4a8fdc'; c.lineWidth=3; c.stroke(); c.fillStyle='#000'; c.font='20px serif'; c.fillText('💧',b.x+b.w-6,b.y-13+bob); }
   // valla
   c.strokeStyle='#f6ead2'; c.lineWidth=3; for(let x=b.x;x<=b.x+b.w;x+=14){ c.beginPath(); c.moveTo(x,b.y+b.h-2); c.lineTo(x,b.y+b.h+10); c.stroke(); }

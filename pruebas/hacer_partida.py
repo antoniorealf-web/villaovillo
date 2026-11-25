@@ -39,8 +39,13 @@ JUEGA = r"""async()=>{
   }
   await T(async()=>{ if(!ok('roomOf')) return; // casa decorada: Berta, llena a rebosar de muebles grandes; Cintia, normal
     const R0=roomOf(DB.profiles[0]), R1=roomOf(DB.profiles[1]), big=['fu_cama','fu_sofa','fu_piano','fu_mesa'];
-    for(let i=0;i<24;i++) R0.fl[i]=big[i%4]; R0.wl[0]='fu_cuadro';
-    ['fu_cama',null,'fu_mesa','fu_silla',null,'fu_alf_r',null,'fu_osito','fu_planta',null,null,'fu_sofa'].forEach((k,i)=>{ R1.fl[i]=k; }); R1.wl[2]='fu_espejo'; });
+    const pon=(p,R,i,k)=>{ if(ok('casaPon')) casaPon(p,k); else R.fl[i]=k; }; // desde el 25 nov la casa es de 10×4 (fl ya no se usa)
+    for(let i=0;i<24;i++) pon(DB.profiles[0],R0,i,big[i%4]); R0.wl[0]='fu_cuadro';
+    ['fu_cama',null,'fu_mesa','fu_silla',null,'fu_alf_r',null,'fu_osito','fu_planta',null,null,'fu_sofa'].forEach((k,i)=>{ if(k) pon(DB.profiles[1],R1,i,k); }); R1.wl[2]='fu_espejo'; });
+  await T(async()=>{ if(!ok('cellObj')) return; // jardín plantado: Berta con todo lo grande; Cintia con flores a medio crecer
+    const g0=DB.profiles[0].garden, g1=DB.profiles[1].garden, o=(k,g,n)=>({k,g,need:n});
+    [['L1',0,0],['pl_🌳',1,3],['sh_noria',0,0],['sh_tiovivo',0,0],['sh_fuente',0,0],['sh_caseta',0,0],['sh_tienda',0,0],['pl_🌷',2,2],['pl_🌲',3,3],['sh_banco',0,0]].forEach(([k,g,n],i)=>{ g0[i*3%32]=o(k,g,n); });
+    [['pl_🌼',1,2],['pl_🌻',0,2],['pl_🌹',2,2],['sh_seta',0,0],['pl_🌳',0,3],['sh_farol',0,0]].forEach(([k,g,n],i)=>{ g1[i*5]=o(k,g,n); }); });
   clearInterval(window.__auto);
   if(ok('saveQuiet')) saveQuiet(); else save();
   const st={}; for(let k=0;k<localStorage.length;k++){ const n=localStorage.key(k); if(n.startsWith('villaovillo')) st[n]=localStorage.getItem(n); }

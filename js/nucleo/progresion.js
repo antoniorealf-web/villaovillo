@@ -68,7 +68,7 @@ async function newDayCheck(){
     const gift=2+Math.min(p.days.streak,5); p.coins+=gift; p.counters.earned+=gift; addXP(p,1);
     save('Nuevo día · racha '+p.days.streak);
     if(p.days.count>1){
-      const growing=p.garden.some(c=>c&&c.g<c.need);
+      const growing=jdPlantas(p).some(c=>c.g<c.need);
       const lost = gap>1 ? ` Como estuviste ${gap-1===1?'un día':(gap-1)+' días'} sin venir, tu racha ha bajado un poquito, ¡pero no pasa nada!` : '';
       await say({face:'🧔',name:NPCS.alcalde.n,text:`¡Buenos días, ${p.name}! Tu regalo de hoy: ${gift} botones. Racha: ${p.days.streak} ${p.days.streak===1?'día':'días'} 🔥.${lost} Hay ${p.daily.list.length} encargos nuevos en el taller.${growing?' ¡Y no olvides regar tu jardín!':''}`});
     } else {
@@ -132,12 +132,12 @@ function rollPlant(p){
 function needFor(k){ if(k&&k.startsWith('pl_')){ const e=k.slice(3); return PLANTS[3].some(([x])=>x===e)?3:2; } return 0; }
 function cellObj(c){ if(!c) return null; if(typeof c==='string'){ const n=needFor(c); return {k:c,g:n,need:n}; } return c; }
 function cellEmoji(c){ if(c.g>=c.need){ const i=itemInfo(c.k); return [i.e,i.f]; } return [c.g===0?'🌱':'🌿',null]; }
-function needsWater(p){ return p.lastWater!==today() && p.garden.some(c=>c&&c.g<c.need); }
+function needsWater(p){ return p.lastWater!==today() && jdPlantas(p).some(c=>c.g<c.need); }
 async function waterGarden(){
   const p=P(); if(p.lastWater===today()){ toast('¡Ya has regado hoy! Vuelve mañana.'); return; }
   p.lastWater=today(); p.counters.water++;
   const bloomed=[];
-  p.garden.forEach(c=>{ if(c&&c.g<c.need){ c.g++; if(c.g>=c.need){ bloomed.push(c.k); p.counters.bloomed++; p.bloomedKinds[itemInfo(c.k).e]=1; } } });
+  jdPlantas(p).forEach(c=>{ if(c.g<c.need){ c.g++; if(c.g>=c.need){ bloomed.push(c.k); p.counters.bloomed++; p.bloomedKinds[itemInfo(c.k).e]=1; } } });
   const coins=1+bloomed.length; p.coins+=coins; p.counters.earned+=coins; addXP(p,1);
   GD.rain=1.8;
   save('Regó el jardín'+(bloomed.length?` · ${bloomed.length} planta(s) florecida(s)`:''));
