@@ -3,7 +3,7 @@
    CASA Y JARDÍN
    ========================================================= */
 let houseIdx=0, invSel=null;
-function openHouse(i){ houseIdx=i; invSel=null; show('house'); renderHouse(); sizeGarden(); }
+function openHouse(i){ houseIdx=i; invSel=null; GD.girar=false; GD.fantasma=null; show('house'); renderHouse(); sizeGarden(); }
 function renderHouse(){
   const p=DB.profiles[houseIdx]; const mine=houseIdx===DB.cur&&!VISIT;
   $('#house-title').textContent=mine?'🏡 Mi casa':'🏡 Casa de '+p.name;
@@ -11,7 +11,7 @@ function renderHouse(){
   $('#hv-garden').classList.toggle('sel',houseView==='garden'); $('#hv-room').classList.toggle('sel',houseView==='room');
   GD.mode=houseView; setupGardenCanvas(p,mine);
   const inv=$('#inv'); inv.innerHTML='';
-  if(houseView==='room'){ if(mine){ renderRoomPanel(inv,p); const sb=el('button','btn blue','🏪 Ir a la tienda'); sb.onclick=()=>{ shopTab='casa'; openShop(); }; inv.append(sb); } else { inv.append(el('div','help',`<div>Esta es la casa de ${esc(p.name)}. ¡Qué bonita!</div>`)); const R=roomOf(p); if(R.wl.includes('fu_pizarra')) inv.append(el('div','help','<div>🖍️ Toca su pizarra para dejarle un mensaje.</div>')); if(R.fl.includes('fu_pecera')) inv.append(el('div','help','<div>🐠 Toca su pecera para verla en grande.</div>')); } return; }
+  if(houseView==='room'){ if(mine){ renderRoomPanel(inv,p); const sb=el('button','btn blue','🏪 Ir a la tienda'); sb.onclick=()=>{ shopTab='casa'; openShop(); }; inv.append(sb); } else { inv.append(el('div','help',`<div>Esta es la casa de ${esc(p.name)}. ¡Qué bonita!</div>`)); const R=roomOf(p); if(R.wl.includes('fu_pizarra')) inv.append(el('div','help','<div>🖍️ Toca su pizarra para dejarle un mensaje.</div>')); if(casaTiene(R,'fu_pecera')) inv.append(el('div','help','<div>🐠 Toca su pecera para verla en grande.</div>')); } return; }
   if(mine){
     const growing=p.garden.some(c=>c&&c.g<c.need);
     const wb=el('button','btn '+(needsWater(p)?'blue':'')+' waterbtn', p.lastWater===today()?'💧 Regado hoy ✓':'💧 Regar el jardín');

@@ -151,9 +151,8 @@ $('#aq-back').onclick=()=>{ const p=AQ&&AQ.p; AQ=null; if(p){ houseView='room'; 
 window.addEventListener('resize',()=>{ if(curScreen==='pecera') sizeAqua(); });
 
 /* ---- tocar la pizarra o la pecera dentro de casa ---- */
-function putAway(p,k){ const R=roomOf(p); let i=R.wl.indexOf(k); if(i>=0) R.wl[i]=null; else { i=R.fl.indexOf(k); if(i>=0) R.fl[i]=null; } p.inv[k]=(p.inv[k]||0)+1; save(); toast('📦 Guardada en tu cesta (no se borra nada)'); BD=null; AQ=null; houseView='room'; openHouse(DB.profiles.indexOf(p)); }
+function putAway(p,k){ const R=roomOf(p); let i=R.wl.indexOf(k); if(i>=0){ R.wl[i]=null; p.inv[k]=(p.inv[k]||0)+1; } else (casaQuitaUno(R,k)||[k]).forEach(x=>{ p.inv[x]=(p.inv[x]||0)+1; }); save(); toast('📦 Guardada en tu cesta (no se borra nada)'); BD=null; AQ=null; houseView='room'; openHouse(DB.profiles.indexOf(p)); }
 function roomHitKey(x,y,R){
   for(let i=0;i<WALL_SLOTS.length;i++){ const [sx,sy]=WALL_SLOTS[i]; if(Math.abs(x-sx)<46&&Math.abs(y-sy)<46) return R.wl[i]; }
-  if(y<RW.rows[0][0]||x<RW.gx||x>=RW.gx+8*RW.cw) return null;
-  const row=RW.rows.findIndex(r=>y>=r[0]&&y<r[1]); if(row<0) return null; return R.fl[row*8+Math.floor((x-RW.gx)/RW.cw)];
+  const h=suToca(R,x,y); return h?(h.top>=0?h.o.en[h.top]:h.o.k):null;
 }

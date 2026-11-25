@@ -9,6 +9,8 @@ function setupGardenCanvas(p,mine){
   cv.onclick=ev=>{ const r=cv.getBoundingClientRect(), d=gardenDims(GD.p); const x=(ev.clientX-r.left)*d.W/r.width, y=(ev.clientY-r.top)*d.H/r.height;
     if(GD.mode==='room'){ roomClick(x+(GD.camX||0),y); return; }
     const col=Math.floor((x-d.gx)/d.cs), row=Math.floor((y-d.gy)/d.cs); if(col<0||col>7||row<0||row>=d.rows) return; gardenCellClick(row*8+col); };
+  cv.onpointermove=ev=>{ if(GD.mode!=='room'||!invSel){ GD.fantasma=null; return; } const r=cv.getBoundingClientRect(), d=gardenDims(GD.p); GD.fantasma={x:(ev.clientX-r.left)*d.W/r.width+(GD.camX||0),y:(ev.clientY-r.top)*d.H/r.height}; }; // silueta del mueble elegido
+  cv.onpointerleave=()=>{ GD.fantasma=null; };
   sizeGarden(); if(!GD.raf){ GD.last=performance.now(); GD.raf=requestAnimationFrame(gardenLoop); }
 }
 function sizeGarden(){ const cv=$('#gcv'); if(!cv||!GD.p) return; const w=Math.max(280,cv.parentElement.clientWidth||600); GD.roomVW=w<620?600:RW.W; GD.camX=Math.min(GD.camX||0,RW.W-GD.roomVW); const d=gardenDims(GD.p); const dpr=window.devicePixelRatio||1; cv.width=Math.round(w*dpr); cv.height=Math.round(w*d.H/d.W*dpr); cv.style.height=(w*d.H/d.W)+'px'; GD.k=w*dpr/d.W; }

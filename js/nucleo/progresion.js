@@ -29,7 +29,7 @@ const MEDALS=[
   {id:'casa20',e:'🏠',n:'Superayudante',d:'20 tareas o deberes comprobados por papá',goal:20,v:p=>p.counters.tasks,c:25},
   {id:'retos5',e:'🎩',n:'Retos del alcalde',d:'Supera 5 retos del alcalde',goal:5,v:p=>p.counters.retos,c:15},
   {id:'artista',e:'🎨',n:'Artista',d:'Guarda 5 diseños libres',goal:5,v:p=>p.counters.designs,c:8},
-  {id:'deco10',e:'🛋️',n:'Decoradora',d:'Coloca 10 cosas dentro de tu casa',goal:10,v:p=>p.room?(p.room.fl.filter(Boolean).length+p.room.wl.filter(Boolean).length):0,c:15},
+  {id:'deco10',e:'🛋️',n:'Decoradora',d:'Coloca 10 cosas dentro de tu casa',goal:10,v:p=>casaCuenta(p.room),c:15},
   {id:'ahorro',e:'💰',n:'Hucha llena',d:'Gana 500 botones en total',goal:500,v:p=>p.counters.earned,c:15}
 ];
 function checkMedals(p){

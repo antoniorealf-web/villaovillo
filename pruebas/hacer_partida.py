@@ -37,6 +37,10 @@ JUEGA = r"""async()=>{
       await W(150);
     }
   }
+  await T(async()=>{ if(!ok('roomOf')) return; // casa decorada: Berta, llena a rebosar de muebles grandes; Cintia, normal
+    const R0=roomOf(DB.profiles[0]), R1=roomOf(DB.profiles[1]), big=['fu_cama','fu_sofa','fu_piano','fu_mesa'];
+    for(let i=0;i<24;i++) R0.fl[i]=big[i%4]; R0.wl[0]='fu_cuadro';
+    ['fu_cama',null,'fu_mesa','fu_silla',null,'fu_alf_r',null,'fu_osito','fu_planta',null,null,'fu_sofa'].forEach((k,i)=>{ R1.fl[i]=k; }); R1.wl[2]='fu_espejo'; });
   clearInterval(window.__auto);
   if(ok('saveQuiet')) saveQuiet(); else save();
   const st={}; for(let k=0;k<localStorage.length;k++){ const n=localStorage.key(k); if(n.startsWith('villaovillo')) st[n]=localStorage.getItem(n); }

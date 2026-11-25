@@ -3,14 +3,15 @@
    INTERIOR DE LA CASA (decoración)
    ========================================================= */
 const FURN=[
-  {k:'silla',e:'🪑',n:'Silla',p:15,z:'floor'},{k:'mesa',n:'Mesa',p:30,z:'floor',draw:'table'},
-  {k:'cama',e:'🛏️',n:'Cama',p:45,z:'floor'},{k:'sofa',e:'🛋️',n:'Sofá',p:60,z:'floor'},
+  {k:'silla',e:'🪑',n:'Silla',p:15,z:'floor',draw:'silla'},{k:'mesa',n:'Mesa',p:30,z:'floor',draw:'table'},
+  {k:'cama',e:'🛏️',n:'Cama',p:45,z:'floor',draw:'cama'},{k:'sofa',e:'🛋️',n:'Sofá',p:60,z:'floor',draw:'sofa'},
+  {k:'lampara',e:'💡',n:'Lámpara de pie',p:35,z:'floor',draw:'lampara',nota:'De noche se enciende'},
   {k:'alf_r',n:'Alfombra roja',p:20,z:'floor',draw:'rug',col:'#e4574f'},{k:'alf_b',n:'Alfombra azul',p:20,z:'floor',draw:'rug',col:'#4a8fdc'},
   {k:'alf_m',n:'Alfombra lila',p:25,z:'floor',draw:'rug',col:'#a678d6',m:['telar',2]},
   {k:'planta',e:'🪴',n:'Planta',p:20,z:'floor'},{k:'osito',e:'🧸',n:'Osito',p:15,z:'floor'},
   {k:'lanas',e:'🧶',n:'Cesto de lanas',p:25,z:'floor',m:['telar',2]},{k:'muneca',e:'🪆',n:'Muñecas rusas',p:30,z:'floor',m:['pan',2]},
   {k:'estante',n:'Estantería con libros',p:50,z:'floor',draw:'shelf',m:['bib',2]},{k:'caballete',e:'🎨',n:'Caballete de pintura',p:50,z:'floor',m:['telar',3]},
-  {k:'pecera',n:'Pecera',p:300,z:'floor',draw:'fishbowl',d:14,once:1},{k:'piano',e:'🎹',n:'Piano',p:120,z:'floor',m:['pan',4]},
+  {k:'pecera',n:'Pecera',p:300,z:'floor',draw:'fishbowl',d:14,once:1},{k:'piano',e:'🎹',n:'Piano',p:120,z:'floor',draw:'piano',m:['pan',4]},
   {k:'pizarra',n:'Pizarra',p:40,z:'wall',draw:'board',once:1},{k:'cuadro',e:'🖼️',n:'Cuadro',p:20,z:'wall'},{k:'guirnalda',n:'Guirnalda',p:15,z:'wall',draw:'garland'},
   {k:'espejo',e:'🪞',n:'Espejo',p:25,z:'wall'},{k:'mapa',e:'🗺️',n:'Mapa del mundo',p:30,z:'wall',m:['bib',2]},
   {k:'reloj',e:'🕰️',n:'Reloj de pared',p:35,z:'wall',m:['pan',3]},{k:'estrella',e:'⭐',n:'Estrella brillante',p:40,z:'wall',m:['bib',4]}
@@ -19,23 +20,22 @@ const WALLPATS=[{k:'liso',n:'Lisa',p:0},{k:'rayas',n:'Rayas',p:30},{k:'lunares',
 const FLOORS=[{k:'madera',n:'Madera',p:0},{k:'baldosas',n:'Baldosas',p:40},{k:'moqueta',n:'Moqueta',p:50},{k:'ajedrez',n:'Ajedrez',p:70,m:['telar',4]}];
 const WALLCOLS=['#fbe9d0','#fde2e4','#e2ecfb','#e4f5df','#efe4fb','#fff6c9'];
 const WALL_SLOTS=[[122,165],[215,135],[305,180],[595,180],[690,135],[782,165]];
-const RW={W:900,H:600,gx:40,cw:90,rows:[[352,432,405,0.9],[432,505,478,1],[505,590,560,1.12]]};
+const RW={W:900,H:600,gx:40,cw:90,rows:[[352,432,405,0.9],[432,505,478,1],[505,590,560,1.12]]}; // gx, cw y rows: la casa de antes (8×3); el suelo de ahora está en suelo.js
 function furn(k){ return FURN.find(f=>'fu_'+f.k===k); }
-function roomOf(p){ p.room=p.room||{wall:'#fbe9d0',pat:'liso',floor:'madera',owned:{liso:1,madera:1},fl:Array(24).fill(null),wl:Array(6).fill(null)}; return p.room; }
+function roomOf(p){ if(!p.room){ p.room={wall:'#fbe9d0',pat:'liso',floor:'madera',owned:{liso:1,madera:1},fl:Array(24).fill(null),wl:Array(6).fill(null)}; casaNueva(p); } return p.room; }
 let houseView='garden';
-function drawFurn(c,f,x,y,s,t){
-  if(f.draw==='rug'){ c.save(); c.translate(x,y-8); c.scale(s,s*0.42); c.beginPath(); c.ellipse(0,0,52,52,0,0,Math.PI*2); c.fillStyle=f.col; c.fill(); ol(c,4); c.beginPath(); c.ellipse(0,0,38,38,0,0,Math.PI*2); c.strokeStyle='rgba(255,255,255,.7)'; c.lineWidth=5; c.setLineDash([10,8]); c.stroke(); c.setLineDash([]); c.restore(); return; }
-  c.save(); c.translate(x,y); c.scale(s,s);
-  c.fillStyle='rgba(60,40,20,.2)'; c.beginPath(); c.ellipse(0,2,34,8,0,0,Math.PI*2); c.fill();
-  if(f.draw==='table'){ for(const lx of [-26,22]){ roundRect(c,lx,-34,6,34,2); c.fillStyle='#9a6338'; c.fill(); ol(c,2); } roundRect(c,-36,-44,72,12,5); c.fillStyle='#c98f5a'; c.fill(); ol(c,2.6); c.font='22px serif'; c.textAlign='center'; c.textBaseline='bottom'; c.fillStyle='#000'; c.fillText('🌷',14,-42); }
-  else if(f.draw==='shelf'){ roundRect(c,-30,-92,60,92,6); c.fillStyle='#b97a48'; c.fill(); ol(c,2.6); for(let r=0;r<3;r++){ roundRect(c,-24,-86+r*29,48,24,2); c.fillStyle='#8a5a36'; c.fill(); ['#e4574f','#4a8fdc','#f4c430','#55b05a','#a678d6'].forEach((col,i)=>{ if((i+r)%4===3) return; roundRect(c,-22+i*9,-82+r*29+(i%2)*3,7,20-(i%2)*3,1); c.fillStyle=col; c.fill(); ol(c,1); }); } }
-  else if(f.draw==='fishbowl'){ roundRect(c,-26,-14,52,14,4); c.fillStyle='#9a6338'; c.fill(); ol(c,2); c.beginPath(); c.arc(0,-46,32,0,Math.PI*2); c.fillStyle='rgba(190,235,255,.55)'; c.fill(); ol(c,2.6);
+function drawFurn(c,f,x,y,s,t,o){ o=o||{}; const tm=muTam(f);
+  if(f.draw==='rug'){ c.save(); c.translate(x,y-8); c.scale(s*(o.w||1)*0.9,s*0.42); c.beginPath(); c.ellipse(0,0,52,52,0,0,Math.PI*2); c.fillStyle=f.col; c.fill(); ol(c,4); c.beginPath(); c.ellipse(0,0,38,38,0,0,Math.PI*2); c.strokeStyle='rgba(255,255,255,.7)'; c.lineWidth=5; c.setLineDash([10,8]); c.stroke(); c.setLineDash([]); c.restore(); return; }
+  c.save(); c.translate(x,y); c.scale(o.g?-s:s,s);
+  if(typeof f.draw==='string'&&typeof MUEBLE_DIB!=='undefined'&&MUEBLE_DIB[f.draw]){ MUEBLE_DIB[f.draw](c,t||0,o); c.restore(); return; } // muebles dibujados (muebles.js)
+  c.fillStyle='rgba(60,40,20,.2)'; c.beginPath(); c.ellipse(0,2,34*(tm.w>1?tm.w*0.9:Math.min(1,tm.t)),8,0,0,Math.PI*2); c.fill();
+  if(f.draw==='fishbowl'){ roundRect(c,-26,-14,52,14,4); c.fillStyle='#9a6338'; c.fill(); ol(c,2); c.beginPath(); c.arc(0,-46,32,0,Math.PI*2); c.fillStyle='rgba(190,235,255,.55)'; c.fill(); ol(c,2.6);
     c.save(); c.beginPath(); c.arc(0,-46,30,0,Math.PI*2); c.clip(); c.fillStyle='#6ab7e6'; c.fillRect(-32,-58,64,44); c.fillStyle='#e8d5a6'; c.fillRect(-32,-24,64,10);
     for(let i=0;i<3;i++){ const fx=Math.sin(t*0.9+i*2)*18, fy=-40+i*7+Math.sin(t*2+i)*2, d=Math.cos(t*0.9+i*2)>0?1:-1; c.save(); c.translate(fx,fy); c.scale(d,1); c.fillStyle=['#f29b38','#e4574f','#f4c430'][i]; c.beginPath(); c.ellipse(0,0,6,4,0,0,Math.PI*2); c.fill(); c.beginPath(); c.moveTo(-5,0); c.lineTo(-10,-4); c.lineTo(-10,4); c.closePath(); c.fill(); c.restore(); }
     c.strokeStyle='#55b05a'; c.lineWidth=3; c.beginPath(); c.moveTo(-14,-16); c.quadraticCurveTo(-18+Math.sin(t)*3,-28,-12,-38); c.stroke(); c.restore();
     c.strokeStyle='rgba(255,255,255,.8)'; c.lineWidth=3; c.beginPath(); c.arc(-8,-56,14,Math.PI*1.1,Math.PI*1.5); c.stroke(); }
-  else if(typeof f.draw==='function') f.draw(c,t||0); // dibujo propio (p. ej. los muebles de un paquete), con el pie en (0,0)
-  else { c.font='58px serif'; c.textAlign='center'; c.textBaseline='bottom'; c.fillStyle='#000'; c.fillText(f.e,0,4); }
+  else if(typeof f.draw==='function'){ if(tm.t!==1) c.scale(tm.t,tm.t); f.draw(c,t||0); } // dibujo propio (p. ej. los muebles de un paquete), con el pie en (0,0)
+  else { c.font=Math.round(58*tm.t)+'px serif'; c.textAlign='center'; c.textBaseline='bottom'; c.fillStyle='#000'; c.fillText(f.e,0,4); }
   c.restore();
 }
 function drawWallItem(c,f,x,y,t){
@@ -120,44 +120,65 @@ function drawRoom(t){
   WALL_SLOTS.forEach(([x,y],i)=>{ const it=R.wl[i];
     if(!it&&sel&&sel.z==='wall'){ c.strokeStyle=`rgba(255,255,255,${0.6+Math.sin(t*5)*0.3})`; c.lineWidth=4; c.setLineDash([8,6]); roundRect(c,x-40,y-40,80,80,14); c.stroke(); c.setLineDash([]); }
     if(it){ const f=furn(it); if(f) drawWallItem(c,f,x,y,t); } });
-  // suelo: rejilla
-  const items=[];
-  for(let i=0;i<24;i++){ const col=i%8,row=Math.floor(i/8), [y0,y1,by,s]=RW.rows[row], x=RW.gx+col*RW.cw+RW.cw/2, it=R.fl[i];
-    if(!it&&sel&&sel.z==='floor'){ c.strokeStyle=`rgba(255,255,255,${0.55+Math.sin(t*5)*0.3})`; c.lineWidth=3; c.setLineDash([8,6]); roundRect(c,RW.gx+col*RW.cw+6,y0+4,RW.cw-12,y1-y0-8,12); c.stroke(); c.setLineDash([]); }
-    if(it){ const f=furn(it); if(f) items.push({f,x,by,s,rug:f.draw==='rug'}); } }
-  items.filter(o=>o.rug).forEach(o=>drawFurn(c,o.f,o.x,o.by,o.s,t));
-  // muebles y gente, de atrás hacia delante
-  const cosas=items.filter(o=>!o.rug).map(o=>({y:o.by,d:()=>drawFurn(c,o.f,o.x,o.by,o.s,t)}))
-    .concat(roomGente().map(a=>({y:a.y,d:()=>drawGenteRoom(c,a,t)})));
+  // suelo: alfombras, guía para colocar, muebles y gente de atrás hacia delante (suelo.js)
+  if(sel&&sel.z==='floor') suGuia(c,R,sel,t);
+  const cosas=suCosas(c,R,p,t).concat(roomGente().map(a=>({y:a.y,d:()=>drawGenteRoom(c,a,t)})));
   cosas.sort((a,b)=>a.y-b.y).forEach(o=>o.d());
+  if(sel&&sel.z==='floor') suFantasma(c,R,sel,p,t);
+  // de noche el cuarto se oscurece un poco y las lámparas dan luz
+  const nl=nightLevel(); if(nl>0.3){ c.fillStyle=`rgba(25,30,70,${(0.24*nl).toFixed(3)})`; c.fillRect(0,0,RW.W,RW.H);
+    c.save(); c.globalCompositeOperation='lighter'; SU.luces.forEach(([x,y,s])=>{ const g=c.createRadialGradient(x,y,4,x,y,150*s); g.addColorStop(0,'rgba(255,190,100,.42)'); g.addColorStop(1,'rgba(255,190,100,0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,150*s,0,Math.PI*2); c.fill(); }); c.restore(); }
 }
+function roomAbre(k,p){ const f=furn(k); if(!f) return false;
+  if(typeof f.abre==='function'){ beep(700,0.05); f.abre(p); return true; } // muebles que se abren (p. ej. el Belén)
+  if(k==='fu_pizarra'){ beep(700,0.05); openBoardView(p); return true; }
+  if(k==='fu_pecera'){ beep(700,0.05); openAqua(p); return true; }
+  return false; }
 function roomClick(x,y){
-  const hk=roomHitKey(x,y,roomOf(GD.p)), fa=hk&&furn(hk);
-  if(fa&&typeof fa.abre==='function'&&!(GD.mine&&invSel)){ beep(700,0.05); fa.abre(GD.p); return; } // muebles que se abren (p. ej. el Belén)
-  if((hk==='fu_pizarra'||hk==='fu_pecera')&&!(GD.mine&&invSel)){ beep(700,0.05); if(hk==='fu_pizarra') openBoardView(GD.p); else openAqua(GD.p); return; }
-  const p=GD.p, R=roomOf(p); if(!GD.mine){ roomAndar(x,y); return; } // de visita: solo se pasea
-  const sel=invSel&&invSel.startsWith('fu_')?furn(invSel):null;
+  const p=GD.p, R=roomOf(p), mine=GD.mine, sel=mine&&invSel&&invSel.startsWith('fu_')?furn(invSel):null;
+  // la pared
   for(let i=0;i<WALL_SLOTS.length;i++){ const [sx,sy]=WALL_SLOTS[i]; if(Math.abs(x-sx)<46&&Math.abs(y-sy)<46){
+    if(R.wl[i]&&!sel&&!GD.girar&&roomAbre(R.wl[i],p)) return;
+    if(!mine) return;
     if(R.wl[i]){ p.inv[R.wl[i]]=(p.inv[R.wl[i]]||0)+1; R.wl[i]=null; beep(350,0.05); }
     else if(sel&&sel.z==='wall'){ R.wl[i]=invSel; if(!--p.inv[invSel]){ delete p.inv[invSel]; invSel=null; } beep(760,0.07,'triangle'); }
     else { toast(sel?'Eso va en el suelo':'Elige algo para la pared en tu cesta'); return; }
     save(); renderHouse(); return; } }
-  if(y<RW.rows[0][0]||x<RW.gx||x>=RW.gx+8*RW.cw){ roomAndar(x,y); return; }
-  const row=RW.rows.findIndex(r=>y>=r[0]&&y<r[1]); if(row<0) return; const i=row*8+Math.floor((x-RW.gx)/RW.cw);
-  if(R.fl[i]){ p.inv[R.fl[i]]=(p.inv[R.fl[i]]||0)+1; R.fl[i]=null; beep(350,0.05); }
-  else if(sel&&sel.z==='floor'){ R.fl[i]=invSel; if(!--p.inv[invSel]){ delete p.inv[invSel]; invSel=null; } beep(760,0.07,'triangle'); }
-  else if(sel){ toast('Eso va en la pared'); return; }
-  else { roomAndar(x,y); return; } // suelo libre y nada elegido: andar hasta allí
-  save(); renderHouse();
+  const h=suToca(R,x,y);
+  // dar la vuelta a los muebles
+  if(mine&&GD.girar){ if(h){ h.o.g=h.o.g?0:1; beep(620,0.05); save(); } else toast('Toca un mueble para darle la vuelta'); return; }
+  // con algo elegido en la cesta: ponerlo en el suelo o encima de un mueble
+  if(sel){ if(sel.z==='wall'){ toast('Eso va en la pared'); return; }
+    const res=suIntento(R,sel,x,y);
+    if(!res){ toast(suCelda(x,y)||h?'Ahí no cabe. ¡Busca un hueco verde!':'Toca el suelo'); return; }
+    if(res.tipo==='encima'){ const o=R.suelo[res.i]; o.en=o.en||[]; o.en[res.j]=invSel; }
+    else capaDe(R,sel)[res.r*10+res.a]=esAlf(sel)?invSel:{k:invSel};
+    if(!--p.inv[invSel]){ delete p.inv[invSel]; invSel=null; } GD.fantasma=null;
+    beep(760,0.07,'triangle'); save(); renderHouse(); return; }
+  // sin nada elegido: abrir, devolver a la cesta o andar
+  if(h){ if(h.top>=0){ const k2=h.o.en[h.top]; if(roomAbre(k2,p)) return; if(!mine){ roomAndar(x,y); return; }
+      h.o.en[h.top]=null; p.inv[k2]=(p.inv[k2]||0)+1; beep(350,0.05); save(); renderHouse(); return; }
+    if(roomAbre(h.o.k,p)) return; if(!mine){ roomAndar(x,y); return; }
+    R.suelo[h.i]=null; [h.o.k].concat((h.o.en||[]).filter(Boolean)).forEach(k=>{ p.inv[k]=(p.inv[k]||0)+1; }); beep(350,0.05); save(); renderHouse(); return; }
+  const cel=suCelda(x,y);
+  if(mine&&cel){ const ai=suMapa(R.alf)[cel.i]; if(ai>=0){ const k=R.alf[ai]; R.alf[ai]=null; p.inv[k]=(p.inv[k]||0)+1; beep(350,0.05); save(); renderHouse(); return; } }
+  roomAndar(x,y);
 }
 function renderRoomPanel(inv,p){
   const R=roomOf(p);
+  if(!VISIT&&(R.ampliada===1||(R.aviso&&R.aviso.length))){ // aviso de la casa nueva, una sola vez
+    const cuenta={}; (R.aviso||[]).forEach(k=>{ if(furn(k)) cuenta[k]=(cuenta[k]||0)+1; }); const fuera=Object.entries(cuenta).map(([k,n])=>(n>1?n+' × ':'')+'«'+furn(k).n+'»'), nueva=R.ampliada===1;
+    R.ampliada=2; R.aviso=[]; save();
+    const lista=fuera.length>1?fuera.slice(0,-1).join(', ')+' y '+fuera[fuera.length-1]:fuera[0];
+    setTimeout(()=>say({face:'🏠',name:'¡Casa nueva!',text:(nueva?'¡Han ampliado tu casa! Ahora hay más sitio y los muebles grandes ocupan su espacio de verdad. ':'')+(fuera.length?`No todo cabía: ${lista} ${fuera.length>1?'están':'está'} en tu cesta. `:'')+(nueva?'Y ahora puedes poner el osito o la planta encima de la cama, la mesa o el sofá.':'')}),350); }
   inv.append(el('div','lbl','Mis muebles'));
   const ig=el('div','invgrid'); const keys=Object.keys(p.inv).filter(k=>k.startsWith('fu_')&&p.inv[k]>0);
   if(!keys.length) ig.append(el('div','counter','No tienes muebles. ¡Cómpralos en la tienda, en la sección «Para tu casa»!'));
   keys.forEach(k=>{ const f=furn(k); const b=el('button','invitem'+(invSel===k?' sel':'')); b.innerHTML=`${f.e||({rug:'🟠',table:'🟫',shelf:'📚',fishbowl:'🐠',garland:'🎏',board:'🖍️'}[f.draw])}<small>×${p.inv[k]}</small>`; b.title=f.n;
-    b.onclick=()=>{ invSel=invSel===k?null:k; beep(600,0.04); renderHouse(); if(invSel) toast(`${f.n}: toca ${f.z==='wall'?'un hueco de la pared':'el suelo'}`,1800); }; ig.append(b); });
+    b.onclick=()=>{ invSel=invSel===k?null:k; GD.girar=false; GD.fantasma=null; beep(600,0.04); renderHouse(); if(invSel) toast(`${f.n}: toca ${f.z==='wall'?'un hueco de la pared':muTam(f).sobre?'un hueco verde o un punto verde encima de un mueble':'un hueco verde'}`,2200); }; ig.append(b); });
   inv.append(ig);
+  const gb=el('button','btn'+(GD.girar?' blue':''),GD.girar?'↔️ Toca un mueble para girarlo · Terminar':'↔️ Dar la vuelta a un mueble');
+  gb.onclick=()=>{ GD.girar=!GD.girar; invSel=null; beep(600,0.04); renderHouse(); }; inv.append(gb);
   inv.append(el('div','lbl','🖌️ Color de la pared'));
   const wc=el('div','choice'); WALLCOLS.forEach(col=>{ const d=el('button','dot'+(R.wall===col?' sel':'')); d.style.background=col; d.onclick=()=>{ R.wall=col; save(); renderHouse(); }; wc.append(d); }); inv.append(wc);
   const opts=(list,cur,set,label)=>{ inv.append(el('div','lbl',label)); const row=el('div','choice');
@@ -170,7 +191,7 @@ function renderRoomPanel(inv,p){
       row.append(b); }); inv.append(row); };
   opts(WALLPATS,R.pat,v=>R.pat=v,'🧱 Papel de la pared');
   opts(FLOORS,R.floor,v=>R.floor=v,'🪵 Suelo');
-  inv.append(el('div','help','<div>💡 Elige un mueble de tu cesta y toca el suelo o un hueco de la pared. Si tocas algo ya colocado, vuelve a tu cesta. La pizarra, la pecera y el Belén se abren al tocarlos.</div>'));
+  inv.append(el('div','help','<div>💡 Elige un mueble de tu cesta y toca un hueco verde del suelo o un hueco de la pared. Las cosas pequeñas (el osito, la planta…) se pueden poner encima de la cama, la mesa o el sofá. Si tocas algo ya colocado, vuelve a tu cesta. La pizarra, la pecera y el Belén se abren al tocarlos.</div>'));
 }
 
 $('#hv-garden').onclick=()=>{ houseView='garden'; invSel=null; renderHouse(); sizeGarden(); };

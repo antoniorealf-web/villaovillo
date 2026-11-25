@@ -31,14 +31,15 @@ function renderShop(){
   const lock=el('div','sitem'); lock.style.opacity=.6; lock.innerHTML='<div class="e">🤖</div><div class="n">Robot jardinero</div><div class="counter">🔒 Muy pronto…</div>'; g.append(lock);
 }
 /* ¿Lo tiene ya? (cesta, suelo o pared) */
-function tieneMueble(p,f){ const R=roomOf(p), k='fu_'+f.k; return (p.inv[k]||0)>0||R.fl.includes(k)||R.wl.includes(k); }
+function tieneMueble(p,f){ const R=roomOf(p), k='fu_'+f.k; return (p.inv[k]||0)>0||casaTiene(R,k); }
 function tieneJardin(p,s){ const k='sh_'+s.k; return (p.inv[k]||0)>0||p.garden.some(c=>c&&c.k===k); }
 /* Cosas que solo puede comprar una de las dos (f.para = '6' o '9'): la otra la ve, pero no la compra. */
 function deOtra(p,f){ if(!f.para||f.para===grupoDe(p)) return null; const o=DB.profiles.find(q=>q&&grupoDe(q)===f.para); return o?o.name:'tu hermana'; }
 function tarjetaMueble(g,p,f){
   const c=el('div','sitem'); const ic=document.createElement('canvas'); const dpr=window.devicePixelRatio||1; ic.width=90*dpr; ic.height=80*dpr; ic.style.width='90px'; ic.style.height='80px'; const cx=ic.getContext('2d'); cx.scale(dpr,dpr);
-  if(f.z==='wall') drawWallItem(cx,f,45,40,0); else drawFurn(cx,f,45,f.draw==='shelf'?80:74,f.draw==='shelf'?0.8:0.95,0);
-  c.append(ic); c.append(el('div','n',esc(f.n))); c.append(el('div','counter',f.z==='wall'?'Para la pared':'Para el suelo'));
+  const tm=muTam(f);
+  if(f.z==='wall') drawWallItem(cx,f,45,40,0); else drawFurn(cx,f,45,76,Math.min(0.95,84/(tm.w*76+12),70/muAlto(tm)),0,{w:tm.w,col:p.color});
+  c.append(ic); c.append(el('div','n',esc(f.n))); c.append(el('div','counter',f.z==='wall'?'Para la pared':esAlf(f)?`Alfombra · ocupa ${tm.w} casillas`:tm.w>1?`Para el suelo · ocupa ${tm.w} casillas`:tm.sobre?'Para el suelo o encima de un mueble':'Para el suelo · ocupa 1 casilla'));
   const otra=deOtra(p,f); if(otra){ c.style.opacity=.6; c.append(el('div','counter',`⭐ Es de ${esc(otra)}. ¡Ve a verla a su casa!`)); g.append(c); return; }
   if(f.m&&mLevel(p,f.m[0])<f.m[1]){ c.style.opacity=.6; c.append(el('div','counter',`🔒 ${MAST[f.m[0]].e} ${MAST[f.m[0]].n} nivel ${f.m[1]}`)); g.append(c); return; }
   if(f.d&&(p.days.count||0)<f.d){ c.style.opacity=.6; c.append(el('div','counter',`🔒 Cuando hayas jugado ${f.d} días (llevas ${p.days.count||0})`)); g.append(c); return; }

@@ -86,6 +86,7 @@ async def paseo_alcalde(b, path):
     ultima = json.load(open(sorted(glob.glob(os.path.join(RAIZ, 'pruebas', 'partidas', '*.json')))[-1]))
     ctx, pg, errs = await pagina(b, path, ultima)
     await pg.evaluate(SIN_DIALOGOS)
+    await pg.evaluate("()=>saveQuiet()")  # lo que añade migrate() al abrir una partida antigua se guarda antes de empezar (no es cosa del paseo)
     antes = await guardado(pg); antesDB = json.loads(await pg.evaluate("()=>JSON.stringify(DB.profiles)"))
     await pg.evaluate("""async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms));
       renderAlcalde(); show('alcalde'); await W(100);

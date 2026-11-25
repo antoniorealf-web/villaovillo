@@ -24,6 +24,7 @@ function migrate(p){
   if(p.panLv==null) p.panLv=3; // escalera de cuentas del grupo 9 (0-5), ver PAN9_LEVELS
   p.bridge=p.bridge||0; p.tlv=p.tlv||{}; p.tlvRun=p.tlvRun||{}; p.newsSeen=p.newsSeen||0; p.code=p.code||'';
   p.garden=(p.garden||[]).map(cellObj); while(p.garden.length<8*p.gardenRows) p.garden.push(null);
+  if(p.room&&typeof casaNueva==='function'){ p.room.wl=p.room.wl||Array(6).fill(null); casaNueva(p); casaReconcilia(p); } // casa de 10×4 (suelo.js): la de antes (fl) no se toca
   return p;
 }
 /* Protección del guardado: si la partida no se puede leer, se aparta en KEY+'.danada' en vez de perderse;
