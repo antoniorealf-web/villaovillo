@@ -114,3 +114,8 @@ function jdEncima(c,o,x,y,t,esc,i){ const S=jdSitios(o); if(!o.en||!S.length) re
     JD_COLG._suelo=st.y; const f=JD_COLG[jdK(k2)]; if(f) f(c,t,i*3+j); c.restore(); }); }
 /* Tocar la campanilla la hace sonar */
 function jdSuena(){ [1046,1318,1568,1318,2093].forEach((f,j)=>setTimeout(()=>beep(f,0.18,'sine',0.05),j*110)); }
+/* Nieve en el jardín mientras dura la Navidad (como en el pueblo): fase 'suelo' (manchas y tejado) y 'copos' (encima de todo) */
+function jdNieve(c,d,t,fase){ if(!plNieve()) return;
+  if(fase==='suelo'){ c.fillStyle='rgba(255,255,255,.85)'; for(let i=0;i<34;i++){ const x=d.gx+seeded(i+900)*JD.C*JD.cs, y=d.gy+seeded(i+950)*d.rows*JD.cs, r=10+seeded(i+990)*26; c.beginPath(); c.ellipse(x,y,r,r*0.4,0,0,Math.PI*2); c.fill(); }
+    c.beginPath(); c.moveTo(450-430*0.62,6+4); c.quadraticCurveTo(450,6-4,450+430*0.62,6+4); c.lineTo(450+430*0.62,6+12); for(let x=430;x>=-430;x-=24) c.quadraticCurveTo(450+(x-12)*0.62,6+20,450+(x-24)*0.62,6+12); c.closePath(); c.fillStyle='#fff'; c.fill(); return; }
+  c.fillStyle='rgba(255,255,255,.9)'; for(let i=0;i<60;i++){ const x=(seeded(i+300)*d.W+Math.sin(t*0.8+i)*14)%d.W, y=(seeded(i+400)*d.H+t*(22+seeded(i)*18))%d.H; c.beginPath(); c.arc(x,y,1.6+seeded(i+500)*1.8,0,Math.PI*2); c.fill(); } }

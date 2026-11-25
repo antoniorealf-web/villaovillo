@@ -55,6 +55,7 @@ function drawGarden(t){
   c.strokeStyle='#f1e6cf'; c.lineWidth=4; c.stroke();
   for(let x=fx+6;x<=fx+fw;x+=34){ picket(x,fy+fh-6); if(x<fx+fw/2-50||x>fx+fw/2+50) picket(x,fy+6); }
   for(let y=fy+40;y<fy+fh-20;y+=34){ picket(fx+6,y); picket(fx+fw-6,y); }
+  jdNieve(c,d,t,'suelo'); // en Navidad
   // caminos, guía para colocar y cosas de atrás hacia delante (jardin-suelo.js)
   const mano=GD.mine&&GD.mano!=null&&p.jardin.cel[GD.mano]?GD.mano:null; // lo que se está moviendo
   const sel=mano!=null?p.jardin.cel[mano].k:GD.mine&&invSel&&!invSel.startsWith('fu_')&&p.inv[invSel]>0?invSel:null;
@@ -64,6 +65,7 @@ function drawGarden(t){
     c.save(); c.globalCompositeOperation='lighter'; luces.forEach(([x,y])=>{ const g=c.createRadialGradient(x,y,3,x,y,70); g.addColorStop(0,'rgba(255,190,100,.5)'); g.addColorStop(1,'rgba(255,190,100,0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,70,0,Math.PI*2); c.fill(); }); c.restore(); }
   if(mano!=null){ const o=p.jardin.cel[mano], [w,h]=jdTam(o.k); roundRect(c,JD.gx+(mano%JD.C)*JD.cs+2,JD.gy+Math.floor(mano/JD.C)*JD.cs+2,w*JD.cs-4,h*JD.cs-4,10); c.strokeStyle=`rgba(255,210,63,${0.7+Math.sin(t*6)*0.3})`; c.lineWidth=4; c.stroke(); }
   if(sel) jdFantasma(c,p,sel,t,mano);
+  jdNieve(c,d,t,'copos');
   // chispas al plantar
   GD.spark.forEach(s=>{ const x=s.x, y=s.y; for(let k=0;k<8;k++){ const a=k/8*Math.PI*2, r=10+s.t*50; c.fillStyle=`rgba(255,230,120,${1-s.t/1.2})`; c.beginPath(); c.arc(x+Math.cos(a)*r,y+Math.sin(a)*r,4,0,Math.PI*2); c.fill(); } });
   // lluvia al regar
