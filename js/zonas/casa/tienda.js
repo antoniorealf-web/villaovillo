@@ -51,7 +51,7 @@ function tarjetaMueble(g,p,f){
   c.append(b); g.append(c);
 }
 function tarjetaJardin(g,p,s){
-  const c=el('div','sitem'), [tw,th]=jdTam('sh_'+s.k); c.innerHTML=`<div class="e">${s.e}</div><div class="n">${esc(s.n)}</div><div class="counter">${s.camino?`Camino · ${s.lote||1} baldosas`:tw*th>1?`Ocupa ${tw}×${th} casillas`:'Ocupa 1 casilla'}</div>`;
+  const c=el('div','sitem'), [tw,th]=jdTam('sh_'+s.k); c.innerHTML=`<div class="e">${s.e}</div><div class="n">${esc(s.n)}</div><div class="counter">${s.abono?`${s.lote} dosis · tienes ${p.inv.sh_abono||0}`:s.camino?`Camino · ${s.lote||1} baldosas`:tw*th>1?`Ocupa ${tw}×${th} casillas`:'Ocupa 1 casilla'}</div>`;
   const otra=deOtra(p,s); if(otra){ c.style.opacity=.6; c.append(el('div','counter',`⭐ Es de ${esc(otra)}. ¡Ve a verla a su casa!`)); g.append(c); return; }
   const rq=shopReq(s); if(rq&&mLevel(p,rq[0])<rq[1]){ c.style.opacity=.6; c.append(el('div','counter',`🔒 ${MAST[rq[0]].e} ${MAST[rq[0]].n} nivel ${rq[1]}`)); g.append(c); return; }
   if(s.once&&tieneJardin(p,s)){ c.append(el('div','counter','✅ Ya lo tienes')); g.append(c); return; }

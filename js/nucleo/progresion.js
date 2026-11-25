@@ -68,7 +68,7 @@ async function newDayCheck(){
     const gift=2+Math.min(p.days.streak,5); p.coins+=gift; p.counters.earned+=gift; addXP(p,1);
     save('Nuevo día · racha '+p.days.streak);
     if(p.days.count>1){
-      const growing=jdPlantas(p).some(c=>c.g<c.need);
+      const growing=jdPlantas(p).some(plQuiereAgua)||plPidenAbono(p).length>0;
       const lost = gap>1 ? ` Como estuviste ${gap-1===1?'un día':(gap-1)+' días'} sin venir, tu racha ha bajado un poquito, ¡pero no pasa nada!` : '';
       await say({face:'🧔',name:NPCS.alcalde.n,text:`¡Buenos días, ${p.name}! Tu regalo de hoy: ${gift} botones. Racha: ${p.days.streak} ${p.days.streak===1?'día':'días'} 🔥.${lost} Hay ${p.daily.list.length} encargos nuevos en el taller.${growing?' ¡Y no olvides regar tu jardín!':''}`});
     } else {
@@ -132,18 +132,20 @@ function rollPlant(p){
 function needFor(k){ if(k&&k.startsWith('pl_')){ const e=k.slice(3); return PLANTS[3].some(([x])=>x===e)?3:2; } return 0; }
 function cellObj(c){ if(!c) return null; if(typeof c==='string'){ const n=needFor(c); return {k:c,g:n,need:n}; } return c; }
 function cellEmoji(c){ if(c.g>=c.need){ const i=itemInfo(c.k); return [i.e,i.f]; } return [c.g===0?'🌱':'🌿',null]; }
-function needsWater(p){ return p.lastWater!==today() && jdPlantas(p).some(c=>c.g<c.need); }
+function needsWater(p){ return p.lastWater!==today() && jdPlantas(p).some(plQuiereAgua); }
 async function waterGarden(){
   const p=P(); if(p.lastWater===today()){ toast('¡Ya has regado hoy! Vuelve mañana.'); return; }
   p.lastWater=today(); p.counters.water++;
-  const bloomed=[];
-  jdPlantas(p).forEach(c=>{ if(c.g<c.need){ c.g++; if(c.g>=c.need){ bloomed.push(c.k); p.counters.bloomed++; p.bloomedKinds[itemInfo(c.k).e]=1; } } });
-  const coins=1+bloomed.length; p.coins+=coins; p.counters.earned+=coins; addXP(p,1);
+  const R=plRiega(p), bloomed=R.flor; // etapas y abono: jardin-plantas.js
+  bloomed.forEach(k=>{ p.counters.bloomed++; p.bloomedKinds[itemInfo(k).e]=1; });
+  const pideAhora=plPidenAbono(p).length;
+  const coins=1+bloomed.length+2*R.etapa.length; p.coins+=coins; p.counters.earned+=coins; addXP(p,1);
   GD.rain=1.8;
   save('Regó el jardín'+(bloomed.length?` · ${bloomed.length} planta(s) florecida(s)`:''));
   [700,800,900].forEach((f,i)=>setTimeout(()=>beep(f,0.08,'sine',0.04),i*90));
   renderHouse();
-  const names=bloomed.map(k=>itemInfo(k).n);
-  await say({face:'💧',name:'¡Jardín regado!',text: bloomed.length?`¡Ha${bloomed.length>1?'n':''} florecido: ${names.join(', ')}! Ganas ${coins} botones.`:`Tus plantas están creciendo. Ganas ${coins} botones. ¡Vuelve mañana a regarlas!`});
+  const names=bloomed.map(k=>itemInfo(k).n), et=R.etapa.map(o=>`tu ${itemInfo(o.k).n.toLowerCase()} ya es un ${plEtapa(o).n}`);
+  const txt=(bloomed.length?`¡Ha${bloomed.length>1?'n':''} crecido del todo: ${names.join(', ')}! `:'')+(et.length?`¡Mira: ${et.join(' y ')}! `:'')+(!bloomed.length&&!et.length?'Tus plantas están creciendo. ':'')+`Ganas ${coins} botones.`+(pideAhora?` ${pideAhora===1?'Una planta pide':pideAhora+' plantas piden'} abono 🌾: sin abono no crecen.`:' ¡Vuelve mañana a regarlas!');
+  await say({face:'💧',name:'¡Jardín regado!',text:txt});
   await afterRewards(); renderHouse();
 }

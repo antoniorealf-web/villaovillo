@@ -9,7 +9,7 @@ function setupGardenCanvas(p,mine){
   cv.onclick=ev=>{ const r=cv.getBoundingClientRect(), d=gardenDims(GD.p); const x=(ev.clientX-r.left)*d.W/r.width, y=(ev.clientY-r.top)*d.H/r.height;
     if(GD.mode==='room'){ roomClick(x+(GD.camX||0),y); return; }
     jardinClick(x,y); };
-  cv.onpointermove=ev=>{ if(!invSel){ GD.fantasma=null; return; } const r=cv.getBoundingClientRect(), d=gardenDims(GD.p); GD.fantasma={x:(ev.clientX-r.left)*d.W/r.width+(GD.mode==='room'?GD.camX||0:0),y:(ev.clientY-r.top)*d.H/r.height}; }; // silueta de lo elegido
+  cv.onpointermove=ev=>{ if(!invSel&&GD.mano==null){ GD.fantasma=null; return; } const r=cv.getBoundingClientRect(), d=gardenDims(GD.p); GD.fantasma={x:(ev.clientX-r.left)*d.W/r.width+(GD.mode==='room'?GD.camX||0:0),y:(ev.clientY-r.top)*d.H/r.height}; }; // silueta de lo elegido
   cv.onpointerleave=()=>{ GD.fantasma=null; };
   sizeGarden(); if(!GD.raf){ GD.last=performance.now(); GD.raf=requestAnimationFrame(gardenLoop); }
 }
@@ -56,10 +56,12 @@ function drawGarden(t){
   for(let x=fx+6;x<=fx+fw;x+=34){ picket(x,fy+fh-6); if(x<fx+fw/2-50||x>fx+fw/2+50) picket(x,fy+6); }
   for(let y=fy+40;y<fy+fh-20;y+=34){ picket(fx+6,y); picket(fx+fw-6,y); }
   // caminos, guía para colocar y cosas de atrás hacia delante (jardin-suelo.js)
-  const sel=GD.mine&&invSel&&!invSel.startsWith('fu_')&&p.inv[invSel]>0?invSel:null;
-  const cosas=jdCosas(c,p,t); if(sel) jdGuia(c,p,sel,t);
+  const mano=GD.mine&&GD.mano!=null&&p.jardin.cel[GD.mano]?GD.mano:null; // lo que se está moviendo
+  const sel=mano!=null?p.jardin.cel[mano].k:GD.mine&&invSel&&!invSel.startsWith('fu_')&&p.inv[invSel]>0?invSel:null;
+  const cosas=jdCosas(c,p,t); if(sel) jdGuia(c,p,sel,t,mano);
   cosas.sort((a,b)=>a.y-b.y).forEach(o=>o.d());
-  if(sel) jdFantasma(c,p,sel,t);
+  if(mano!=null){ const o=p.jardin.cel[mano], [w,h]=jdTam(o.k); roundRect(c,JD.gx+(mano%JD.C)*JD.cs+2,JD.gy+Math.floor(mano/JD.C)*JD.cs+2,w*JD.cs-4,h*JD.cs-4,10); c.strokeStyle=`rgba(255,210,63,${0.7+Math.sin(t*6)*0.3})`; c.lineWidth=4; c.stroke(); }
+  if(sel) jdFantasma(c,p,sel,t,mano);
   // chispas al plantar
   GD.spark.forEach(s=>{ const x=s.x, y=s.y; for(let k=0;k<8;k++){ const a=k/8*Math.PI*2, r=10+s.t*50; c.fillStyle=`rgba(255,230,120,${1-s.t/1.2})`; c.beginPath(); c.arc(x+Math.cos(a)*r,y+Math.sin(a)*r,4,0,Math.PI*2); c.fill(); } });
   // lluvia al regar
