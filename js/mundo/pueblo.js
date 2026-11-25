@@ -87,7 +87,7 @@ function drawPlot(c,b,p){ // el jardín de cada niña visto desde el pueblo (cé
   c.textAlign='center'; c.textBaseline='bottom'; c.fillStyle='#000';
   p.jardin.cel.map((o,i)=>o&&{o,i}).filter(Boolean).sort((a,b)=>Math.floor(a.i/JD.C)+jdTam(a.o.k)[1]-Math.floor(b.i/JD.C)-jdTam(b.o.k)[1]).forEach(({o,i})=>{
     const [w,h]=jdTam(o.k), x=cx0+(i%JD.C+w/2)*cw, y=cy0+(Math.floor(i/JD.C)+h)*ch, fs=Math.min(w*cw,h*ch)*1.15, [em,fr]=cellEmoji(o);
-    if(plTipo(o.k)){ plDibuja(c,o,x,y,tGlobal,cw/JD.cs*0.95,i); c.textAlign='center'; c.textBaseline='bottom'; c.fillStyle='#000'; return; } // plantas dibujadas, en pequeño
+    const es=cw/JD.cs*0.95; if(plTipo(o.k)) plDibuja(c,o,x,y,tGlobal,es,i); else jdObjeto(c,o,x,y,tGlobal,es,i); jdEncima(c,o,x,y,tGlobal,es,i); c.textAlign='center'; c.textBaseline='bottom'; c.fillStyle='#000'; return; // dibujos en pequeño
     c.font=`${fs}px serif`; c.fillText(em,x,y+1); if(fr){ c.font=`${fs*0.45}px serif`; c.fillText(fr,x+fs*0.28,y-fs*0.25); } });
   c.textBaseline='middle';
   if(p===P() && needsWater(p)){ const bob=Math.sin(tGlobal*4)*4; c.fillStyle='#fffaf1'; c.beginPath(); c.arc(b.x+b.w-6,b.y-14+bob,17,0,Math.PI*2); c.fill(); c.strokeStyle='#4a8fdc'; c.lineWidth=3; c.stroke(); c.fillStyle='#000'; c.font='20px serif'; c.fillText('💧',b.x+b.w-6,b.y-13+bob); }

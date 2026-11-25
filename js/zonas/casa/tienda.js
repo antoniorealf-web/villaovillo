@@ -51,8 +51,14 @@ function tarjetaMueble(g,p,f){
   c.append(b); g.append(c);
 }
 function tarjetaJardin(g,p,s){
-  const c=el('div','sitem'), [tw,th]=jdTam('sh_'+s.k); c.innerHTML=`<div class="e">${s.e}</div><div class="n">${esc(s.n)}</div><div class="counter">${s.abono?`${s.lote} dosis · tienes ${p.inv.sh_abono||0}`:s.camino?`Camino · ${s.lote||1} baldosas`:tw*th>1?`Ocupa ${tw}×${th} casillas`:'Ocupa 1 casilla'}</div>`;
+  const c=el('div','sitem'), k='sh_'+s.k, [tw,th]=jdTam(k), va=jdVa(k);
+  const lugar=!va.includes('suelo')?'Se cuelga de un árbol joven':va.includes('colgar')?'En el suelo o colgado de un árbol':va.includes('encima')?'En el suelo o en el banco':tw*th>1?`Ocupa ${tw}×${th} casillas`:'Ocupa 1 casilla';
+  c.innerHTML=`<div class="e">${s.e}</div><div class="n">${esc(s.n)}</div><div class="counter">${s.abono?`${s.lote} dosis · tienes ${p.inv.sh_abono||0}`:s.camino?`Camino · ${s.lote||1} baldosas`:lugar}</div>`;
+  if(JD_DIB[k]||JD_COLG[k]){ const ic=document.createElement('canvas'), dpr=window.devicePixelRatio||1; ic.width=90*dpr; ic.height=80*dpr; ic.style.width='90px'; ic.style.height='80px'; const cx=ic.getContext('2d'); cx.scale(dpr,dpr); // dibujo en vez del emoji
+    if(JD_DIB[k]){ const al=JD_ALTO[k]||60, sc=Math.min(1,74/al,84/(tw*JD.cs)); jdObjeto(cx,{k},45,77,performance.now()/1000,sc); } else { cx.translate(45,8); JD_COLG._suelo=-66; JD_COLG[k](cx,1,0); }
+    c.querySelector('.e').replaceWith(ic); }
   const otra=deOtra(p,s); if(otra){ c.style.opacity=.6; c.append(el('div','counter',`⭐ Es de ${esc(otra)}. ¡Ve a verla a su casa!`)); g.append(c); return; }
+  const cd=s.cond&&jdCond(p,s); if(cd){ c.style.opacity=.6; c.append(el('div','counter','🔒 '+cd)); g.append(c); return; }
   const rq=shopReq(s); if(rq&&mLevel(p,rq[0])<rq[1]){ c.style.opacity=.6; c.append(el('div','counter',`🔒 ${MAST[rq[0]].e} ${MAST[rq[0]].n} nivel ${rq[1]}`)); g.append(c); return; }
   if(s.once&&tieneJardin(p,s)){ c.append(el('div','counter','✅ Ya lo tienes')); g.append(c); return; }
   if(s.nota) c.append(el('div','counter',esc(s.nota)));

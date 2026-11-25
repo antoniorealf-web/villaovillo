@@ -34,7 +34,7 @@ async function showRankUps(){
 }
 function addXP(p,n){ if(n) p.xp=(p.xp||0)+n; }
 function rankProgress(p){ return mProgress(p,'telar'); }
-function shopReq(s){ return {colmena:['pan',2],cesta:['pan',3],campanilla:['bib',2],fuente:['bib',3],caseta:['telar',3],tienda:['telar',4],tiovivo:['pan',5],noria:['telar',7]}[s.k]||null; }
+function shopReq(s){ return {colmena:['pan',2],cesta:['pan',3],campanilla:['bib',3],fuente:['bib',3],caseta:['telar',3],tienda:['telar',4],tiovivo:['pan',5],noria:['telar',7]}[s.k]||null; }
 /* ---- puente ---- */
 function bridgeTotal(){ return DB.profiles.filter(Boolean).reduce((a,p)=>a+(p.bridge||0),0); }
 function bridgeDone(){ return bridgeTotal()>=BRIDGE_GOAL; }

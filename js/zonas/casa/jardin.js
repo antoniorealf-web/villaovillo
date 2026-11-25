@@ -59,7 +59,9 @@ function drawGarden(t){
   const mano=GD.mine&&GD.mano!=null&&p.jardin.cel[GD.mano]?GD.mano:null; // lo que se está moviendo
   const sel=mano!=null?p.jardin.cel[mano].k:GD.mine&&invSel&&!invSel.startsWith('fu_')&&p.inv[invSel]>0?invSel:null;
   const cosas=jdCosas(c,p,t); if(sel) jdGuia(c,p,sel,t,mano);
-  cosas.sort((a,b)=>a.y-b.y).forEach(o=>o.d());
+  JD_LUCES=[]; cosas.sort((a,b)=>a.y-b.y).forEach(o=>o.d()); const luces=JD_LUCES; JD_LUCES=null;
+  const nl=nightLevel(); if(nl>0.3){ c.fillStyle=`rgba(25,30,70,${(0.3*nl).toFixed(3)})`; c.fillRect(0,0,d.W,d.H); // de noche, más oscuro y los faroles alumbran
+    c.save(); c.globalCompositeOperation='lighter'; luces.forEach(([x,y])=>{ const g=c.createRadialGradient(x,y,3,x,y,70); g.addColorStop(0,'rgba(255,190,100,.5)'); g.addColorStop(1,'rgba(255,190,100,0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,70,0,Math.PI*2); c.fill(); }); c.restore(); }
   if(mano!=null){ const o=p.jardin.cel[mano], [w,h]=jdTam(o.k); roundRect(c,JD.gx+(mano%JD.C)*JD.cs+2,JD.gy+Math.floor(mano/JD.C)*JD.cs+2,w*JD.cs-4,h*JD.cs-4,10); c.strokeStyle=`rgba(255,210,63,${0.7+Math.sin(t*6)*0.3})`; c.lineWidth=4; c.stroke(); }
   if(sel) jdFantasma(c,p,sel,t,mano);
   // chispas al plantar

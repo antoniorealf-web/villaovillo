@@ -23,13 +23,14 @@ function renderHouse(){
       inv.append(ab); inv.append(el('div','counter',`Te quedan ${dosis} ${dosis===1?'dosis':'dosis'} de abono`)); }
     if(GD.mano!=null&&p.jardin.cel[GD.mano]){ const o=p.jardin.cel[GD.mano];
       inv.append(el('div','help',`<div>✋ Llevas: <b>${esc(itemInfo(o.k).n)}</b>${plTipo(o.k)?' · '+esc(plEtapa(o).n):''}. Toca un hueco verde para ponerlo ahí.</div>`));
+      if((o.en||[]).some(Boolean)){ const qb=el('button','btn','🪢 Quitar lo colgado'); qb.onclick=()=>jdQuitaEncima(p); inv.append(qb); }
       const gc=el('button','btn','📦 Guardar en la cesta'); gc.onclick=()=>jdGuarda(p); inv.append(gc);
       const sl=el('button','btn','✋ Dejarlo donde estaba'); sl.onclick=()=>{ jdSoltar(); renderHouse(); }; inv.append(sl); }
     inv.append(el('div','lbl','Mi cesta'));
     const ig=el('div','invgrid'); const keys=Object.keys(p.inv).filter(k=>p.inv[k]>0&&!k.startsWith('fu_')&&k!=='sh_abono');
     if(!keys.length) ig.append(el('div','counter','Tu cesta está vacía. ¡Completa encargos para ganar plantas o compra en la tienda!'));
     keys.forEach(k=>{ const info=itemInfo(k); const b=el('button','invitem'+(invSel===k?' sel':'')); b.innerHTML=`${info.e}${info.f?`<span class="fr">${info.f}</span>`:''}<small>×${p.inv[k]}</small>`; b.title=info.n;
-      b.onclick=()=>{ invSel=invSel===k?null:k; GD.girar=false; GD.fantasma=null; GD.mano=null; beep(600,0.04); renderHouse(); if(invSel){ const [w,h]=jdTam(k); toast(info.n+(jdEsCamino(k)?': toca el césped para poner el camino':w*h>1?`: ocupa ${w}×${h} casillas. Toca un hueco verde`:': toca un hueco verde'),1800); } }; ig.append(b); });
+      b.onclick=()=>{ invSel=invSel===k?null:k; GD.girar=false; GD.fantasma=null; GD.mano=null; beep(600,0.04); renderHouse(); if(invSel){ const [w,h]=jdTam(k); toast(info.n+(!jdVa(k).includes('suelo')?': toca un punto verde de un árbol':jdEsCamino(k)?': toca el césped para poner el camino':w*h>1?`: ocupa ${w}×${h} casillas. Toca un hueco verde`:': toca un hueco verde'),1800); } }; ig.append(b); });
     inv.append(ig);
     const gb=el('button','btn'+(GD.girar?' blue':''),GD.girar?'↔️ Toca algo para girarlo · Terminar':'↔️ Dar la vuelta a algo');
     gb.onclick=()=>{ GD.girar=!GD.girar; invSel=null; GD.mano=null; beep(600,0.04); renderHouse(); }; inv.append(gb);

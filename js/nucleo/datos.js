@@ -94,12 +94,13 @@ const SPECIAL = {
   M:{e:'🌳',f:'🌈',n:'Árbol arcoíris de maestra'}
 };
 const SHOP = [
-  {k:'seta',e:'🍄',n:'Setas',p:10,r:0},{k:'farol',e:'🏮',n:'Farolillo',p:15,r:0},{k:'banco',e:'🪑',n:'Banco',p:20,r:0},
+  {k:'seta',e:'🍄',n:'Setas',p:10,r:0},{k:'farol',e:'🏮',n:'Farol',p:15,r:0},{k:'banco',e:'🪑',n:'Banco',p:20,r:0},
   {k:'pajaro',e:'🐦',n:'Caseta de pájaros',p:25,r:0},{k:'colmena',e:'🐝',n:'Colmena',p:30,r:1},{k:'cesta',e:'🧺',n:'Cesta de picnic',p:35,r:2},
   {k:'campanilla',e:'🎐',n:'Campanilla de viento',p:40,r:3},{k:'fuente',e:'⛲',n:'Fuente',p:60,r:3},{k:'caseta',e:'🛖',n:'Cabaña',p:90,r:4},
   {k:'tienda',e:'⛺',n:'Tienda de campaña',p:130,r:5},{k:'tiovivo',e:'🎠',n:'Tiovivo',p:180,r:6},{k:'noria',e:'🎡',n:'Noria',p:260,r:8},
   {k:'cam_piedra',e:'🪨',n:'Camino de piedras',p:12,r:0,camino:1,lote:6},{k:'cam_baldosa',e:'🟧',n:'Baldosas',p:15,r:0,camino:1,lote:6},
-  {k:'abono',e:'🌾',n:'Saco de abono',p:10,r:0,abono:1,lote:5} // 5 dosis (jardin-plantas.js) // caminos: van debajo de todo (jardin-suelo.js)
+  {k:'abono',e:'🌾',n:'Saco de abono',p:10,r:0,abono:1,lote:5}, // 5 dosis (jardin-plantas.js)
+  {k:'columpio',e:'🪢',n:'Columpio',p:45,r:0,cond:'joven'},{k:'panal',e:'🍯',n:'Panal de abejas',p:35,r:0,cond:'flores'},{k:'farolillo',e:'🪔',n:'Farolillo para colgar',p:25,r:0,cond:'adulto'} // se cuelgan de un árbol (jardin-objetos.js) // caminos: van debajo de todo (jardin-suelo.js)
 ];
 // catálogo de objetos para jardín: key -> {e, f?, n}
 function itemInfo(k){

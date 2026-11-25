@@ -94,11 +94,17 @@ function plFrutos(c,pts,n,col,r,sd,hoja){ for(let i=0;i<n;i++){ const p=pts[1+i%
 function plFlores(c,pts,n,col,sd){ for(let i=0;i<n;i++){ const p=pts[i%pts.length], a=seeded(sd+i*5)*Math.PI*2, d=p[2]*0.7*seeded(sd+i*9), x=p[0]+Math.cos(a)*d, y=p[1]+Math.sin(a)*d;
   c.fillStyle=col; for(let j=0;j<5;j++){ const b=j/5*Math.PI*2; c.beginPath(); c.arc(x+Math.cos(b)*2.6,y+Math.sin(b)*2.6,2.2,0,Math.PI*2); c.fill(); }
   c.fillStyle='#f4c430'; c.beginPath(); c.arc(x,y,1.5,0,Math.PI*2); c.fill(); } }
+const PL_TAM=[0,0,{h:46,R:22,w:9},{h:62,R:46,w:16},{h:72,R:56,w:20},{h:82,R:66,w:24}]; // forma del árbol en cada etapa
+/* Sitios para colgar cosas (desde árbol joven), con el pie en (0,0) y sin dar la vuelta: los dos primeros, a los lados (columpio) */
+function plSitios(o){ const e=plEtapa(o); if(!e||plTipo(o.k)!=='arbol'||e.i<3) return []; const tm=PL_TAM[e.i], R=tm.R, esp=PL_ARB[jdK(o.k)];
+  if(esp==='pino') return [[-R*0.78,-tm.h*0.3-6],[R*0.78,-tm.h*0.3-6],[0,-tm.h*0.3-R*0.6]].slice(0,e.i>=4?3:2);
+  if(esp==='palmera'){ const tx=tm.w*0.4, ty=-tm.h-8; return [[tx-R*0.85,ty+R*0.3],[tx+R*0.95,ty+R*0.35]]; }
+  const cy=-tm.h-R*0.35; return [[-R*0.72,cy+R*0.62],[R*0.72,cy+R*0.62],[R*0.15,cy+R*0.88]].slice(0,e.i>=4?3:2); }
 function plArbol(c,o,e,t,i){ const esp=PL_ARB[jdK(o.k)]||'frondoso', mes=plMes(), nieve=plNieve();
   if(e.i===0){ plSemilla(c); return; }
   c.fillStyle='#8a5a36'; c.beginPath(); c.ellipse(0,-1,18,6,0,0,Math.PI*2); c.fill(); ol(c,1.6);
   if(e.i===1){ roundRect(c,7,-34,3,34,1); c.fillStyle='#c9a36a'; c.fill(); ol(c,1); plTallo(c,24,'#6b8f3a'); plHoja(c,0,-22,-2.5,0.8); plHoja(c,0,-22,-0.6,0.8); plHoja(c,0,-14,-2.9,0.6); return; }
-  const tam=[0,0,{h:46,R:22,w:9},{h:62,R:46,w:16},{h:72,R:56,w:20},{h:82,R:66,w:24}][e.i], sw=Math.sin(t*1.1+i)*1.5, sd=(i%7)+1, cy=-tam.h-tam.R*0.35+sw*0.3;
+  const tam=PL_TAM[e.i], sw=Math.sin(t*1.1+i)*1.5, sd=(i%7)+1, cy=-tam.h-tam.R*0.35+sw*0.3;
   c.save(); c.translate(sw*0.4,0);
   if(e.i===2){ roundRect(c,10,-46,3,46,1); c.fillStyle='#c9a36a'; c.fill(); ol(c,1); }
   if(esp==='palmera'){ c.beginPath(); c.moveTo(-tam.w*0.5,0); c.quadraticCurveTo(tam.w*0.4,-tam.h*0.5,tam.w*0.2,-tam.h-8); c.lineTo(tam.w*0.6+2,-tam.h-8); c.quadraticCurveTo(tam.w,-tam.h*0.5,tam.w*0.5,0); c.closePath(); c.fillStyle='#b98a55'; c.fill(); ol(c,2.2);
